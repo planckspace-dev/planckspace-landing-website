@@ -1,0 +1,701 @@
+@import "tailwindcss";
+
+/* ============================================================
+   PlanckSpace — Soft Structuralism · Premium Warm Blue
+   Light, airy, structural. One accent: a warm cornflower blue,
+   used precisely. Neutrals tinted faintly toward the accent.
+   Discipline over decoration.
+   ============================================================ */
+
+:root {
+  /* ── Neutrals — tinted faintly cool/blue for cohesion ── */
+  --page:          #FFFFFF;
+  --surface:       #FFFFFF;
+  --soft:          #F5F6FC;   /* alternating section bg */
+  --inset:         #EFF1F9;
+  --inset-2:       #E3E7F3;
+  --border:        #E8EAF4;   /* hairline */
+  --border-strong: #D5D9EA;
+  --ink:           #0C0D14;   /* headlines (near-black, faint cool) */
+  --ink-soft:      #20222E;
+  --text-2:        #555A6B;   /* body */
+  --text-3:        #8A8FA4;   /* muted / labels */
+
+  /* ── Blue — the single brand accent (warm cornflower / periwinkle) ── */
+  --blue-50:   #EEF2FF;
+  --blue-100:  #E0E7FF;
+  --blue-200:  #C7D2FE;
+  --blue-300:  #A7B6FB;
+  --blue-400:  #8194F6;
+  --blue-500:  #6175EE;
+  --blue-600:  #4C5EE6;   /* primary */
+  --blue-700:  #3A45C7;
+  --blue-800:  #2C349C;
+  --blue-900:  #1F2570;
+
+  /* Convenience aliases */
+  --accent:      var(--blue-600);
+  --accent-soft: var(--blue-50);
+
+  /* ── Functional only (inside data viz / semantics) ── */
+  --coral-50:  #FEF1EC;
+  --coral-100: #FBD9CC;
+  --coral-500: #F0552A;
+  --coral-700: #B93C13;
+
+  --green-50:  #EAF8F1;
+  --green-100: #C4ECD9;
+  --green-500: #12A565;
+  --green-700: #0E8A55;
+
+  --amber-50:  #FEF6E7;
+  --amber-100: #FBE6B8;
+  --amber-500: #F59E0B;
+  --amber-600: #D97706;
+  --amber-700: #B45309;
+
+  /* ── Legacy violet aliases → mapped to blue so any stray
+        reference stays on-palette during the redesign ── */
+  --violet-50:  var(--blue-50);
+  --violet-100: var(--blue-100);
+  --violet-200: var(--blue-200);
+  --violet-300: var(--blue-300);
+  --violet-400: var(--blue-400);
+  --violet-500: var(--blue-500);
+  --violet-600: var(--blue-600);
+  --violet-700: var(--blue-700);
+  --violet-900: var(--blue-900);
+
+  /* ── Soft, diffused, blue-tinted elevation ── */
+  --shadow-xs:  0 1px 2px rgba(16,18,40,0.05);
+  --shadow-sm:  0 1px 2px rgba(16,18,40,0.04), 0 4px 10px -2px rgba(16,18,40,0.05);
+  --shadow-md:  0 2px 6px -1px rgba(16,18,40,0.05), 0 12px 28px -8px rgba(34,44,110,0.10);
+  --shadow-lg:  0 4px 12px -2px rgba(16,18,40,0.05), 0 26px 56px -16px rgba(34,44,120,0.16);
+  --shadow-float:
+    0 6px 18px -6px rgba(34,44,120,0.14),
+    0 34px 70px -24px rgba(44,56,160,0.22);
+  --shadow-product:
+    0 4px 14px rgba(16,18,40,0.06),
+    0 30px 60px -22px rgba(34,44,120,0.18),
+    0 60px 120px -40px rgba(44,56,170,0.28);
+
+  /* ── Layout — one radius scale (cards soft, buttons pill) ── */
+  --r-xs:  10px;
+  --r-sm:  14px;
+  --r:     18px;
+  --r-md:  22px;
+  --r-lg:  28px;
+  --r-xl:  34px;
+}
+
+@theme inline {
+  --color-page:          var(--page);
+  --color-surface:       var(--surface);
+  --color-soft:          var(--soft);
+  --color-inset:         var(--inset);
+  --color-inset-2:       var(--inset-2);
+  --color-border:        var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink:           var(--ink);
+  --color-ink-soft:      var(--ink-soft);
+  --color-text-2:        var(--text-2);
+  --color-text-3:        var(--text-3);
+
+  --color-accent:    var(--blue-600);
+  --color-blue:      var(--blue-600);
+  --color-blue-50:   var(--blue-50);
+  --color-blue-100:  var(--blue-100);
+  --color-blue-200:  var(--blue-200);
+  --color-blue-300:  var(--blue-300);
+  --color-blue-400:  var(--blue-400);
+  --color-blue-500:  var(--blue-500);
+  --color-blue-600:  var(--blue-600);
+  --color-blue-700:  var(--blue-700);
+  --color-blue-800:  var(--blue-800);
+  --color-blue-900:  var(--blue-900);
+
+  /* legacy violet utilities resolve to blue */
+  --color-violet:     var(--blue-600);
+  --color-violet-50:  var(--blue-50);
+  --color-violet-100: var(--blue-100);
+  --color-violet-300: var(--blue-300);
+  --color-violet-600: var(--blue-600);
+  --color-violet-700: var(--blue-700);
+
+  --color-coral:     var(--coral-500);
+  --color-coral-50:  var(--coral-50);
+  --color-coral-500: var(--coral-500);
+  --color-green:     var(--green-500);
+  --color-green-50:  var(--green-50);
+  --color-green-500: var(--green-500);
+
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-space-mono);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 110px;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans), "Space Grotesk", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--blue-600);
+  color: #fff;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   Typography — big, structural, tightly tracked
+   ============================================================ */
+
+.display {
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.h-section {
+  font-weight: 600;
+  letter-spacing: -0.032em;
+  line-height: 1.02;
+  color: var(--ink);
+}
+
+.text-balance { text-wrap: balance; }
+.text-pretty  { text-wrap: pretty; }
+
+/* Eyebrow — mono, used sparingly (max ~1 per 3 sections) */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--border-strong);
+}
+.eyebrow-accent { color: var(--blue-600); }
+.eyebrow-accent::before { background: var(--blue-300); }
+.eyebrow-center::before { display: none; }
+
+.code-block {
+  font-family: var(--font-mono), "Space Mono", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+.mono-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ============================================================
+   Surfaces — floating, soft, structural
+   ============================================================ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.card-inset {
+  background: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+/* Floating soft card — lifts on hover via shadow + hairline */
+.card-soft {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.card-soft:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* alias kept for any legacy reference */
+.card-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.card-premium:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* Double-bezel — a glass plate sitting in a soft tray */
+.bezel {
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+}
+.bezel-core {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r-xl) - 8px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  overflow: hidden;
+}
+
+/* Glass island (nav) */
+.glass-island {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.hairline { height: 1px; background: var(--border); border: 0; }
+
+/* ============================================================
+   Buttons — pill / island architecture
+   ============================================================ */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+  background: var(--blue-600);
+  border: 1px solid var(--blue-700);
+  border-radius: 999px;
+  padding: 12px 14px 12px 22px;
+  box-shadow:
+    0 1px 2px rgba(16,18,40,0.16),
+    0 8px 20px -8px rgba(76,94,230,0.50),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: background 0.2s ease, box-shadow 0.3s ease, transform 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--blue-700);
+  box-shadow:
+    0 2px 4px rgba(16,18,40,0.18),
+    0 14px 32px -8px rgba(76,94,230,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.btn-primary:active { transform: scale(0.985); }
+
+/* Nested trailing-icon circle inside primary button */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.btn-primary:hover .btn-icon { transform: translateX(2px); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 12px 22px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.3s ease, transform 0.15s ease;
+}
+.btn-secondary:hover {
+  border-color: var(--text-3);
+  box-shadow: var(--shadow-sm);
+}
+.btn-secondary:active { transform: scale(0.985); }
+
+/* ============================================================
+   Decorative — used sparingly
+   ============================================================ */
+
+.dot-grid {
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.line-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* Terminal — refined dark window (reads as a code surface) */
+.terminal {
+  background: #0C0E16;
+  border: 1px solid #1E2230;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.terminal-bar {
+  background: #141826;
+  border-bottom: 1px solid #1E2230;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Subtle badges (monochrome-leaning) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-family: var(--font-mono), monospace;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+.badge-accent { color: var(--blue-700); background: var(--blue-50); border: 1px solid var(--blue-100); }
+.badge-violet { color: var(--blue-700); background: var(--blue-50); border: 1px solid var(--blue-100); }
+.badge-coral  { color: var(--coral-700); background: var(--coral-50); border: 1px solid var(--coral-100); }
+.badge-green  { color: var(--green-700); background: var(--green-50); border: 1px solid var(--green-100); }
+
+/* Blue wash gradient — for the dark cinematic moment glow */
+.violet-gradient,
+.accent-gradient {
+  background: linear-gradient(140deg, var(--blue-600) 0%, var(--blue-500) 55%, var(--blue-400) 100%);
+}
+
+/* ============================================================
+   Animations — restrained, purposeful, spring-ish
+   ============================================================ */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marquee-x {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-x 42s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+
+@keyframes cursor-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  background: var(--blue-400);
+  border-radius: 1px;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Slow ambient drift for hero glow */
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.55; }
+  50%      { transform: translate(2%, -3%) scale(1.07); opacity: 0.75; }
+}
+
+/* Noise overlay for dark panels */
+.noise-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   PREMIUM ELEVATION LAYER — 2026 refresh
+   Strict superset of everything above (nothing removed). Adds a
+   fluid display scale, an ambient aurora system, fine grain,
+   pointer-spotlight, 3D tilt, glow dividers, and a per-section
+   identity system — so every section owns its own class.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Per-section identity ──
+   Each section carries its own class and its own accent token.
+   Internal accents read var(--sec-accent), so a section can shift
+   its whole character from one line. Voice stays consistent; the
+   treatment is art-directed per section. */
+.section { position: relative; isolation: isolate; }
+
+.s-hero     { --sec-accent: var(--blue-600); }
+.s-logos    { --sec-accent: var(--blue-600); }
+.s-problem  { --sec-accent: var(--coral-500); } /* the one "pain" moment */
+.s-features { --sec-accent: var(--blue-600); }
+.s-how      { --sec-accent: var(--blue-600); }
+.s-roles    { --sec-accent: var(--blue-600); }
+.s-privacy  { --sec-accent: var(--blue-400); } /* the dark moment */
+.s-pricing  { --sec-accent: var(--blue-600); }
+.s-faq      { --sec-accent: var(--blue-600); }
+.s-cta      { --sec-accent: #ffffff; }
+
+/* Section eyebrow rhythm: not every section gets one. Reserve the
+   centered kicker for pricing/roles; let structural sections lead
+   with the headline. (Anti-"eyebrow on every section" discipline.) */
+
+/* ── Fluid, structural display type ── */
+.display-hero {
+  font-weight: 600;
+  letter-spacing: -0.038em;
+  line-height: 0.93;
+  color: var(--ink);
+  font-size: clamp(2.65rem, 1.05rem + 6.4vw, 5.4rem);
+  text-wrap: balance;
+}
+.h-fluid {
+  font-weight: 600;
+  letter-spacing: -0.032em;
+  line-height: 1.02;
+  color: var(--ink);
+  font-size: clamp(2rem, 1.15rem + 3.3vw, 3.35rem);
+  text-wrap: balance;
+}
+.lead {
+  font-size: clamp(1.0625rem, 1rem + 0.45vw, 1.3rem);
+  line-height: 1.62;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+/* ── Ambient aurora — layered, slow-drifting blue light ──
+   Soft enough to read as atmosphere, never as a gradient banner. */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aurora-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(64px);
+  will-change: transform;
+}
+@keyframes drift-a { 0%,100% { transform: translate(0,0) scale(1); }   50% { transform: translate(4%,-3%) scale(1.08); } }
+@keyframes drift-b { 0%,100% { transform: translate(0,0) scale(1); }   50% { transform: translate(-5%,4%) scale(1.12); } }
+@keyframes drift-c { 0%,100% { transform: translate(0,0) scale(1.02); } 50% { transform: translate(3%,5%) scale(0.94); } }
+
+/* ── Fine film grain (reusable, lighter than .noise-bg) ── */
+.grain { position: relative; }
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.022;
+  mix-blend-mode: overlay;
+}
+
+/* ── Pointer spotlight — a soft accent bloom that follows the cursor.
+   JS sets --mx / --my (in %). Opt-in per surface. ── */
+.spotlight { position: relative; }
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  background: radial-gradient(
+    460px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in srgb, var(--sec-accent, var(--blue-500)) 15%, transparent),
+    transparent 62%
+  );
+  z-index: 0;
+}
+.spotlight:hover::before { opacity: 1; }
+
+/* Robust spotlight card: glow layer is an explicit element kept BELOW a
+   z-indexed content wrapper, so text is never washed by the bloom. */
+.spotlight-card { position: relative; overflow: hidden; }
+.spotlight-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background: radial-gradient(
+    440px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--sec-accent, var(--blue-500)) 13%, transparent),
+    transparent 60%
+  );
+}
+.spotlight-card:hover .spotlight-glow { opacity: 1; }
+
+/* ── 3D tilt scene for the product showcase ── */
+.tilt-scene { perspective: 1600px; }
+.tilt-card  { transform-style: preserve-3d; will-change: transform; }
+.tilt-pop   { transform: translateZ(48px); } /* floating chips lift toward viewer */
+
+/* ── Gentle continuous float for chips / accents ── */
+@keyframes float-soft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes float-soft-2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+
+/* Autoplay progress (feature showcase) */
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Hero flow-field — token streams flowing into the dashboard + node mesh */
+@keyframes flow-dash { to { stroke-dashoffset: -180; } }
+@keyframes ff-fade  { 0%, 100% { opacity: 0.05; } 50% { opacity: 0.2; } }
+@keyframes ff-pulse { 0%, 100% { opacity: 0.25; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.7); } }
+.ff-node { transform-box: fill-box; transform-origin: center; }
+
+/* ── Hairline dividers with a soft accent bloom in the middle ── */
+.glow-divider { position: relative; height: 1px; background: var(--border); border: 0; }
+.glow-divider::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, 64%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--blue-400), transparent);
+  opacity: 0.6;
+}
+
+/* ── One-shot sheen sweep (used on the hero CTA, sparingly) ── */
+@keyframes sheen-sweep { from { transform: translateX(-120%) skewX(-18deg); } to { transform: translateX(220%) skewX(-18deg); } }
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+.sheen:hover::after { animation: sheen-sweep 0.9s ease; }
+
+/* ── Keycap (nav command hint) ── */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-3);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* ── Mono tag — a quieter eyebrow alternative ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 13px 6px 11px;
+  box-shadow: var(--shadow-xs);
+}
+.tag-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--blue-500); box-shadow: 0 0 0 3px var(--blue-100); }
+
+/* ── Underline-on-hover link ── */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.link-underline:hover { background-size: 100% 1px; }
+
+/* ── Smooth-scrub helper for revealed media ── */
+.will-rise { will-change: transform, opacity; }
+
+/* Honor reduced motion for the new ambient pieces too */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none !important; }
+  .sheen:hover::after { animation: none !important; }
+}

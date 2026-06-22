@@ -1,0 +1,13 @@
+{
+  "name": "Planckspace",
+  "short_name": "Planckspace",
+  "description": "Spend visibility and optimization for AI coding tools.",
+  "theme_color": "#5847E5",
+  "background_color": "#F7F8FA",
+  "display": "standalone",
+  "icons": [
+    { "src": "/favicon/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
