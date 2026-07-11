@@ -1,119 +1,92 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import * as Accordion from "@radix-ui/react-accordion";
 import { Plus } from "lucide-react";
+import { Reveal } from "@/components/ui/reveal";
 
-const faqs = [
+const FAQS = [
   {
-    q: "Does PlanckSpace read my code or prompts?",
-    a: "No. PlanckSpace reads only the local session database that your AI editor writes — which contains metadata: model name, token counts, cost, duration, repo name, and outcome. Your prompts, code, and AI responses are never stored or accessed.",
+    q: "How does the tracking actually work?",
+    a: "AI coding tools already write session logs to your machine — model, token counts, timestamps. The PlanckSpace CLI (and its background daemon) parses that metadata locally, computes cost from current model pricing, and syncs the numbers to your workspace. Nothing is intercepted, proxied, or injected into your editor.",
   },
   {
-    q: "Which editors are supported?",
-    a: "Claude Code (full support with token counts and costs), Cursor (supported, though token fields are 0 — Cursor meters server-side), and Windsurf (beta). The VS Code extension works in VS Code, Cursor, Windsurf, and VS Codium.",
+    q: "Which tools are supported?",
+    a: "Claude Code, Cursor, Windsurf, and Antigravity today. The VS Code extension adds in-editor spend, insights, and recommendations, and works in VS Code forks like Cursor and Windsurf.",
   },
   {
-    q: "Do I need an account to use PlanckSpace?",
-    a: "No. The CLI and VS Code extension work completely offline with no account. You only need an account to sync data to a team workspace and unlock the shared dashboard.",
+    q: "Do you ever see our code or prompts?",
+    a: "No. PlanckSpace syncs usage metadata only: models, token counts, cost, duration, tool, repo name, and git author. Source code, prompts, responses, and file contents never leave the machine. Run planck inspect to see the exact payload before it syncs.",
   },
   {
-    q: "How does the team workspace work?",
-    a: "You create a workspace and invite your developers via email. Each developer runs planck login <token> — a 30-second step. From that point, their CLI syncs session metadata to your workspace, visible in role-based dashboards.",
+    q: "What does “tracked spend” mean on the pricing page?",
+    a: "It's the dollar value of AI usage PlanckSpace meters for your workspace each calendar month — the thing plans are sized by. Starter includes $200/month of tracked spend, Pro $500, Business $2,000. It's a measurement limit, not extra charges.",
   },
   {
-    q: "What does 'reconciliation' mean?",
-    a: "Reconciliation compares what your team actually used (tracked by PlanckSpace) against what your AI vendor billed you. The reconciliation view flags the gap — surfacing overcharges or unaccounted sessions.",
+    q: "How is this different from each provider's own usage page?",
+    a: "Provider dashboards show one tool, one account, no team context. PlanckSpace unifies every tool into per-team, per-repo, per-developer attribution, reconciles it against the actual invoice, and flags waste like idle seats and cache misses — the questions finance actually asks.",
   },
   {
-    q: "How do cost insights work?",
-    a: "The CLI detects patterns that inflate spend: large CLAUDE.md files, low prompt-cache hit rates, repeated context reloads, and anomalous sessions. Each insight shows an estimated monthly saving and a one-line fix.",
+    q: "We're on Claude Pro / Max subscriptions, not API billing. Useful?",
+    a: "Yes — subscription efficiency is a first-class view. PlanckSpace imputes the usage value of each flat-rate seat, shows who's under-using theirs, and tells you when a seat should move up or down a tier.",
   },
   {
-    q: "Is Windows supported?",
-    a: "The CLI requires macOS or Linux (or WSL on Windows). The VS Code extension works on all platforms — it reads a local SQLite database that the CLI writes.",
-  },
-  {
-    q: "What happens to my data if I cancel?",
-    a: "Your local data stays on your machine — PlanckSpace never deletes it. Workspace data on our servers is retained for 90 days after cancellation, then permanently purged.",
+    q: "Is there a free plan?",
+    a: "Starter is free forever: 3 users and $200 of tracked spend per month, no credit card. Pro and Business start with a 14-day free trial. Enterprise is sales-assisted — talk to us.",
   },
 ];
 
 export default function FAQ() {
-  const [open, setOpen] = useState<number | null>(0);
-
   return (
-    <section id="faq" className="section s-faq py-24 sm:py-32 bg-[var(--soft)] border-y border-[var(--border)]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-16">
-          {/* Left — sticky header */}
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
-            className="lg:sticky lg:top-32 self-start"
-          >
-            <h2 className="h-section text-[34px] sm:text-[46px] text-balance">
-              Common questions
-            </h2>
-            <p className="mt-6 text-[var(--text-2)] text-[16px] leading-relaxed">
-              Everything teams ask before rolling out PlanckSpace. Still curious?
-            </p>
-            <a
-              href="mailto:hello@planckspace.dev"
-              className="mt-5 inline-flex items-center gap-1.5 text-[var(--blue-600)] font-medium text-[15px] hover:underline"
-            >
-              Email us →
-            </a>
-          </motion.div>
-
-          {/* Right — accordion */}
-          <div className="space-y-3">
-            {faqs.map((faq, i) => {
-              const isOpen = open === i;
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.35, delay: i * 0.03 }}
-                  className={`rounded-2xl border transition-all duration-200 ${
-                    isOpen ? "bg-white border-[var(--border-strong)] shadow-[var(--shadow-sm)]" : "bg-white border-[var(--border)]"
-                  }`}
-                >
-                  <button
-                    onClick={() => setOpen(isOpen ? null : i)}
-                    className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4.5 text-left cursor-pointer"
-                  >
-                    <span className="text-[15px] font-semibold text-[var(--ink)] leading-snug">{faq.q}</span>
-                    <span className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${isOpen ? "bg-[var(--blue-600)] rotate-45" : "bg-[var(--inset)]"}`}>
-                      <Plus className={`w-3.5 h-3.5 ${isOpen ? "text-white" : "text-[var(--text-3)]"}`} />
-                    </span>
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
-                      <motion.div
-                        key="content"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-5 sm:px-6 pb-5 text-[14px] text-[var(--text-2)] leading-relaxed">
-                          {faq.a}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
+    <section className="py-24 sm:py-36">
+      <div className="container-x">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-20">
+          <div className="lg:sticky lg:top-32 lg:self-start">
+            <Reveal>
+              <p className="eyebrow mb-6">FAQ</p>
+              <h2 className="display-2">Fair questions, straight answers.</h2>
+              <p className="lead mt-5 max-w-sm">
+                Anything else —{" "}
+                <a href="/contact" className="link-quiet">
+                  ask us directly
+                </a>
+                . A human replies.
+              </p>
+            </Reveal>
           </div>
+
+          <Reveal>
+            <Accordion.Root type="single" collapsible className="w-full">
+              {FAQS.map((f, i) => (
+                <Accordion.Item
+                  key={f.q}
+                  value={`item-${i}`}
+                  className="border-t border-[var(--border)] last:border-b"
+                >
+                  <Accordion.Header>
+                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left">
+                      <span className="text-[16px] font-medium tracking-[-0.01em] text-[var(--ink)] sm:text-[17px]">
+                        {f.q}
+                      </span>
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:border-[var(--text-3)] group-data-[state=open]:rotate-45 group-data-[state=open]:border-[var(--ink)] group-data-[state=open]:bg-[var(--ink)]">
+                        <Plus
+                          className="h-3.5 w-3.5 text-[var(--text-2)] transition-colors duration-300 group-data-[state=open]:text-white"
+                          strokeWidth={1.75}
+                        />
+                      </span>
+                    </Accordion.Trigger>
+                  </Accordion.Header>
+                  <Accordion.Content className="overflow-hidden data-[state=closed]:animate-[acc-up_0.35s_cubic-bezier(0.32,0.72,0,1)] data-[state=open]:animate-[acc-down_0.35s_cubic-bezier(0.32,0.72,0,1)]">
+                    <p className="max-w-xl pb-7 pr-10 text-[14.5px] leading-relaxed text-[var(--text-2)]">
+                      {f.a}
+                    </p>
+                  </Accordion.Content>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
+          </Reveal>
         </div>
       </div>
+
     </section>
   );
 }

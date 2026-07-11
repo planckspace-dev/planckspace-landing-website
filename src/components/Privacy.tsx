@@ -1,77 +1,83 @@
-"use client";
+import { Check, X } from "lucide-react";
+import { Reveal } from "@/components/ui/reveal";
 
-import { motion } from "framer-motion";
-import { Lock, Database, WifiOff, Eye } from "lucide-react";
-
-const pillars = [
-  { icon: Lock, title: "Read-only local file", body: "Opens ~/.planckspace/local.db read-only. Never writes to your AI editor's files." },
-  { icon: Eye, title: "Metadata only", body: "Only model, token counts, cost, duration, and repo name. No prompts, no code, no responses." },
-  { icon: WifiOff, title: "Works fully offline", body: "Dashboard, insights, and audit all work without a network connection. Sync is always opt-in." },
-  { icon: Database, title: "You control the sync", body: "Data goes to planckspace.dev only when you connect a workspace token. Revoke access any time." },
+const SYNCED = [
+  "Model and token counts",
+  "Session cost and duration",
+  "Tool and editor used",
+  "Repo name and git author",
 ];
 
+const NEVER = [
+  "Source code",
+  "Prompts and responses",
+  "File contents",
+  "Anything you typed",
+];
+
+/* The one deliberate dark moment on the page. */
 export default function Privacy() {
   return (
-    <section className="section s-privacy py-24 sm:py-32 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[34px] overflow-hidden grid grid-cols-1 lg:grid-cols-2 shadow-[var(--shadow-float)] border border-[var(--border)]">
-          {/* Left — ink panel (the deliberate dark moment) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative p-10 sm:p-12 lg:p-14 flex flex-col justify-center overflow-hidden noise-bg"
-            style={{ background: "#0C0D14" }}
-          >
-            {/* blue glow */}
-            <div
-              className="absolute -top-24 -left-16 w-80 h-80 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(76,94,230,0.40) 0%, transparent 70%)", animation: "drift-b 22s ease-in-out infinite" }}
-            />
-            <div
-              className="absolute -bottom-20 right-0 w-72 h-72 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(97,117,238,0.18) 0%, transparent 70%)", animation: "drift-c 26s ease-in-out infinite" }}
-            />
+    <section className="py-24 sm:py-36">
+      <div className="container-x">
+        <Reveal>
+          <div className="overflow-hidden rounded-[1.5rem] border border-[var(--dark-border)] bg-[var(--dark-page)] shadow-[var(--shadow-float)]">
+            <div className="grid lg:grid-cols-[1.15fr_1fr]">
+              <div className="p-10 sm:p-14 lg:p-16">
+                <p className="eyebrow mb-7 !text-[#6b7183] before:!bg-[rgba(255,255,255,0.15)]">
+                  Privacy by architecture
+                </p>
+                <h2 className="display-2 !text-white">
+                  We meter receipts,
+                  <br />
+                  not code.
+                </h2>
+                <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--dark-text-2)]">
+                  PlanckSpace parses the metadata your AI tools already write to
+                  disk — token counts, models, costs. Your source, prompts, and
+                  responses never leave the machine. Developers can verify
+                  exactly what syncs with{" "}
+                  <code className="num rounded bg-white/10 px-1.5 py-0.5 text-[13px] text-white">
+                    planck inspect
+                  </code>
+                  .
+                </p>
+                <p className="num mt-8 text-[12px] text-[#6b7183]">
+                  Sync is opt-in per machine · revoke a device any time
+                </p>
+              </div>
 
-            <span className="relative inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--blue-300)] mb-6">
-              <span className="w-[22px] h-px bg-[var(--blue-400)]" />Privacy-first
-            </span>
-            <h2 className="relative text-[34px] sm:text-[44px] font-semibold leading-[1.04] tracking-tight text-white mb-5">
-              We never see your code.{" "}
-              <span className="text-white/40">Ever.</span>
-            </h2>
-            <p className="relative text-white/65 text-[16px] leading-relaxed mb-8 max-w-md">
-              PlanckSpace is built on one principle: total visibility into costs, zero
-              visibility into content. Your prompts, code, and AI responses never leave
-              your machine.
-            </p>
-            <div className="relative inline-flex items-center gap-2 text-[12px] font-mono bg-white/[0.07] border border-white/15 text-white/90 px-4 py-2.5 rounded-full w-fit">
-              <Lock className="w-3.5 h-3.5 text-[var(--green-500)]" />
-              No prompts · No code · No file contents
-            </div>
-          </motion.div>
-
-          {/* Right — pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[var(--border)]">
-            {pillars.map((p, i) => (
-              <motion.div
-                key={p.title}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.08 }}
-                className="bg-white p-7 sm:p-8 hover:bg-[var(--blue-50)]/50 transition-colors duration-200"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-[var(--blue-50)] border border-[var(--blue-100)] flex items-center justify-center mb-4">
-                  <p.icon className="w-[18px] h-[18px] text-[var(--blue-600)]" />
+              <div className="grid grid-cols-1 gap-px border-t border-[var(--dark-border)] bg-[var(--dark-border)] sm:grid-cols-2 lg:border-l lg:border-t-0">
+                <div className="bg-[var(--ink-2)] p-8 sm:p-10">
+                  <p className="num mb-6 text-[11px] uppercase tracking-[0.16em] text-[#6b7183]">
+                    Synced
+                  </p>
+                  <ul className="space-y-4">
+                    {SYNCED.map((s) => (
+                      <li key={s} className="flex items-start gap-3 text-[14px] text-[#d5d9e4]">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#4ade80]" strokeWidth={1.75} />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <h4 className="text-[15px] font-semibold text-[var(--ink)] mb-2">{p.title}</h4>
-                <p className="text-[13px] text-[var(--text-2)] leading-relaxed">{p.body}</p>
-              </motion.div>
-            ))}
+                <div className="bg-[var(--dark-page)] p-8 sm:p-10">
+                  <p className="num mb-6 text-[11px] uppercase tracking-[0.16em] text-[#6b7183]">
+                    Never synced
+                  </p>
+                  <ul className="space-y-4">
+                    {NEVER.map((s) => (
+                      <li key={s} className="flex items-start gap-3 text-[14px] text-[#9ba1b0]">
+                        <X className="mt-0.5 h-4 w-4 shrink-0 text-[#f4602f]" strokeWidth={1.75} />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

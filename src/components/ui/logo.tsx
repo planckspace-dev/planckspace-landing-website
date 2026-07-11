@@ -1,17 +1,17 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Brand mark — the PlanckSpace bot glyph, recolored from the legacy violet kit
- * to the current warm-blue palette (#6175EE → #3A45C7). Inline SVG so it scales
- * crisply and inherits sizing from className.
+ * Brand mark — the PlanckSpace bot glyph, set in the product's UI 2.0 brand
+ * blue (#4C80F6 → #1D53CF). Inline SVG so it scales crisply and inherits
+ * sizing from className.
  */
 export function PlanckMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} role="img" aria-label="PlanckSpace">
       <defs>
         <linearGradient id="pmark-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#6175EE" />
-          <stop offset="1" stopColor="#3A45C7" />
+          <stop offset="0" stopColor="#4C80F6" />
+          <stop offset="1" stopColor="#1D53CF" />
         </linearGradient>
         <clipPath id="pmark-clip">
           <rect width="100" height="100" rx="24" />

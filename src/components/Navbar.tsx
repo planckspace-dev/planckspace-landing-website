@@ -1,132 +1,141 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { CONSOLE_URL } from "@/lib/plans";
+import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+const LINKS = [
+  { label: "Product", href: "/#product" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
+  // Lock scroll while the mobile overlay is open.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.documentElement.style.overflow = "";
+    };
+  }, [open]);
 
   return (
-    <motion.header
-      initial={{ y: -24, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-5 pt-3 sm:pt-5"
-    >
-      <div
-        className={cn(
-          "max-w-5xl mx-auto flex items-center justify-between h-15 pl-4 pr-3 sm:pl-5 sm:pr-3 py-2.5 rounded-full transition-all duration-500",
-          scrolled
-            ? "glass-island"
-            : "bg-white/45 backdrop-blur-md border border-transparent"
-        )}
-      >
-        {/* Logo */}
-        <Link href="/" className="flex items-center shrink-0" aria-label="PlanckSpace home">
-          <Logo markClassName="w-8 h-8" textClassName="text-[19px]" />
-        </Link>
-
-        {/* Desktop nav — centered */}
-        <nav className="hidden md:flex items-center gap-0.5 absolute left-1/2 -translate-x-1/2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[13.5px] text-[var(--text-2)] hover:text-[var(--ink)] transition-colors duration-150 font-medium px-3.5 py-2 rounded-full hover:bg-[var(--inset)]"
-            >
-              {link.label}
+    <>
+      <header className="fixed inset-x-0 top-0 z-40 pointer-events-none">
+        <div className="container-x">
+          <nav
+            className="pointer-events-auto mt-4 flex h-[3.25rem] items-center justify-between rounded-full border border-[var(--border)] bg-white/80 pl-4 pr-2 backdrop-blur-xl shadow-[0_1px_2px_rgba(17,19,26,0.04),0_12px_32px_-16px_rgba(17,19,26,0.18)]"
+            aria-label="Main"
+          >
+            <Link href="/" className="shrink-0" aria-label="PlanckSpace home">
+              <Logo markClassName="w-7 h-7" textClassName="text-[15px]" />
             </Link>
-          ))}
-        </nav>
 
-        {/* Desktop CTAs */}
-        <div className="hidden md:flex items-center gap-1.5 shrink-0">
-          <Link
-            href="https://app.planckspace.dev/login"
-            className="text-[13.5px] text-[var(--text-2)] hover:text-[var(--ink)] transition-colors font-medium px-3.5 py-2 rounded-full hover:bg-[var(--inset)]"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="#get-started"
-            className="group sheen flex items-center gap-2 text-[13.5px] font-semibold bg-[var(--ink)] text-white pl-4 pr-2 py-2 rounded-full hover:bg-[var(--ink-soft)] transition-colors duration-150"
-          >
-            Get started
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform">
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
-        </div>
-
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-[var(--ink)] p-2 -mr-0.5 transition-colors"
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22 }}
-            className="md:hidden mt-2 max-w-5xl mx-auto bg-white border border-[var(--border)] rounded-3xl shadow-[var(--shadow-lg)] overflow-hidden"
-          >
-            <div className="px-3 py-3 space-y-0.5">
-              {navLinks.map((link) => (
+            <div className="hidden md:flex items-center gap-1">
+              {LINKS.map((l) => (
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-[var(--text-2)] hover:text-[var(--ink)] hover:bg-[var(--inset)] px-3 py-2.5 text-sm font-medium rounded-xl"
+                  key={l.label}
+                  href={l.href}
+                  className="rounded-full px-3.5 py-1.5 text-[13.5px] font-medium text-[var(--text-2)] transition-colors duration-300 hover:bg-[var(--inset)] hover:text-[var(--ink)]"
                 >
-                  {link.label}
+                  {l.label}
                 </Link>
               ))}
-              <div className="pt-2 mt-2 border-t border-[var(--border)] flex flex-col gap-2 px-1 pb-1">
-                <Link
-                  href="https://app.planckspace.dev/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-sm font-medium py-2.5 text-center border border-[var(--border-strong)] rounded-full text-[var(--ink)]"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="#get-started"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-white text-sm font-semibold py-2.5 text-center bg-[var(--ink)] rounded-full"
-                >
-                  Get started free
-                </Link>
-              </div>
             </div>
-          </motion.div>
+
+            <div className="hidden md:flex items-center gap-1.5">
+              <a
+                href={`${CONSOLE_URL}/login`}
+                className="rounded-full px-3.5 py-1.5 text-[13.5px] font-medium text-[var(--text-2)] transition-colors duration-300 hover:text-[var(--ink)]"
+              >
+                Sign in
+              </a>
+              <a
+                href={`${CONSOLE_URL}/register`}
+                className="btn btn-primary !py-1.5 !pl-4 !text-[13.5px]"
+              >
+                Get started
+                <span className="btn-disc !h-6 !w-6">
+                  <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </span>
+              </a>
+            </div>
+
+            {/* mobile hamburger — two lines that morph into an X */}
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              aria-expanded={open}
+              aria-label={open ? "Close menu" : "Open menu"}
+              className="md:hidden relative mr-2 h-9 w-9"
+            >
+              <span
+                className={cn(
+                  "absolute left-2 top-1/2 h-[1.5px] w-5 bg-[var(--ink)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                  open ? "rotate-45" : "-translate-y-[3.5px]",
+                )}
+              />
+              <span
+                className={cn(
+                  "absolute left-2 top-1/2 h-[1.5px] w-5 bg-[var(--ink)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                  open ? "-rotate-45" : "translate-y-[3.5px]",
+                )}
+              />
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      {/* mobile overlay */}
+      <div
+        className={cn(
+          "fixed inset-0 z-30 md:hidden bg-white/90 backdrop-blur-2xl transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
-      </AnimatePresence>
-    </motion.header>
+      >
+        <div className="container-x flex h-full flex-col justify-center gap-2">
+          {LINKS.map((l, i) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              onClick={() => setOpen(false)}
+              className={cn(
+                "text-4xl font-semibold tracking-[-0.03em] text-[var(--ink)] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                open ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0",
+              )}
+              style={{ transitionDelay: open ? `${100 + i * 60}ms` : "0ms" }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <div
+            className={cn(
+              "mt-8 flex flex-col gap-3 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              open ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0",
+            )}
+            style={{ transitionDelay: open ? "360ms" : "0ms" }}
+          >
+            <a href={`${CONSOLE_URL}/register`} className="btn btn-primary w-max">
+              Get started
+              <span className="btn-disc">
+                <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
+              </span>
+            </a>
+            <a
+              href={`${CONSOLE_URL}/login`}
+              className="text-[15px] font-medium text-[var(--text-2)]"
+            >
+              Sign in →
+            </a>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

@@ -1,50 +1,54 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Space_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-geist",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-space-mono",
-  weight: ["400", "700"],
+  variable: "--font-jetbrains",
+  weight: ["400", "500"],
   display: "swap",
 });
 
 const FAVICON_BASE = "/planckspace-logo-kit/planckspace-logo";
 
 export const metadata: Metadata = {
-  title: "PlanckSpace — AI Coding Spend, Made Visible",
+  metadataBase: new URL("https://planckspace.dev"),
+  title: {
+    default: "PlanckSpace — Spend management for AI-assisted engineering",
+    template: "%s — PlanckSpace",
+  },
   description:
-    "Track every token your team spends in Claude Code, Cursor, and Windsurf. Surface wasted spend, cut costs, and optimize AI ROI — without touching your code.",
+    "PlanckSpace meters every token your team spends in Claude Code, Cursor, Windsurf, and Antigravity — one shared dashboard for cost visibility, waste detection, and invoice reconciliation. Metadata only, never your code.",
   keywords: [
     "AI coding costs",
     "Claude Code spend tracker",
     "Cursor spend analytics",
     "AI token usage dashboard",
-    "developer productivity analytics",
     "AI budget management for teams",
     "engineering cost visibility",
+    "AI spend reconciliation",
   ],
   authors: [{ name: "PlanckSpace" }],
   openGraph: {
-    title: "PlanckSpace — AI Coding Spend, Made Visible",
+    title: "PlanckSpace — Spend management for AI-assisted engineering",
     description:
-      "Track every token your team spends in Claude Code, Cursor, and Windsurf. Surface wasted spend, cut costs, and optimize AI ROI.",
+      "Meter every token across Claude Code, Cursor, Windsurf, and Antigravity. Cost visibility, waste detection, and invoice reconciliation — without touching your code.",
     type: "website",
     url: "https://planckspace.dev",
     siteName: "PlanckSpace",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PlanckSpace — AI Coding Spend, Made Visible",
+    title: "PlanckSpace — Spend management for AI-assisted engineering",
     description:
-      "Track every token your team spends in Claude Code, Cursor, and Windsurf. Surface wasted spend, cut costs, and optimize AI ROI.",
+      "Meter every token across Claude Code, Cursor, Windsurf, and Antigravity. Cost visibility, waste detection, and invoice reconciliation — without touching your code.",
   },
   icons: {
     icon: [
@@ -63,11 +67,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${spaceGrotesk.variable} ${spaceMono.variable} h-full`}
-    >
-      <body className="antialiased min-h-full">{children}</body>
+    <html lang="en" className={`${geist.variable} ${jetbrains.variable} h-full`}>
+      <body className="antialiased min-h-full bg-[var(--page)] text-[var(--ink)]">
+        {children}
+      </body>
     </html>
   );
 }

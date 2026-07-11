@@ -1,28 +1,28 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import LogoBar from "@/components/LogoBar";
+import ToolsBar from "@/components/ToolsBar";
 import Problem from "@/components/Problem";
 import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
-import Roles from "@/components/Roles";
 import Privacy from "@/components/Privacy";
-import Pricing from "@/components/Pricing";
+import Roles from "@/components/Roles";
+import PricingTeaser from "@/components/PricingTeaser";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <main className="bg-[var(--page)] text-[var(--ink)] overflow-x-clip antialiased">
+    <main className="overflow-x-clip">
       <Navbar />
       <Hero />
-      <LogoBar />
+      <ToolsBar />
       <Problem />
       <Features />
       <HowItWorks />
-      <Roles />
       <Privacy />
-      <Pricing />
+      <Roles />
+      <PricingTeaser />
       <FAQ />
       <CTA />
       <Footer />
