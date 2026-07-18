@@ -252,6 +252,73 @@ function MockExport() {
   );
 }
 
+function MockFixIt() {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-white p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-3)]">
+          Insight · your editor
+        </span>
+        <span className="num text-[10px] text-[var(--text-3)]">high confidence</span>
+      </div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[12px] font-medium text-[var(--ink)]">
+          CLAUDE.md re-read 212× per session · api-service
+        </span>
+        <span className="num shrink-0 text-[12px] font-medium text-[var(--green-700)]">$34/mo</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <span className="rounded-md bg-[var(--brand-600)] px-3 py-1.5 text-[10.5px] font-medium text-white">
+          ⚡ Fix now
+        </span>
+        <span className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[10.5px] font-medium text-[var(--text-2)]">
+          ▸ Fix with Claude Code
+        </span>
+      </div>
+      <div className="mt-2.5 text-[10px] text-[var(--text-3)]">
+        files backed up · one-click undo · marked fixed automatically
+      </div>
+    </div>
+  );
+}
+
+function MockLedger() {
+  const receipts = [
+    { label: "Context split · api-service", value: "$28/mo", date: "verified Jun 02" },
+    { label: "Model routing · workspace", value: "$19/mo", date: "verified Jun 21" },
+  ];
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-white p-4">
+      <div className="flex items-baseline gap-2">
+        <span className="text-[11px] text-[var(--text-2)]">Saved you</span>
+        <span className="num text-[22px] font-medium tracking-[-0.03em] text-[var(--green-700)]">
+          $212
+        </span>
+        <span className="text-[11px] text-[var(--text-2)]">since May 12</span>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        {receipts.map((r) => (
+          <div
+            key={r.label}
+            className="flex items-center justify-between rounded-md border border-[var(--border)] px-3 py-2"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="text-[10px] text-[var(--green-700)]">✓</span>
+              <span className="truncate text-[10.5px] text-[var(--ink)]">{r.label}</span>
+            </span>
+            <span className="num shrink-0 pl-2 text-[10.5px] text-[var(--text-3)]">
+              <span className="font-medium text-[var(--ink)]">{r.value}</span> · {r.date}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2.5 text-[10px] text-[var(--text-3)]">
+        measured from your telemetry after each fix — never claimed
+      </div>
+    </div>
+  );
+}
+
 /* section ----------------------------------------------------------------- */
 
 export default function Features() {
@@ -339,6 +406,26 @@ export default function Features() {
               body="Chargeback and showback CSVs, cut by team or cost center — drop them straight into the monthly close."
             >
               <MockExport />
+            </TileShell>
+          </Reveal>
+
+          <Reveal className="lg:col-span-7">
+            <TileShell
+              className="h-full"
+              title="Fix it from your editor, in one click"
+              body="The PlanckSpace extension for VS Code, Cursor, and Windsurf turns every insight into an applied fix — mechanical ones instantly (backed up, undoable), judgement calls handed to your own Claude Code with the measured data injected."
+            >
+              <MockFixIt />
+            </TileShell>
+          </Reveal>
+
+          <Reveal delay={0.06} className="lg:col-span-5">
+            <TileShell
+              className="h-full"
+              title="Savings, verified from telemetry"
+              body="After a fix, PlanckSpace watches your real usage and only books the saving once it's confirmed. The ledger is measured, never claimed — with a dated receipt for every dollar."
+            >
+              <MockLedger />
             </TileShell>
           </Reveal>
         </div>
