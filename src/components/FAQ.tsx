@@ -30,8 +30,12 @@ const FAQS = [
     a: "Yes — subscription efficiency is a first-class view. PlanckSpace imputes the usage value of each flat-rate seat, shows who's under-using theirs, and tells you when a seat should move up or down a tier.",
   },
   {
+    q: "How do we get access?",
+    a: "Through a demo. We spend 30 minutes on your setup, agree the right plan, then provision the workspace and help your team roll it out. There's no self-serve sign-up — onboarding runs with us so your numbers are right from the first session.",
+  },
+  {
     q: "Is there a free plan?",
-    a: "Starter is free forever: 3 users and $200 of tracked spend per month, no credit card. Pro and Business start with a 14-day free trial. Enterprise is sales-assisted — talk to us.",
+    a: "Yes. Starter is free forever: 3 users and $200 of tracked spend per month, no credit card. Pro and Business include a 14-day free trial. Every plan — Starter included — starts with a demo so we can set it up with you.",
   },
 ];
 

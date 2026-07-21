@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { CONSOLE_URL, CONTACT_EMAIL } from "@/lib/plans";
+import { CONSOLE_URL, CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
 
 const COLUMNS = [
   {
@@ -9,6 +9,7 @@ const COLUMNS = [
       { label: "Platform", href: "/#product" },
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
+      { label: "Book a demo", href: DEMO_PATH },
       { label: "Sign in", href: `${CONSOLE_URL}/login` },
     ],
   },

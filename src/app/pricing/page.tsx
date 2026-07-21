@@ -4,12 +4,12 @@ import { ArrowUpRight, Check, Minus } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Reveal } from "@/components/ui/reveal";
-import { PLANS, CONSOLE_URL } from "@/lib/plans";
+import { PLANS, DEMO_PATH } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "PlanckSpace pricing: free for 3 seats and $200 of tracked AI spend per month. Pro $30/mo, Business $200/mo — both with a 14-day free trial. Enterprise is custom.",
+    "PlanckSpace pricing: Starter is free for 3 seats and $200 of tracked AI spend per month. Pro $30/mo, Business $200/mo — both with a 14-day trial. Enterprise is custom. Every plan starts with a demo.",
 };
 
 /* comparison matrix — rows map to real platform capabilities */
@@ -35,12 +35,16 @@ const MATRIX: {
 
 const PRICING_FAQS = [
   {
+    q: "How do we actually get access?",
+    a: "Book a demo. We spend 30 minutes on your setup, agree the right plan, then provision your workspace and walk your team through the rollout. There's no self-serve sign-up — onboarding runs with us so the numbers are right from the first session.",
+  },
+  {
     q: "What is “tracked AI spend”?",
     a: "The dollar value of AI usage PlanckSpace meters for your workspace each calendar month. It sizes the plan — it is not an extra charge. If your team's metered usage reaches the limit, syncing pauses until the month rolls over or you upgrade; nothing breaks in your tools.",
   },
   {
     q: "How does the 14-day trial work?",
-    a: "Pro and Business start with a full-featured 14-day trial — no credit card. When the trial ends without an upgrade, the workspace simply falls back to Starter limits. Nothing is deleted.",
+    a: "Pro and Business include a full-featured 14-day trial — no credit card. It starts when we provision your workspace after the demo. If the trial ends without an upgrade, the workspace falls back to Starter limits. Nothing is deleted.",
   },
   {
     q: "What happens if we hit a seat or spend limit?",
@@ -77,7 +81,8 @@ export default function PricingPage() {
             <h1 className="display-1">Honest pricing for an honest meter.</h1>
             <p className="lead mx-auto mt-6 max-w-xl">
               Flat monthly plans sized by the AI spend you track. No per-token
-              fees, no percentage of your bill, no credit card to start.
+              fees, no percentage of your bill, no credit card. Every plan
+              starts with a 30-minute demo — we set the workspace up with you.
             </p>
           </div>
         </div>
@@ -135,23 +140,17 @@ export default function PricingPage() {
 
                   <div className="flex-1" />
 
-                  {p.id === "enterprise" ? (
-                    <Link href="/contact" className="btn btn-secondary mt-8 w-full">
-                      Talk to us
-                    </Link>
-                  ) : (
-                    <a
-                      href={`${CONSOLE_URL}/register?plan=${p.id}`}
-                      className={`btn mt-8 w-full ${p.highlighted ? "btn-primary" : "btn-secondary"}`}
-                    >
-                      {p.id === "starter" ? "Start free" : `Start ${p.trialDays}-day trial`}
-                      {p.highlighted && (
-                        <span className="btn-disc">
-                          <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-                        </span>
-                      )}
-                    </a>
-                  )}
+                  <Link
+                    href={`${DEMO_PATH}?plan=${p.id}`}
+                    className={`btn mt-8 w-full ${p.highlighted ? "btn-primary" : "btn-secondary"}`}
+                  >
+                    {p.id === "enterprise" ? "Talk to sales" : "Book a demo"}
+                    {p.highlighted && (
+                      <span className="btn-disc">
+                        <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                    )}
+                  </Link>
                 </div>
               </Reveal>
             ))}
@@ -244,7 +243,7 @@ export default function PricingPage() {
               Not sure which plan fits?
             </h2>
             <p className="mt-1 text-[14.5px] text-[var(--text-2)]">
-              Tell us your team size and tools — we'll tell you honestly, even if the answer is “Starter”.
+              Tell us your team size and tools — we’ll tell you honestly, even if the answer is “Starter”.
             </p>
           </div>
           <Link href="/contact" className="btn btn-primary shrink-0">

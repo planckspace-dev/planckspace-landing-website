@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
-import { PLANS, CONSOLE_URL } from "@/lib/plans";
+import { PLANS, DEMO_PATH } from "@/lib/plans";
 
 export default function PricingTeaser() {
   return (
@@ -77,9 +77,9 @@ export default function PricingTeaser() {
               <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
             </span>
           </Link>
-          <a href={`${CONSOLE_URL}/register`} className="link-quiet text-[14.5px]">
-            or start free with 3 seats
-          </a>
+          <Link href={DEMO_PATH} className="link-quiet text-[14.5px]">
+            or book a demo to get access
+          </Link>
         </Reveal>
       </div>
     </section>

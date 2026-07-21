@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ContactForm from "@/components/ContactForm";
-import { CONTACT_EMAIL } from "@/lib/plans";
+import { CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -21,7 +23,7 @@ const EXPECT = [
   },
   {
     title: "A real demo, on your data",
-    body: "Enterprise evaluations run against your own workspace, not a canned dataset.",
+    body: "Evaluations run against your own workspace, not a canned dataset. Want one now? Book a demo instead.",
   },
 ];
 
@@ -41,8 +43,28 @@ export default function ContactPage() {
               </h1>
               <p className="lead mt-6 max-w-md">
                 Sales, support, Enterprise, partnerships — one form, straight to
-                the founding team's inbox.
+                the founding team’s inbox.
               </p>
+
+              <Link
+                href={DEMO_PATH}
+                className="group mt-8 flex max-w-md items-center gap-4 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-[var(--shadow-soft)] transition-colors duration-300 hover:border-[var(--ink)]"
+              >
+                <div className="flex-1">
+                  <p className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
+                    Want to see the product?
+                  </p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-2)]">
+                    Book a 30-minute demo — that’s how workspaces get set up.
+                  </p>
+                </div>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--inset)] transition-colors duration-300 group-hover:bg-[var(--ink)]">
+                  <ArrowUpRight
+                    className="h-4 w-4 text-[var(--ink)] transition-colors duration-300 group-hover:text-white"
+                    strokeWidth={1.75}
+                  />
+                </span>
+              </Link>
 
               <div className="mt-12 space-y-8">
                 {EXPECT.map((e, i) => (

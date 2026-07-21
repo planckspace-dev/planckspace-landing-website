@@ -74,7 +74,7 @@ export default function ContactForm() {
           Message sent.
         </h3>
         <p className="mt-2 max-w-sm text-[14.5px] leading-relaxed text-[var(--text-2)]">
-          Thanks — it's in our inbox. A human (usually a founder) replies within
+          Thanks — it’s in our inbox. A human (usually a founder) replies within
           one business day.
         </p>
         <button

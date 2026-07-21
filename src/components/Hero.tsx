@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import ProductShot from "@/components/ProductShot";
-import { CONSOLE_URL } from "@/lib/plans";
+import { DEMO_PATH } from "@/lib/plans";
 import Link from "next/link";
 
 /* Static hero — no animation, no gimmicks. Big type, one message,
@@ -36,19 +36,20 @@ export default function Hero() {
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={`${CONSOLE_URL}/register`} className="btn btn-primary">
-              Start free
+            <Link href={DEMO_PATH} className="btn btn-primary">
+              Book a demo
               <span className="btn-disc">
                 <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
               </span>
-            </a>
+            </Link>
             <Link href="/pricing" className="btn btn-secondary">
               See pricing
             </Link>
           </div>
 
           <p className="num mt-7 text-[12px] text-[var(--text-3)]">
-            Free for 3 seats&ensp;·&ensp;5-minute setup&ensp;·&ensp;No credit card
+            30-minute walkthrough&ensp;·&ensp;On your own numbers&ensp;·&ensp;No
+            credit card
           </p>
         </div>
 

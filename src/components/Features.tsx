@@ -1,10 +1,22 @@
+import Image, { type StaticImageData } from "next/image";
 import { Reveal } from "@/components/ui/reveal";
+
+import shotOverview from "../../assets/product-shots/derived/tile-overview.png";
+import shotWaste from "../../assets/product-shots/derived/tile-waste.png";
+import shotBudget from "../../assets/product-shots/derived/tile-budget.png";
+import shotTeams from "../../assets/product-shots/derived/tile-teams.png";
+import shotSession from "../../assets/product-shots/derived/tile-session.png";
+import shotExport from "../../assets/product-shots/derived/tile-export.png";
 
 /* ─────────────────────────────────────────────────────────────────────────
    Product bento — every tile maps to a real capability in the platform
    (wasted-spend, reconciliation, budgets/anomalies, team attribution,
-   session detail, chargeback exports). Mini-mocks follow the dashboard's
-   design contract: ink values, brand-blue series, functional color only.
+   session detail, chargeback exports).
+
+   Most tiles now carry real dashboard captures, cropped by
+   scripts/crop-product-shots.mjs. Reconciliation, the editor fix-it flow and
+   the savings ledger still use hand-built mocks — see that script's header for
+   which source shots are outstanding.
    ───────────────────────────────────────────────────────────────────────── */
 
 function TileShell({
@@ -35,81 +47,29 @@ function TileShell({
   );
 }
 
-/* mini-mocks ------------------------------------------------------------- */
-
-function MockOverview() {
+/** A real dashboard capture, floated on the tile's panel wash. */
+function Shot({
+  src,
+  alt,
+  sizes,
+}: {
+  src: StaticImageData;
+  alt: string;
+  sizes: string;
+}) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-[0_1px_2px_rgba(17,19,26,0.03)]">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-3)]">
-          Workspace spend · 30d
-        </span>
-        <span className="num text-[10px] text-[var(--green-700)]">94% attributed</span>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <span className="num text-[26px] font-medium tracking-[-0.03em]">$4,820.14</span>
-        <span className="num text-[11px] text-[var(--text-3)]">+12% vs May</span>
-      </div>
-      <svg viewBox="0 0 360 84" className="mt-3 w-full">
-        <defs>
-          <linearGradient id="ft-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#2E6BF2" stopOpacity="0.10" />
-            <stop offset="1" stopColor="#2E6BF2" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[20, 46, 72].map((y) => (
-          <line key={y} x1="0" x2="360" y1={y} y2={y} stroke="#EEF0F4" strokeDasharray="3 4" />
-        ))}
-        <path
-          d="M0,66 C25,62 40,56 62,58 C84,60 100,44 126,47 C152,50 165,34 192,38 C219,42 232,28 258,31 C284,34 300,46 320,40 C340,34 350,20 360,16 L360,84 L0,84 Z"
-          fill="url(#ft-fill)"
-        />
-        <path
-          d="M0,66 C25,62 40,56 62,58 C84,60 100,44 126,47 C152,50 165,34 192,38 C219,42 232,28 258,31 C284,34 300,46 320,40 C340,34 350,20 360,16"
-          fill="none"
-          stroke="#2E6BF2"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="num mt-2 flex justify-between text-[9.5px] text-[var(--text-3)]">
-        <span>Jun 06</span>
-        <span>Jun 20</span>
-        <span>Jul 05</span>
-      </div>
+    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-white shadow-[0_1px_2px_rgba(17,19,26,0.04),0_14px_30px_-20px_rgba(17,19,26,0.3)]">
+      <Image src={src} alt={alt} sizes={sizes} className="block h-auto w-full" />
     </div>
   );
 }
 
-function MockWaste() {
-  const rows = [
-    { label: "2 idle Cursor seats", value: "$240/mo", tone: "var(--coral-700)" },
-    { label: "Cache hit 23% · api-service", value: "−$340/mo", tone: "var(--coral-700)" },
-    { label: "Opus on lint fixes · 41 runs", value: "−$88/mo", tone: "var(--coral-700)" },
-  ];
-  return (
-    <div className="space-y-2">
-      {rows.map((r) => (
-        <div
-          key={r.label}
-          className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-white px-3.5 py-2.5"
-        >
-          <span className="flex min-w-0 items-center gap-2.5">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--coral-500)]" />
-            <span className="truncate text-[11.5px] text-[var(--ink)]">{r.label}</span>
-          </span>
-          <span className="num shrink-0 text-[11.5px] font-medium" style={{ color: r.tone }}>
-            {r.value}
-          </span>
-        </div>
-      ))}
-      <div className="flex items-center justify-between px-1 pt-1">
-        <span className="text-[10.5px] text-[var(--text-3)]">Recoverable this month</span>
-        <span className="num text-[13px] font-medium text-[var(--ink)]">$668</span>
-      </div>
-    </div>
-  );
-}
+/* tile sizes in the 12-col bento, used for correct srcset selection */
+const WIDE = "(min-width: 1024px) 640px, 100vw";
+const MID = "(min-width: 1024px) 450px, 100vw";
+const NARROW = "(min-width: 1024px) 350px, 100vw";
+
+/* mini-mocks — still hand-built where no usable capture exists ------------ */
 
 function MockReconciliation() {
   return (
@@ -137,116 +97,6 @@ function MockReconciliation() {
       <div className="mt-4 rounded-md bg-[var(--brand-50)] px-3 py-2.5 text-[10.5px] leading-relaxed text-[var(--brand-900)]">
         <span className="num font-medium">$340 gap</span> — likely 1 engineer without
         PlanckSpace installed. Invite them to close it.
-      </div>
-    </div>
-  );
-}
-
-function MockBudget() {
-  return (
-    <div className="space-y-2.5">
-      <div className="rounded-lg border border-[var(--border)] bg-white p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-medium text-[var(--ink)]">July budget</span>
-          <span className="num text-[11px] text-[var(--text-2)]">
-            $4,820 <span className="text-[var(--text-3)]">/ $6,000</span>
-          </span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-[var(--inset)]">
-          <div className="h-full w-[82%] rounded-full bg-[var(--amber-500)]" />
-        </div>
-        <div className="mt-2 flex justify-between text-[10px]">
-          <span className="font-medium text-[var(--amber-500)]">82% consumed · day 6 pace alert</span>
-          <span className="num text-[var(--text-3)]">runway: 9 days</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-white px-3.5 py-2.5">
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--coral-500)]" />
-        <span className="text-[11px] text-[var(--ink)]">
-          Anomaly: spend 3.1× daily median
-        </span>
-        <span className="num ml-auto text-[10px] text-[var(--text-3)]">email sent 09:12</span>
-      </div>
-    </div>
-  );
-}
-
-function MockTeams() {
-  const teams = [
-    { name: "Platform", value: "$1,940", pct: 82 },
-    { name: "Product eng", value: "$1,410", pct: 60 },
-    { name: "Infra", value: "$980", pct: 42 },
-    { name: "Unattributed", value: "$490", pct: 20, muted: true },
-  ];
-  return (
-    <div className="space-y-2.5 rounded-lg border border-[var(--border)] bg-white p-4">
-      {teams.map((t) => (
-        <div key={t.name} className="flex items-center gap-3">
-          <span className="w-[74px] truncate text-[10.5px] text-[var(--text-2)]">{t.name}</span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--inset)]">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${t.pct}%`,
-                background: t.muted ? "#64708A" : "var(--brand-600)",
-              }}
-            />
-          </div>
-          <span className="num w-12 text-right text-[10.5px] text-[var(--ink)]">{t.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MockSession() {
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-white p-4">
-      <div className="mb-2.5 flex items-center justify-between">
-        <span className="num text-[10.5px] text-[var(--text-3)]">session · 38 min · claude code</span>
-        <span className="num text-[12px] font-medium text-[var(--ink)]">$3.84</span>
-      </div>
-      <div className="space-y-1.5">
-        {[
-          ["model", "claude-sonnet-4-6"],
-          ["tokens in / out", "412k / 38k"],
-          ["cache read", "1.2M (61%)"],
-          ["repo", "acme/api-service"],
-        ].map(([k, v]) => (
-          <div key={k} className="flex justify-between text-[10.5px]">
-            <span className="text-[var(--text-3)]">{k}</span>
-            <span className="num text-[var(--ink)]">{v}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MockExport() {
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-white p-4">
-      <div className="num space-y-1.5 text-[10px] leading-relaxed text-[var(--text-2)]">
-        <div className="flex justify-between border-b border-[var(--border)] pb-1.5 text-[var(--text-3)]">
-          <span>team</span>
-          <span>sessions</span>
-          <span>cost_usd</span>
-        </div>
-        {[
-          ["platform", "141", "1940.22"],
-          ["product-eng", "118", "1410.85"],
-          ["infra", "83", "980.07"],
-        ].map(([a, b, c]) => (
-          <div key={a} className="flex justify-between">
-            <span>{a}</span>
-            <span>{b}</span>
-            <span className="text-[var(--ink)]">{c}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center justify-between rounded-md bg-[var(--inset)] px-3 py-2">
-        <span className="num text-[10px] text-[var(--text-2)]">chargeback_june.csv</span>
-        <span className="text-[10px] font-medium text-[var(--brand-700)]">Download ↓</span>
       </div>
     </div>
   );
@@ -345,7 +195,7 @@ export default function Features() {
               title="One shared source of truth"
               body="Live workspace spend across every tool, model, and developer — the same numbers for engineering, management, and finance."
             >
-              <MockOverview />
+              <Shot src={shotOverview} sizes={WIDE} alt="Overview stat cards — usage value $1,134, cost per shipped session $25.21, 88% shipped rate — above a spend-over-time chart and a $594 per month recoverable-waste panel." />
             </TileShell>
           </Reveal>
 
@@ -355,7 +205,7 @@ export default function Features() {
               title="Wasted spend, itemized"
               body="Idle seats, cache misses, and oversized-model habits surfaced as line items with a dollar value — not vibes."
             >
-              <MockWaste />
+              <Shot src={shotWaste} sizes={MID} alt="The wasted-spend fix queue, ranked by impact: context re-reads costing $204.34 a month, three marathon sessions that never shipped, each row carrying an estimated monthly saving and a View fix action." />
             </TileShell>
           </Reveal>
 
@@ -375,7 +225,7 @@ export default function Features() {
               title="Budgets that alert before the surprise"
               body="Monthly budgets with pace tracking and anomaly detection. When spend spikes 3× the median, you hear it from us — not the invoice."
             >
-              <MockBudget />
+              <Shot src={shotBudget} sizes={WIDE} alt="The alert feed: three alerts, two critical — a session outlier at $190 against a $16 baseline and a repo spike at $190 against a $7 baseline, both already delivered." />
             </TileShell>
           </Reveal>
 
@@ -385,7 +235,7 @@ export default function Features() {
               title="Per-team attribution"
               body="Spend rolls up by team, repo, and developer, with the unattributed remainder always visible."
             >
-              <MockTeams />
+              <Shot src={shotTeams} sizes={NARROW} alt="Top repos by spend: planckspace-backend at $580 across 26 shipped sessions, planckspace-frontend at $263, each with cost per shipped session." />
             </TileShell>
           </Reveal>
 
@@ -395,7 +245,7 @@ export default function Features() {
               title="Session-level receipts"
               body="Every dollar traces to a session: model, token mix, cache efficiency, repo. Drill from invoice to receipt."
             >
-              <MockSession />
+              <Shot src={shotSession} sizes={NARROW} alt="The session list: each row shows repo and branch, tool and model, outcome, duration, turn count and cost — from $0.51 up to $187.18." />
             </TileShell>
           </Reveal>
 
@@ -405,7 +255,7 @@ export default function Features() {
               title="Finance-ready exports"
               body="Chargeback and showback CSVs, cut by team or cost center — drop them straight into the monthly close."
             >
-              <MockExport />
+              <Shot src={shotExport} sizes={NARROW} alt="The chargeback export card: cost allocated per developer, including developer, repo, sessions, cost and shipped columns, downloadable as CSV or PDF." />
             </TileShell>
           </Reveal>
 

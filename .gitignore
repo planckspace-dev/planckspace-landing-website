@@ -44,3 +44,10 @@ next-env.d.ts
 .agents/
 .claude/
 skills-lock.json
+
+# Raw dashboard captures — kept locally to re-run scripts/crop-product-shots.mjs.
+# Several contain teammate email addresses and this repo is public, so the raw
+# sources are NOT committed. Only the clean hero shot and the PII-free derived
+# crops (both actually imported by the build) are tracked.
+/assets/product-shots/*.png
+!/assets/product-shots/02-overview-panel.png

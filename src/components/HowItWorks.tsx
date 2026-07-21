@@ -57,7 +57,9 @@ export default function HowItWorks() {
           <h2 className="display-2">Live before the coffee is ready.</h2>
           <p className="lead mt-5">
             No proxy, no API keys to rotate, no agent in your build. PlanckSpace
-            reads the session logs your tools already write.
+            reads the session logs your tools already write. Once we’ve
+            provisioned your workspace, rollout is three steps — and we’re on the
+            call for all of them.
           </p>
         </Reveal>
 
