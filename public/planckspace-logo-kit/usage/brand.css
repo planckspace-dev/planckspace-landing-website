@@ -1,0 +1,22 @@
+/* Planckspace brand tokens ------------------------------------------------
+   Mark geometry lives on a 32x30 module grid (viewBox "0 0 320 300").
+   Clear space around the mark: never less than --ps-clearspace.            */
+
+:root {
+  --ps-ink:        #0B0B0C;   /* primary mark, text on light            */
+  --ps-ink-soft:   #17171B;   /* raised planes on dark surfaces         */
+  --ps-paper:      #F7F5F0;   /* reversed mark, text on dark            */
+  --ps-blue:       #2E6BF2;   /* the one accent - light surfaces        */
+  --ps-lime:       #C6FF3D;   /* the one accent - dark surfaces only    */
+
+  --ps-mark-ratio: 1.0667;  /* width / height                         */
+  --ps-clearspace: 0.1875em;  /* = stem width, relative to mark width   */
+  --ps-radius-app: 22.37%;    /* app-icon corner radius                 */
+
+  --ps-font-sans:  Geist, "Geist Sans", Inter, system-ui, sans-serif;
+  --ps-font-mono:  "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* The mark inherits text colour, so it themes itself. */
+.ps-mark { display: block; width: auto; height: 1em; color: var(--ps-ink); }
+[data-theme="dark"] .ps-mark { color: var(--ps-paper); }

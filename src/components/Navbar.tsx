@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
-import { CONSOLE_URL, DEMO_PATH } from "@/lib/plans";
+import { DEMO_PATH } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -34,7 +34,7 @@ export default function Navbar() {
             aria-label="Main"
           >
             <Link href="/" className="shrink-0" aria-label="PlanckSpace home">
-              <Logo markClassName="w-7 h-7" textClassName="text-[15px]" />
+              <Logo height={24} />
             </Link>
 
             <div className="hidden md:flex items-center gap-1">
@@ -50,12 +50,6 @@ export default function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center gap-1.5">
-              <a
-                href={`${CONSOLE_URL}/login`}
-                className="rounded-full px-3.5 py-1.5 text-[13.5px] font-medium text-[var(--text-2)] transition-colors duration-300 hover:text-[var(--ink)]"
-              >
-                Sign in
-              </a>
               <Link
                 href={DEMO_PATH}
                 className="btn btn-primary !py-1.5 !pl-4 !text-[13.5px]"
@@ -131,12 +125,6 @@ export default function Navbar() {
                 <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
               </span>
             </Link>
-            <a
-              href={`${CONSOLE_URL}/login`}
-              className="text-[15px] font-medium text-[var(--text-2)]"
-            >
-              Sign in →
-            </a>
           </div>
         </div>
       </div>

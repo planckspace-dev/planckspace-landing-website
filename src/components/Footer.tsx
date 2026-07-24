@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { CONSOLE_URL, CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
+import { CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
 
 const COLUMNS = [
   {
@@ -10,7 +10,6 @@ const COLUMNS = [
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
       { label: "Book a demo", href: DEMO_PATH },
-      { label: "Sign in", href: `${CONSOLE_URL}/login` },
     ],
   },
   {
@@ -18,7 +17,7 @@ const COLUMNS = [
     links: [
       { label: "CLI", href: "/#how-it-works" },
       { label: "VS Code extension", href: "https://open-vsx.org/extension/planckspace/planckspace-extension" },
-      { label: "Dashboard", href: CONSOLE_URL },
+      { label: "Dashboard", href: "/#product" },
     ],
   },
   {
@@ -37,7 +36,7 @@ export default function Footer() {
       <div className="container-x py-16 sm:py-20">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
           <div>
-            <Logo markClassName="w-8 h-8" textClassName="text-[17px]" />
+            <Logo height={28} />
             <p className="mt-5 max-w-xs text-[13.5px] leading-relaxed text-[var(--text-3)]">
               Spend management for AI-assisted engineering. Every token
               accounted for — never your code.
@@ -81,7 +80,7 @@ export default function Footer() {
             © {new Date().getFullYear()} PlanckSpace. All rights reserved.
           </p>
           <p className="num text-[11.5px] text-[var(--text-3)]">
-            Metadata only · never prompts, never code
+            Metadata only · code and prompts never leave your machine
           </p>
         </div>
       </div>
