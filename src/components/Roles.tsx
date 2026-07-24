@@ -54,7 +54,9 @@ export default function Roles() {
                 <ul className="mt-6 space-y-3.5">
                   {r.points.map((p) => (
                     <li key={p} className="flex gap-3 text-[14px] leading-relaxed text-[var(--text-2)]">
-                      <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-[var(--border-strong)]" />
+                      <span aria-hidden className="num shrink-0 text-[14px] leading-relaxed text-[var(--text-3)]">
+                        +
+                      </span>
                       {p}
                     </li>
                   ))}

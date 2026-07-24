@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import ToolsBar from "@/components/ToolsBar";
 import Problem from "@/components/Problem";
 import Features from "@/components/Features";
+import Capabilities from "@/components/Capabilities";
 import HowItWorks from "@/components/HowItWorks";
 import Privacy from "@/components/Privacy";
 import Roles from "@/components/Roles";
@@ -19,6 +20,7 @@ export default function Home() {
       <ToolsBar />
       <Problem />
       <Features />
+      <Capabilities />
       <HowItWorks />
       <Privacy />
       <Roles />

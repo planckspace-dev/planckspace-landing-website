@@ -36,7 +36,7 @@ const AGENDA = [
 const ASSURANCES = [
   { icon: Clock, label: "30 minutes", sub: "No slide deck" },
   { icon: UserRound, label: "A founder", sub: "Not an SDR" },
-  { icon: Lock, label: "Metadata only", sub: "Never your code" },
+  { icon: Lock, label: "Metadata only", sub: "Code stays on your machine" },
 ];
 
 /** Matches the form card's footprint so the layout doesn't jump before hydration. */

@@ -17,14 +17,20 @@ export default function ToolsBar() {
           <p className="eyebrow mb-8" data-center="true">
             Meters every major AI coding tool
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-4">
             {TOOLS.map((t) => (
-              <span
+              <div
                 key={t}
-                className="text-[17px] font-semibold tracking-[-0.02em] text-[var(--text-3)] transition-colors duration-500 hover:text-[var(--ink)]"
+                className="group/tool flex items-center justify-center gap-2 bg-white px-4 py-4"
               >
-                {t}
-              </span>
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--brand-500)]"
+                />
+                <span className="text-[14.5px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
+                  {t}
+                </span>
+              </div>
             ))}
           </div>
 

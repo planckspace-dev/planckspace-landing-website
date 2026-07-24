@@ -87,10 +87,9 @@ export const PLANS: Plan[] = [
   },
 ];
 
-/** Existing customers sign in here. There is no public self-serve registration —
- *  every new workspace is provisioned after a demo. */
-export const CONSOLE_URL = "https://console.planckspace.dev";
-/** Single entry point for all "get access" intent across the site. */
+/** Single entry point for all "get access" intent across the site. The site
+ *  exposes no sign-in or console surface at all: there is no public self-serve
+ *  registration, and every new workspace is provisioned after a demo. */
 export const DEMO_PATH = "/demo";
 /** Shown illustratively in How it works — onboarding runs with us, post-demo. */
 export const INSTALL_CMD = "curl -fsSL https://planckspace.dev/install | sh";

@@ -68,8 +68,13 @@ export default function FAQ() {
                 >
                   <Accordion.Header>
                     <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left">
-                      <span className="text-[16px] font-medium tracking-[-0.01em] text-[var(--ink)] sm:text-[17px]">
-                        {f.q}
+                      <span className="flex items-baseline gap-4">
+                        <span className="num shrink-0 text-[12px] tabular-nums text-[var(--text-3)] transition-colors duration-300 group-data-[state=open]:text-[var(--brand-600)]">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span className="text-[16px] font-medium tracking-[-0.01em] text-[var(--ink)] sm:text-[17px]">
+                          {f.q}
+                        </span>
                       </span>
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:border-[var(--text-3)] group-data-[state=open]:rotate-45 group-data-[state=open]:border-[var(--ink)] group-data-[state=open]:bg-[var(--ink)]">
                         <Plus
