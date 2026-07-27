@@ -3,7 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { DEMO_PATH } from "@/lib/plans";
 
-/* Closing CTA. Access is demo-led — no install command, no self-serve
+/* Closing CTA. Access is demo-led: no install command, no self-serve
    registration. The three cells below set expectations for the call. */
 
 const EXPECT = [
@@ -17,17 +17,14 @@ export default function CTA() {
     <section className="border-t border-[var(--border)] bg-[var(--panel)] py-24 sm:py-36">
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow mb-7" data-center="true">
-            Get started
-          </p>
           <h2 className="display-1 !text-[clamp(2.5rem,5vw,3.75rem)]">
-            Stop guessing.
+            Stop estimating.
             <br />
-            Start metering.
+            Start measuring.
           </h2>
           <p className="lead mx-auto mt-6 max-w-xl">
-            Book 30 minutes and we’ll show you what your team’s AI spend actually
-            looks like — then set the workspace up with you.
+            Book 30 minutes. We’ll show you what your team’s AI coding costs,
+            what it’s returning, and then set the workspace up with you.
           </p>
 
           <div className="mx-auto mt-12 grid max-w-xl gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">

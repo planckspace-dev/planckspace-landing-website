@@ -1,20 +1,46 @@
 import { Reveal } from "@/components/ui/reveal";
 
-const PAINS = [
+/* The three questions an engineering leader cannot answer today: cost,
+   efficiency, impact, in that order, because each one depends on the one
+   before it. The stat band underneath is the "this is everyone, not you"
+   reassurance; sources are named on purpose. */
+
+const QUESTIONS = [
   {
     index: "01",
-    title: "The invoice arrives. Nobody can explain it.",
-    body: "Finance sees one number at the end of the month. No per-team, per-repo, or per-tool breakdown — just a total that keeps climbing.",
+    kicker: "Cost",
+    title: "Where is the spend actually going?",
+    body: "There is no attribution across developers, teams, or repositories. Finance sees one number at the end of the month that keeps climbing, and nobody can break it apart.",
   },
   {
     index: "02",
-    title: "Untracked machines leak spend.",
-    body: "Every device without metering is invisible usage. The gap between what you're invoiced and what you can attribute quietly compounds.",
+    kicker: "Efficiency",
+    title: "Are teams getting leverage from AI?",
+    body: "No visibility into wasted tokens, idle seats, oversized models on trivial work, or the sessions that grind for two hours and ship nothing. None of it surfaces until someone measures it.",
   },
   {
     index: "03",
-    title: "Waste hides in the defaults.",
-    body: "Cache misses, oversized models on trivial tasks, idle seats on paid subscriptions — none of it shows up until someone measures it.",
+    kicker: "Impact",
+    title: "Is AI improving engineering outcomes?",
+    body: "Nothing connects AI usage to shipped work. The one number that would settle the argument, what a shipped change actually costs, does not exist anywhere.",
+  },
+];
+
+const ADOPTION = [
+  {
+    value: "84%",
+    label: "of developers use or plan to use AI coding tools",
+    source: "Stack Overflow Developer Survey 2025",
+  },
+  {
+    value: "91%",
+    label: "of organizations run more than one AI coding tool",
+    source: "GitLab Global DevSecOps Report 2026",
+  },
+  {
+    value: "51%",
+    label: "of professional developers use AI every day",
+    source: "Stack Overflow Developer Survey 2025",
   },
 ];
 
@@ -26,32 +52,39 @@ export default function Problem() {
           {/* sticky editorial statement */}
           <div className="lg:sticky lg:top-32 lg:self-start">
             <Reveal>
-              <p className="eyebrow mb-6">The problem</p>
               <h2 className="display-2">
-                AI spend is the fastest-growing line item nobody can see.
+                AI changed how we write code. Nobody knows what it’s costing.
               </h2>
               <p className="lead mt-5 max-w-md">
-                Teams adopted AI coding tools in weeks. The cost controls never
-                arrived. PlanckSpace exists to close that gap.
+                Every team is already spending on AI. On an invoice, every
+                interaction looks identical, so no one can tell which
+                developers, repositories, or workflows created any value.
+              </p>
+              <p className="mt-6 max-w-md text-[14.5px] leading-relaxed text-[var(--text-3)]">
+                Cloud got its observability layer a decade ago. AI coding
+                doesn’t have one yet.
               </p>
             </Reveal>
           </div>
 
-          {/* numbered ledger */}
+          {/* the three unanswerable questions */}
           <div>
-            {PAINS.map((p, i) => (
-              <Reveal key={p.index} delay={i * 0.08}>
-                <div className="group border-t border-[var(--border)] py-9 last:border-b sm:py-11">
+            {QUESTIONS.map((q, i) => (
+              <Reveal key={q.index} delay={i * 0.08}>
+                <div className="border-t border-[var(--border)] py-9 last:border-b sm:py-11">
                   <div className="flex gap-6 sm:gap-10">
                     <span className="num pt-1 text-[13px] text-[var(--text-3)]">
-                      {p.index}
+                      {q.index}
                     </span>
                     <div>
+                      <p className="num mb-2 text-[11px] uppercase tracking-[0.16em] text-[var(--brand-700)]">
+                        {q.kicker}
+                      </p>
                       <h3 className="text-[19px] font-semibold tracking-[-0.02em] text-[var(--ink)] sm:text-[22px]">
-                        {p.title}
+                        {q.title}
                       </h3>
                       <p className="mt-2.5 max-w-lg text-[15px] leading-relaxed text-[var(--text-2)]">
-                        {p.body}
+                        {q.body}
                       </p>
                     </div>
                   </div>
@@ -60,6 +93,29 @@ export default function Problem() {
             ))}
           </div>
         </div>
+
+        {/* the scale of the budget forming underneath all of this */}
+        <Reveal className="mt-16 sm:mt-24">
+          <p className="mb-8 max-w-md text-[15px] leading-relaxed text-[var(--text-3)]">
+            This is not a niche line item. It is the fastest-growing budget in
+            most engineering organizations.
+          </p>
+          <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
+            {ADOPTION.map((a) => (
+              <div key={a.source + a.value} className="bg-white p-7 sm:p-8">
+                <div className="num text-[40px] leading-none font-medium tracking-[-0.05em] text-[var(--ink)] sm:text-[52px]">
+                  {a.value}
+                </div>
+                <p className="mt-4 text-[14.5px] leading-relaxed text-[var(--text-2)]">
+                  {a.label}
+                </p>
+                <p className="num mt-4 border-t border-[var(--border)] pt-3 text-[10.5px] text-[var(--text-3)]">
+                  {a.source}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -8,9 +8,6 @@ export default function PricingTeaser() {
     <section className="border-t border-[var(--border)] bg-[var(--panel)] py-24 sm:py-36">
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow mb-6" data-center="true">
-            Pricing
-          </p>
           <h2 className="display-2">Starts free. Scales with your spend.</h2>
           <p className="lead mt-5">
             Plans are sized by the AI spend you track, not by surprise line
@@ -48,11 +45,11 @@ export default function PricingTeaser() {
                 </div>
                 <p className="mt-3 border-t border-[var(--border)] pt-3 text-[12.5px] leading-relaxed text-[var(--text-2)]">
                   {p.trackedSpendUsdMonthly === null ? (
-                    "Unlimited tracked spend · unlimited users"
+                    "Unlimited tracked spend, unlimited users"
                   ) : (
                     <>
                       <span className="num">${p.trackedSpendUsdMonthly.toLocaleString()}</span>{" "}
-                      tracked spend/mo ·{" "}
+                      tracked spend a month, for{" "}
                       <span className="num">{p.maxUsers}</span> users
                     </>
                   )}

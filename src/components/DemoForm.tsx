@@ -13,8 +13,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
  * The backend's /api/contact endpoint validates `topic` against a fixed set
  * (sales | support | partnership | other). Demo requests ride in as `sales`
  * with the qualifying answers composed into `message`, so no backend change is
- * required. The structured answers are *also* sent as `demo` — harmless for the
- * current endpoint to ignore, ready for it to consume later.
+ * required. The structured answers are *also* sent as `demo`, which the current
+ * endpoint harmlessly ignores and a later one can consume.
  */
 const DEMO_TOPIC = "sales";
 
@@ -28,7 +28,7 @@ const ROLES = [
   "Other",
 ];
 
-const TEAM_SIZES = ["1–5", "6–15", "16–50", "51–200", "200+"];
+const TEAM_SIZES = ["1-5", "6-15", "16-50", "51-200", "200+"];
 
 const TOOLS = [
   "Claude Code",
@@ -41,11 +41,11 @@ const TOOLS = [
 
 const SPEND = [
   "Under $500",
-  "$500 – $2k",
-  "$2k – $10k",
-  "$10k – $50k",
+  "$500 - $2k",
+  "$2k - $10k",
+  "$10k - $50k",
   "$50k+",
-  "No idea — that's the problem",
+  "No idea, and that's the problem",
 ];
 
 const GOALS = [
@@ -70,7 +70,7 @@ const MEETING_TIMES = [
   "I'm flexible",
 ];
 
-/** Consumer mailbox providers — a demo request should come from a work domain. */
+/** Consumer mailbox providers. A demo request should come from a work domain. */
 const FREE_EMAIL_DOMAINS = new Set([
   "gmail.com",
   "googlemail.com",
@@ -180,7 +180,7 @@ export default function DemoForm() {
 
   const [step, setStep] = useState(0);
   // Plan intent arrives from a pricing-page deep link (/demo?plan=business) and
-  // is only ever a starting value — the visitor can still change their mind.
+  // is only ever a starting value; the visitor can still change their mind.
   const [form, setForm] = useState<FormState>(() => ({
     ...EMPTY,
     plan: PLANS.find((p) => p.id === planFromUrl)?.name ?? "",
@@ -275,7 +275,7 @@ export default function DemoForm() {
       `Timeline:          ${form.timeline}`,
       `Preferred times:   ${form.meetingTime}`,
       "",
-      form.notes.trim() ? `Notes:\n${form.notes.trim()}` : "Notes: —",
+      form.notes.trim() ? `Notes:\n${form.notes.trim()}` : "Notes: none",
     ]
       .filter((line) => line !== null)
       .join("\n");
@@ -348,7 +348,7 @@ export default function DemoForm() {
           {[
             {
               t: "A founder replies within one business day",
-              b: `We'll send a few times to ${form.email.trim()} — no scheduling ping-pong.`,
+              b: `We'll send a few times to ${form.email.trim()}, with no scheduling ping-pong.`,
             },
             {
               t: "A 30-minute working session",
@@ -417,7 +417,7 @@ export default function DemoForm() {
         </div>
       </div>
 
-      {/* ---- step 1 — about you ---- */}
+      {/* ---- step 1: about you ---- */}
       {step === 0 && (
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
@@ -472,7 +472,7 @@ export default function DemoForm() {
         </div>
       )}
 
-      {/* ---- step 2 — your team ---- */}
+      {/* ---- step 2: your team ---- */}
       {step === 1 && (
         <div className="space-y-7">
           <div>
@@ -552,7 +552,7 @@ export default function DemoForm() {
         </div>
       )}
 
-      {/* ---- step 3 — what you need ---- */}
+      {/* ---- step 3: what you need ---- */}
       {step === 2 && (
         <div className="space-y-7">
           <fieldset>
@@ -644,7 +644,7 @@ export default function DemoForm() {
         </div>
       )}
 
-      {/* honeypot — visually hidden, tab-skipped */}
+      {/* honeypot: visually hidden, tab-skipped */}
       <div className="absolute -left-[9999px] top-auto" aria-hidden="true">
         <label htmlFor="df-website">Website</label>
         <input id="df-website" name="website" tabIndex={-1} autoComplete="off" />
@@ -695,7 +695,7 @@ export default function DemoForm() {
       </div>
 
       <p className="mt-5 text-[12px] leading-relaxed text-[var(--text-3)]">
-        We use these answers to prepare the call — nothing else. No newsletter,
+        We use these answers to prepare the call and nothing else. No newsletter,
         no sequence, no reselling your details.
       </p>
     </form>

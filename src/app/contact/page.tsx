@@ -19,7 +19,7 @@ const EXPECT = [
   },
   {
     title: "Straight answers on plans",
-    body: "Tell us your team size and tools — if Starter is enough, we'll say so.",
+    body: "Tell us your team size and tools. If Starter is enough, we'll say so.",
   },
   {
     title: "A real demo, on your data",
@@ -35,15 +35,15 @@ export default function ContactPage() {
       <section className="pt-36 pb-24 sm:pt-44 sm:pb-32">
         <div className="container-x">
           <div className="grid gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
-            {/* left — editorial intro */}
+            {/* left: editorial intro */}
             <div>
               <p className="eyebrow mb-7">Contact</p>
               <h1 className="display-1 !text-[clamp(2.5rem,4.5vw,3.75rem)]">
                 Talk to the people who built it.
               </h1>
               <p className="lead mt-6 max-w-md">
-                Sales, support, Enterprise, partnerships — one form, straight to
-                the founding team’s inbox.
+                Sales, support, Enterprise, or partnerships. One form, straight
+                to the founding team’s inbox.
               </p>
 
               <Link
@@ -55,7 +55,7 @@ export default function ContactPage() {
                     Want to see the product?
                   </p>
                   <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-2)]">
-                    Book a 30-minute demo — that’s how workspaces get set up.
+                    Book a 30-minute demo. That’s how workspaces get set up.
                   </p>
                 </div>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--inset)] transition-colors duration-300 group-hover:bg-[var(--ink)]">
@@ -97,7 +97,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* right — the form */}
+            {/* right: the form */}
             <div>
               <ContactForm />
             </div>

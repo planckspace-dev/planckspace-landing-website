@@ -11,7 +11,7 @@ import { CONTACT_EMAIL } from "@/lib/plans";
 export const metadata: Metadata = {
   title: "Book a demo",
   description:
-    "See PlanckSpace on your own numbers. A 30-minute working session with a founder — how much your team spends on Claude Code, Cursor, and Windsurf, where it's wasted, and what it's returning.",
+    "See PlanckSpace on your own numbers. A 30-minute working session with a founder, covering how much your team spends on Claude Code, Cursor, and Windsurf, where it's wasted, and what it's returning.",
 };
 
 const AGENDA = [
@@ -25,7 +25,7 @@ const AGENDA = [
   },
   {
     title: "Attribution your finance team accepts",
-    body: "Per-team, per-repo, per-developer — reconciled against the invoice you actually receive.",
+    body: "Per-team, per-repo, and per-developer, reconciled against the invoice you actually receive.",
   },
   {
     title: "Rollout, honestly scoped",
@@ -66,7 +66,7 @@ export default function DemoPage() {
       <section className="pt-36 pb-24 sm:pt-44 sm:pb-32">
         <div className="container-x">
           <div className="grid gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
-            {/* left — the pitch for spending 30 minutes */}
+            {/* left: the pitch for spending 30 minutes */}
             <div>
               <p className="eyebrow mb-7">Book a demo</p>
               <h1 className="display-1 !text-[clamp(2.5rem,4.5vw,3.75rem)]">
@@ -74,8 +74,8 @@ export default function DemoPage() {
               </h1>
               <p className="lead mt-6 max-w-md">
                 PlanckSpace is rolled out with us, not around us. Tell us about
-                your team and we’ll walk you through what your AI spend actually
-                looks like — then set your workspace up ourselves.
+                your team, we’ll walk you through what your AI spend actually
+                looks like, then set your workspace up ourselves.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-2.5">
@@ -142,7 +142,7 @@ export default function DemoPage() {
               </div>
             </div>
 
-            {/* right — the qualifying form */}
+            {/* right: the qualifying form */}
             <div className="lg:sticky lg:top-28 lg:self-start">
               <Suspense fallback={<FormFallback />}>
                 <DemoForm />

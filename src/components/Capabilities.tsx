@@ -15,7 +15,7 @@ import { Reveal } from "@/components/ui/reveal";
    on the right, and a scrollspy keeps the pinned entry in sync with whichever
    panel you're reading.
 
-   Every panel ends with the exact fields the detector read — which are all
+   Every panel ends with the exact fields the detector read, all of which are
    counters. That footer is the point: the engine is this specific *because*
    it only ever sees metering data, never code.
 
@@ -40,7 +40,7 @@ type Capability = {
   math: string;
   result: string;
   fix: string;
-  /** Telemetry fields the detector consumed — all counters. */
+  /** Telemetry fields the detector consumed. All counters. */
   measuredFrom: string[];
 };
 
@@ -57,11 +57,11 @@ const CAPS: Capability[] = [
       { k: "Cache-read ÷ input tokens", v: "3,592×", hot: true },
       { k: "Fires above", v: "0.40×" },
       { k: "Avg input / session", v: "48,210 tokens" },
-      { k: "Sessions measured", v: "51 · last 30d" },
+      { k: "Sessions measured", v: "51 in 30 days" },
     ],
     math: "$1,134 window spend × 18% recoverable × (30 ÷ 30)",
     result: "$204.12 / mo",
-    fix: "Move CLAUDE.md's topic sections into .claude/docs/ and leave a pointer index in the root — each file then loads only in sessions where its topic comes up. Not @import: imports load in full at every conversation start, so they move text around without saving a token.",
+    fix: "Move CLAUDE.md's topic sections into .claude/docs/ and leave a pointer index in the root. Each file then loads only in the sessions where its topic comes up. Not @import: imports load in full at every conversation start, so they move text around without saving a token.",
     measuredFrom: ["cacheReadTokens", "inputTokens", "costUsd", "startedAt"],
   },
   {
@@ -71,7 +71,7 @@ const CAPS: Capability[] = [
     blurb: "Catches the expensive model doing work that never shipped.",
     detector: "model-routing",
     confidence: "high",
-    signal: { value: "62%", label: "of sessions on Opus — 24% of what shipped" },
+    signal: { value: "62%", label: "of sessions on Opus, 24% of what shipped" },
     readout: [
       { k: "Opus share of sessions", v: "62.0%", hot: true },
       { k: "Opus share of shipped work", v: "24.0%" },
@@ -99,7 +99,7 @@ const CAPS: Capability[] = [
     ],
     math: "7.3M input × 50% cacheable × 90% saved × $3.00/M",
     result: "$98.55 / mo",
-    fix: "Put the stable prefix — project overview, conventions, standing guidance — first and unchanged, ahead of anything task-specific. The cache keys on that prefix, so anything dynamic above it invalidates everything below.",
+    fix: "Put the stable prefix (project overview, conventions, standing guidance) first and unchanged, ahead of anything task-specific. The cache keys on that prefix, so anything dynamic above it invalidates everything below.",
     measuredFrom: ["inputTokens", "cacheReadTokens", "sessionId"],
   },
   {
@@ -118,7 +118,7 @@ const CAPS: Capability[] = [
     ],
     math: "$195.40 across 6 non-shipping marathons × (30 ÷ 30)",
     result: "$195.40 / mo",
-    fix: "Past roughly 30 turns the accumulated context is re-sent on every turn and the session rarely converges. When one stalls, start fresh with a tighter prompt carrying what you learned — restarting is cheaper than pushing.",
+    fix: "Past roughly 30 turns the accumulated context is re-sent on every turn and the session rarely converges. When one stalls, start fresh with a tighter prompt carrying what you learned. Restarting is cheaper than pushing.",
     measuredFrom: ["turnCount", "outcome", "costUsd"],
   },
   {
@@ -137,14 +137,14 @@ const CAPS: Capability[] = [
     ],
     math: "4 dormant seats × $30.00 seat cost",
     result: "$120.00 / mo",
-    fix: "Reclaim or reassign at the provider. This one is deliberately never automated — it's a billing change against a real person's access, so PlanckSpace surfaces it and hands you the list, nothing more.",
+    fix: "Reclaim or reassign at the provider. This one is deliberately never automated. It is a billing change against a real person's access, so PlanckSpace surfaces it and hands you the list, nothing more.",
     measuredFrom: ["gitAuthorEmail", "costUsd", "tool", "seatCostUsdMonthly"],
   },
   {
     id: "verification",
     n: "06",
     name: "Telemetry-verified savings",
-    blurb: "Re-measures after the fix, so savings are booked — never claimed.",
+    blurb: "Re-measures after the fix, so savings are booked and never claimed.",
     detector: "insight-verification",
     confidence: "high",
     signal: { value: "94%", label: "of the measured problem eliminated" },
@@ -156,7 +156,7 @@ const CAPS: Capability[] = [
     ],
     math: "$204.12 estimate × 94% actually realised",
     result: "$191.87 / mo booked",
-    fix: "The baseline is snapshotted at first detection, then re-measured over sessions that ran after the fix. A fix you marked done whose metric never moved stays 'claimed' and is never counted — and a metric that improves on its own still verifies.",
+    fix: "The baseline is snapshotted at first detection, then re-measured over the sessions that ran after the fix. A fix you marked done whose metric never moved stays 'claimed' and is never counted. A metric that improves on its own still verifies.",
     measuredFrom: ["cacheReadTokens", "inputTokens", "startedAt", "statusChangedAt"],
   },
 ];
@@ -166,7 +166,7 @@ const CAPS: Capability[] = [
 function Detail({ cap }: { cap: Capability }) {
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-[0_1px_2px_rgba(17,19,26,0.04),0_18px_40px_-24px_rgba(17,19,26,0.28)]">
-      {/* header — self-identifying, since all six panels are stacked now */}
+      {/* header, self-identifying since all six panels are stacked now */}
       <div className="border-b border-[var(--border)] px-5 py-3.5">
         <div className="flex items-center justify-between gap-3">
           <span className="flex min-w-0 items-baseline gap-3">
@@ -236,7 +236,7 @@ function Detail({ cap }: { cap: Capability }) {
         <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--text-2)]">{cap.fix}</p>
       </div>
 
-      {/* privacy footer — the whole point */}
+      {/* privacy footer, which is the whole point */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-5 py-3.5">
         <span className="text-[10px] font-medium uppercase tracking-[0.09em] text-[var(--text-3)]">
           Read to know this
@@ -250,7 +250,7 @@ function Detail({ cap }: { cap: Capability }) {
           </span>
         ))}
         <span className="num ml-auto text-[10.5px] text-[var(--text-3)]">
-          counters only · no code, no prompts
+          counters only, no code, no prompts
         </span>
       </div>
     </div>
@@ -273,7 +273,7 @@ export default function Capabilities() {
 
   /* Scrollspy. The index is pinned while the panels scroll past it, so the
      active entry is simply the last panel whose top has crossed the activation
-     line. Desktop only — below lg nothing is pinned, so there's nothing to
+     line. Desktop only: below lg nothing is pinned, so there is nothing to
      keep in sync. */
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1024px)");
@@ -341,14 +341,12 @@ export default function Capabilities() {
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow mb-6" data-center="true">
-            The detection engine
-          </p>
           <h2 className="display-2">Six detectors. Every one shows its work.</h2>
           <p className="lead mt-5">
             Each targets a specific way AI spend leaks, and each carries the
-            measurement that found it — the signal, the threshold, the
-            arithmetic. Nothing here needs to read your code.
+            measurement that found it: the signal, the threshold, the arithmetic,
+            and the re-measurement that confirms the fix worked. Nothing here
+            needs to read your code.
           </p>
         </Reveal>
 
@@ -356,7 +354,7 @@ export default function Capabilities() {
             which is what gives the pinned index room to stick against the
             scrolling panel column. */}
         <div className="mt-16 grid gap-4 lg:grid-cols-12 lg:gap-6">
-          {/* index — pinned */}
+          {/* the pinned index */}
           <div className="lg:col-span-5">
             <nav
               aria-label="Detectors"
@@ -409,7 +407,7 @@ export default function Capabilities() {
             </nav>
           </div>
 
-          {/* panels — the column that actually moves */}
+          {/* the column that actually moves */}
           <div className="lg:col-span-7">
             <div className="space-y-4 lg:space-y-6">
               {CAPS.map((c, i) => (

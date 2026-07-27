@@ -4,7 +4,7 @@ import overview from "../../assets/product-shots/02-overview-panel.png";
 /* ─────────────────────────────────────────────────────────────────────────
    The hero product shot: a real capture of the Overview screen, framed in
    the site's own browser chrome. Dimensions come from the static import, and
-   it is marked priority — this is the LCP element.
+   it is marked priority because this is the LCP element.
    ───────────────────────────────────────────────────────────────────────── */
 
 export default function ProductShot() {

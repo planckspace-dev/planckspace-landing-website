@@ -6,7 +6,8 @@ const ROLES = [
     title: "Defend the AI budget with numbers.",
     points: [
       "One figure for total AI spend, reconciled against provider invoices",
-      "ROI framing: spend vs. sessions shipped, by team",
+      "Cost per shipped session: the ROI number, by team",
+      "Savings verified from telemetry, not a vendor's estimate",
       "Board-ready exports without asking engineering",
     ],
   },
@@ -16,7 +17,8 @@ const ROLES = [
     points: [
       "Per-team and per-repo attribution, updated live",
       "Budgets with pace alerts before the overrun, not after",
-      "Waste surfaced as line items you can act on",
+      "Waste surfaced as line items with a dollar value",
+      "A ranked queue of fixes, highest recovery first",
     ],
   },
   {
@@ -24,7 +26,8 @@ const ROLES = [
     title: "Your usage, not your keystrokes.",
     points: [
       "Personal cost and cache-efficiency insights in the editor",
-      "Metadata only — verify what syncs with planck inspect",
+      "One-click fixes, backed up and undoable",
+      "Metadata only, verifiable with planck inspect",
       "No screenshots, no timers, no surveillance",
     ],
   },
@@ -35,7 +38,6 @@ export default function Roles() {
     <section className="border-t border-[var(--border)] py-24 sm:py-36">
       <div className="container-x">
         <Reveal className="max-w-2xl">
-          <p className="eyebrow mb-6">Every seat at the table</p>
           <h2 className="display-2">
             The same numbers, three very different questions answered.
           </h2>

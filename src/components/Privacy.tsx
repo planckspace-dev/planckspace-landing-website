@@ -18,7 +18,7 @@ const NEVER = [
 /* The one deliberate dark moment on the page. */
 export default function Privacy() {
   return (
-    <section className="py-24 sm:py-36">
+    <section id="privacy" className="scroll-mt-24 py-24 sm:py-36">
       <div className="container-x">
         <Reveal>
           <div className="overflow-hidden rounded-[1.5rem] border border-[var(--dark-border)] bg-[var(--dark-page)] shadow-[var(--shadow-float)]">
@@ -28,22 +28,22 @@ export default function Privacy() {
                   Privacy by architecture
                 </p>
                 <h2 className="display-2 !text-white">
-                  We meter receipts,
+                  Never your code.
                   <br />
-                  not code.
+                  Never your prompts.
                 </h2>
                 <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--dark-text-2)]">
-                  PlanckSpace parses the metadata your AI tools already write to
-                  disk — token counts, models, costs. Your source, prompts, and
-                  responses never leave the machine. Developers can verify
-                  exactly what syncs with{" "}
+                  PlanckSpace meters receipts, not work. It parses the metadata
+                  your AI tools already write to disk: token counts, models,
+                  costs. Your source, prompts, and responses never leave the
+                  machine. Developers can verify exactly what syncs with{" "}
                   <code className="num rounded bg-white/10 px-1.5 py-0.5 text-[13px] text-white">
                     planck inspect
                   </code>
                   .
                 </p>
                 <p className="num mt-8 text-[12px] text-[#6b7183]">
-                  Sync is opt-in per machine · revoke a device any time
+                  Sync is opt-in per machine. Revoke a device at any time.
                 </p>
               </div>
 

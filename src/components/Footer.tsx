@@ -6,25 +6,29 @@ const COLUMNS = [
   {
     head: "Product",
     links: [
-      { label: "Platform", href: "/#product" },
+      { label: "The approach", href: "/#approach" },
+      { label: "The platform", href: "/#product" },
+      { label: "Detection engine", href: "/#engine" },
       { label: "How it works", href: "/#how-it-works" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Book a demo", href: DEMO_PATH },
     ],
   },
   {
-    head: "Toolkit",
+    head: "Resources",
     links: [
-      { label: "CLI", href: "/#how-it-works" },
-      { label: "VS Code extension", href: "https://open-vsx.org/extension/planckspace/planckspace-extension" },
-      { label: "Dashboard", href: "/#product" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Privacy model", href: "/#privacy" },
+      { label: "Questions", href: "/#faq" },
+      {
+        label: "VS Code extension",
+        href: "https://open-vsx.org/extension/planckspace/planckspace-extension",
+      },
     ],
   },
   {
     head: "Company",
     links: [
+      { label: "Book a demo", href: DEMO_PATH },
       { label: "Contact", href: "/contact" },
-      { label: "Privacy approach", href: "/#product" },
       { label: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
     ],
   },
@@ -38,8 +42,8 @@ export default function Footer() {
           <div>
             <Logo height={28} />
             <p className="mt-5 max-w-xs text-[13.5px] leading-relaxed text-[var(--text-3)]">
-              Spend management for AI-assisted engineering. Every token
-              accounted for — never your code.
+              The management layer for AI coding. Measure it, optimize it, and
+              verify the savings. Never your code, never your prompts.
             </p>
           </div>
 
@@ -80,7 +84,7 @@ export default function Footer() {
             © {new Date().getFullYear()} PlanckSpace. All rights reserved.
           </p>
           <p className="num text-[11.5px] text-[var(--text-3)]">
-            Metadata only · code and prompts never leave your machine
+            Metadata only. Code and prompts never leave your machine.
           </p>
         </div>
       </div>

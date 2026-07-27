@@ -1,5 +1,5 @@
 /**
- * Pricing catalog — mirrors the backend's single source of truth
+ * Pricing catalog. Mirrors the backend's single source of truth
  * (planckspace-backend/src/lib/plans.ts). If a limit changes there,
  * change it here in the same commit.
  */
@@ -91,7 +91,7 @@ export const PLANS: Plan[] = [
  *  exposes no sign-in or console surface at all: there is no public self-serve
  *  registration, and every new workspace is provisioned after a demo. */
 export const DEMO_PATH = "/demo";
-/** Shown illustratively in How it works — onboarding runs with us, post-demo. */
+/** Shown illustratively in How it works. Onboarding runs with us, post-demo. */
 export const INSTALL_CMD = "curl -fsSL https://planckspace.dev/install | sh";
 /** Public inbox shown on the site and used as the mailto fallback. */
 export const CONTACT_EMAIL = "admin.planckspace@gmail.com";

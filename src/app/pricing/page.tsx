@@ -9,10 +9,10 @@ import { PLANS, DEMO_PATH } from "@/lib/plans";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "PlanckSpace pricing: Starter is free for 3 seats and $200 of tracked AI spend per month. Pro $30/mo, Business $200/mo — both with a 14-day trial. Enterprise is custom. Every plan starts with a demo.",
+    "PlanckSpace pricing: Starter is free for 3 seats and $200 of tracked AI spend per month. Pro $30/mo and Business $200/mo, both with a 14-day trial. Enterprise is custom. Every plan starts with a demo.",
 };
 
-/* comparison matrix — rows map to real platform capabilities */
+/* comparison matrix, rows map to real platform capabilities */
 const MATRIX: {
   label: string;
   values: (string | boolean)[];
@@ -36,19 +36,19 @@ const MATRIX: {
 const PRICING_FAQS = [
   {
     q: "How do we actually get access?",
-    a: "Book a demo. We spend 30 minutes on your setup, agree the right plan, then provision your workspace and walk your team through the rollout. There's no self-serve sign-up — onboarding runs with us so the numbers are right from the first session.",
+    a: "Book a demo. We spend 30 minutes on your setup, agree the right plan, then provision your workspace and walk your team through the rollout. There's no self-serve sign-up, because onboarding runs with us so the numbers are right from the first session.",
   },
   {
     q: "What is “tracked AI spend”?",
-    a: "The dollar value of AI usage PlanckSpace meters for your workspace each calendar month. It sizes the plan — it is not an extra charge. If your team's metered usage reaches the limit, syncing pauses until the month rolls over or you upgrade; nothing breaks in your tools.",
+    a: "The dollar value of AI usage PlanckSpace meters for your workspace each calendar month. It sizes the plan and is not an extra charge. If your team's metered usage reaches the limit, syncing pauses until the month rolls over or you upgrade; nothing breaks in your tools.",
   },
   {
     q: "How does the 14-day trial work?",
-    a: "Pro and Business include a full-featured 14-day trial — no credit card. It starts when we provision your workspace after the demo. If the trial ends without an upgrade, the workspace falls back to Starter limits. Nothing is deleted.",
+    a: "Pro and Business include a full-featured 14-day trial with no credit card. It starts when we provision your workspace after the demo. If the trial ends without an upgrade, the workspace falls back to Starter limits. Nothing is deleted.",
   },
   {
     q: "What happens if we hit a seat or spend limit?",
-    a: "You'll see it coming in the dashboard. At the seat limit, new invites are held until you upgrade. At the spend limit, new sessions queue locally and sync after the month resets or the plan changes — you never lose data.",
+    a: "You'll see it coming in the dashboard. At the seat limit, new invites are held until you upgrade. At the spend limit, new sessions queue locally and sync after the month resets or the plan changes, so you never lose data.",
   },
   {
     q: "Do you charge per token or take a percentage of spend?",
@@ -82,7 +82,7 @@ export default function PricingPage() {
             <p className="lead mx-auto mt-6 max-w-xl">
               Flat monthly plans sized by the AI spend you track. No per-token
               fees, no percentage of your bill, no credit card. Every plan
-              starts with a 30-minute demo — we set the workspace up with you.
+              starts with a 30-minute demo, and we set the workspace up with you.
             </p>
           </div>
         </div>
@@ -123,10 +123,10 @@ export default function PricingPage() {
                   </div>
                   <p className="num mt-1 text-[11px] text-[var(--text-3)]">
                     {p.trialDays > 0
-                      ? `${p.trialDays}-day free trial · no card`
+                      ? `${p.trialDays}-day free trial, no card`
                       : p.id === "starter"
-                        ? "free forever · no card"
-                        : "annual or monthly · invoiced"}
+                        ? "free forever, no card"
+                        : "annual or monthly, invoiced"}
                   </p>
 
                   <ul className="mt-6 space-y-3 border-t border-[var(--border)] pt-6">
@@ -243,7 +243,7 @@ export default function PricingPage() {
               Not sure which plan fits?
             </h2>
             <p className="mt-1 text-[14.5px] text-[var(--text-2)]">
-              Tell us your team size and tools — we’ll tell you honestly, even if the answer is “Starter”.
+              Tell us your team size and tools. We’ll answer honestly, even when the answer is “Starter”.
             </p>
           </div>
           <Link href="/contact" className="btn btn-primary shrink-0">

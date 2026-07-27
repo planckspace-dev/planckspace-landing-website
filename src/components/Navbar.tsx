@@ -8,6 +8,7 @@ import { DEMO_PATH } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
+  { label: "Approach", href: "/#approach" },
   { label: "Product", href: "/#product" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "Pricing", href: "/pricing" },
@@ -61,7 +62,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* mobile hamburger — two lines that morph into an X */}
+            {/* mobile hamburger: two lines that morph into an X */}
             <button
               type="button"
               onClick={() => setOpen(!open)}

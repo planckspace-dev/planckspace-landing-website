@@ -14,7 +14,7 @@ const TOPICS = [
   { value: "other", label: "Something else" },
 ];
 
-const TEAM_SIZES = ["1–5", "6–15", "16–50", "51–200", "200+"];
+const TEAM_SIZES = ["1-5", "6-15", "16-50", "51-200", "200+"];
 
 const inputCls =
   "w-full rounded-xl border border-[var(--border-strong)] bg-white px-4 py-3 text-[14.5px] text-[var(--ink)] placeholder:text-[var(--text-3)] transition-colors duration-300 focus:border-[var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-100)]";
@@ -40,7 +40,7 @@ export default function ContactForm() {
       teamSize: String(data.get("teamSize") ?? "") || undefined,
       topic: String(data.get("topic") ?? "sales"),
       message: String(data.get("message") ?? ""),
-      // honeypot — hidden from humans, bots fill it
+      // honeypot: hidden from humans, bots fill it
       website: String(data.get("website") ?? ""),
     };
 
@@ -74,7 +74,7 @@ export default function ContactForm() {
           Message sent.
         </h3>
         <p className="mt-2 max-w-sm text-[14.5px] leading-relaxed text-[var(--text-2)]">
-          Thanks — it’s in our inbox. A human (usually a founder) replies within
+          Thanks, it’s in our inbox. A human (usually a founder) replies within
           one business day.
         </p>
         <button
@@ -172,7 +172,7 @@ export default function ContactForm() {
           />
         </div>
 
-        {/* honeypot — visually hidden, tab-skipped */}
+        {/* honeypot: visually hidden, tab-skipped */}
         <div className="absolute -left-[9999px] top-auto" aria-hidden="true">
           <label htmlFor="cf-website">Website</label>
           <input id="cf-website" name="website" tabIndex={-1} autoComplete="off" />
