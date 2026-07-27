@@ -1,0 +1,7 @@
+# `public/install` is piped straight into a shell:
+#   curl -fsSL https://planckspace.dev/install | sh
+# CRLF would reach Linux users as `\r` inside every command. Committing LF is
+# currently only luck — it depends on each contributor having core.autocrlf set.
+# Pin it here so the repo does not rely on local git config.
+public/install text eol=lf
+*.sh text eol=lf
