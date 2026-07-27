@@ -1,0 +1,167 @@
+#!/bin/sh
+# PlanckSpace installer — https://planckspace.dev/install
+#
+# CANONICAL SOURCE: planckspace-cli/install.sh — edit it there, then copy here.
+# This copy exists only because the advertised URL is on the marketing domain,
+# which this repo serves. It is also shipped inside the npm tarball (see the
+# CLI's package.json "files"), so the two must not drift.
+#
+# Usage:
+#   curl -fsSL https://planckspace.dev/install | sh
+#   curl -fsSL https://planckspace.dev/install | sh -s -- --token pk_live_xxx
+#
+# POSIX sh only, deliberately. The documented entrypoint pipes this into `sh`,
+# and the shebang is ignored when a script arrives on stdin — so `sh` is dash on
+# Debian/Ubuntu, not bash. bash-isms (`[[ ]]`, arrays, `set -o pipefail` on dash
+# < 0.5.12) abort before any real work. macOS hides this: its /bin/sh is bash in
+# POSIX mode and tolerates `[[`, so a bash installer looks fine there and fails
+# on every Linux box. Keep this file portable even though it reads older.
+set -eu
+
+CONSOLE_URL="https://console.planckspace.dev"
+VSCODE_EXT_ID="planckspace.planckspace-extension"
+VSCODE_EXT_URL="https://marketplace.visualstudio.com/items?itemName=${VSCODE_EXT_ID}"
+OPENVSX_EXT_URL="https://open-vsx.org/extension/planckspace/planckspace-extension"
+PKG="@planckspace/cli"
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+say()  { printf '\n%s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+die()  { printf '\nERROR: %s\n\n' "$*" >&2; exit 1; }
+
+# ── parse args ───────────────────────────────────────────────────────────────
+TOKEN=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --token)   TOKEN="${2:-}"; shift 2 ;;
+    --token=*) TOKEN="${1#--token=}"; shift ;;
+    *)         shift ;;
+  esac
+done
+
+# ── OS / arch check ──────────────────────────────────────────────────────────
+OS="$(uname -s 2>/dev/null || echo unknown)"
+ARCH="$(uname -m 2>/dev/null || echo unknown)"
+
+case "$OS" in
+  Darwin|Linux) ;;
+  MINGW*|MSYS*|CYGWIN*|Windows_NT)
+    say "Windows detected."
+    say "PlanckSpace requires WSL (Windows Subsystem for Linux)."
+    info "1. Open PowerShell as Administrator and run:  wsl --install"
+    info "2. After WSL is set up, open a WSL terminal and run:"
+    info "   curl -fsSL https://planckspace.dev/install | sh"
+    exit 1
+    ;;
+  *)
+    die "Unsupported OS: $OS. Install manually with: npm install -g $PKG"
+    ;;
+esac
+
+say "PlanckSpace installer  (OS: $OS / arch: $ARCH)"
+
+# ── Node.js check ────────────────────────────────────────────────────────────
+node_ok() {
+  command -v node >/dev/null 2>&1 || return 1
+  node_major="$(node --version 2>/dev/null | sed 's/^v//' | cut -d. -f1)"
+  [ "${node_major:-0}" -ge 20 ] 2>/dev/null
+}
+
+if ! node_ok; then
+  say "Node.js 20+ is required but was not found."
+  say "Install it with nvm (recommended — no sudo needed):"
+  info "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
+  info "source \"\${HOME}/.nvm/nvm.sh\""
+  info "nvm install 20"
+  say "Or download from: https://nodejs.org/en/download"
+  say "Then re-run this installer."
+  exit 1
+fi
+
+info "Node $(node --version) found."
+
+# ── npm check ────────────────────────────────────────────────────────────────
+command -v npm >/dev/null 2>&1 || die "npm not found. Re-install Node.js from https://nodejs.org"
+
+# ── install CLI ──────────────────────────────────────────────────────────────
+say "Installing $PKG@latest..."
+npm install -g "$PKG@latest" --loglevel error
+
+# Verify the binary is reachable. npm's global bin is routinely outside PATH on a
+# fresh machine; recover from `npm prefix -g` (`npm bin -g` was removed in npm 9).
+if ! command -v planck >/dev/null 2>&1; then
+  NPM_PREFIX="$(npm prefix -g 2>/dev/null || true)"
+  # Unix installs expose <prefix>/bin; some Windows/nvm layouts put it at <prefix>.
+  for candidate in "$NPM_PREFIX/bin" "$NPM_PREFIX"; do
+    if [ -n "$NPM_PREFIX" ] && [ -x "$candidate/planck" ]; then
+      PATH="$candidate:$PATH"
+      export PATH
+      say "Note: $candidate is not on your PATH."
+      info "Add this to your shell profile so 'planck' works in new terminals:"
+      info "  export PATH=\"$candidate:\$PATH\""
+      break
+    fi
+  done
+fi
+command -v planck >/dev/null 2>&1 || \
+  die "'planck' not found after install. Add \"$(npm prefix -g 2>/dev/null)/bin\" to your PATH."
+
+# ── init ─────────────────────────────────────────────────────────────────────
+say "Initializing ~/.planckspace..."
+planck init
+
+# ── login ────────────────────────────────────────────────────────────────────
+CONNECTED=false
+if [ -n "$TOKEN" ]; then
+  say "Connecting to your workspace..."
+  # Via stdin, never --token: a bearer credential passed as an argument is
+  # visible in `ps` to every other user on the machine for as long as it runs.
+  if printf '%s' "$TOKEN" | planck login --token-stdin; then
+    CONNECTED=true
+  fi
+else
+  say "No token provided."
+  info "Sign in at $CONSOLE_URL, copy your CLI token from Settings, then run:"
+  info "  planck login"
+fi
+
+# ── scan (backfill existing history) ─────────────────────────────────────────
+say "Scanning local AI session history..."
+planck scan
+
+# ── sync (only when connected) ───────────────────────────────────────────────
+if [ "$CONNECTED" = "true" ]; then
+  say "Syncing data to your workspace..."
+  planck scan --sync
+fi
+
+# ── VS Code extension ─────────────────────────────────────────────────────────
+say "Installing VS Code extension..."
+if command -v code >/dev/null 2>&1; then
+  if code --install-extension "$VSCODE_EXT_ID" --force >/dev/null 2>&1; then
+    info "Extension installed via 'code' CLI."
+  else
+    info "Extension install via CLI failed — install manually (see below)."
+  fi
+else
+  info "'code' CLI not found — install the extension manually."
+fi
+
+# ── done ─────────────────────────────────────────────────────────────────────
+say "--------------------------------------"
+say "PlanckSpace is ready."
+say "--------------------------------------"
+if [ "$CONNECTED" = "true" ]; then
+  info "Dashboard:         $CONSOLE_URL"
+else
+  info "Next step:         planck login"
+  info "Console:           $CONSOLE_URL"
+fi
+info ""
+info "VS Code extension:"
+info "  Marketplace:     $VSCODE_EXT_URL"
+info "  Open VSX:        $OPENVSX_EXT_URL"
+info "  Headless CLI:    code --install-extension $VSCODE_EXT_ID"
+info ""
+info "Check setup:       planck status"
+say ""
