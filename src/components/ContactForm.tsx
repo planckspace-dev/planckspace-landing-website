@@ -5,8 +5,6 @@ import { ArrowUpRight, Check } from "lucide-react";
 
 import { CONTACT_EMAIL } from "@/lib/plans";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
 const TOPICS = [
   { value: "sales", label: "Sales & plans" },
   { value: "support", label: "Product support" },
@@ -47,7 +45,7 @@ export default function ContactForm() {
     setStatus("sending");
     setErrorMsg("");
     try {
-      const res = await fetch(`${API_URL}/api/contact`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

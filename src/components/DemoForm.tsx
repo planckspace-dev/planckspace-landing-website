@@ -7,16 +7,14 @@ import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { CONTACT_EMAIL, PLANS } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
 /**
- * The backend's /api/contact endpoint validates `topic` against a fixed set
- * (sales | support | partnership | other). Demo requests ride in as `sales`
- * with the qualifying answers composed into `message`, so no backend change is
- * required. The structured answers are *also* sent as `demo`, which the current
- * endpoint harmlessly ignores and a later one can consume.
+ * Posts to this app's own /api/contact route handler, which treats `demo` as a
+ * first-class topic so these land with a "Demo request" subject rather than
+ * looking like generic sales mail. Every qualifying answer is composed into
+ * `message`; the structured `demo` mirror is sent too, which the route ignores
+ * today and a later consumer can pick up.
  */
-const DEMO_TOPIC = "sales";
+const DEMO_TOPIC = "demo";
 
 const ROLES = [
   "Founder / CEO",
@@ -291,7 +289,7 @@ export default function DemoForm() {
     setStatus("sending");
     setErrorMsg("");
     try {
-      const res = await fetch(`${API_URL}/api/contact`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

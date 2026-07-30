@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    // This directory sits inside `planckspace/`, which is an npm workspaces root
+    // for the sibling repos and has its own lockfile. The landing site is not one
+    // of those workspaces, but Turbopack infers the project root by walking up to
+    // the first lockfile it finds, so it would pick the parent and watch every
+    // sibling repo. Pin the root to this package instead.
+    root: import.meta.dirname,
+  },
   async headers() {
     return [
       {
