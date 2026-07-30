@@ -8,7 +8,9 @@ import Capabilities from "@/components/Capabilities";
 import HowItWorks from "@/components/HowItWorks";
 import Privacy from "@/components/Privacy";
 import Roles from "@/components/Roles";
-import PricingTeaser from "@/components/PricingTeaser";
+// Pricing is off the public site for now. Restore this import together with
+// the <PricingTeaser /> below and the /pricing route in src/app/_pricing.
+// import PricingTeaser from "@/components/PricingTeaser";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
@@ -37,7 +39,7 @@ export default function Home() {
       <HowItWorks />
       <Privacy />
       <Roles />
-      <PricingTeaser />
+      {/* <PricingTeaser /> */}
       <FAQ />
       <CTA />
       <Footer />

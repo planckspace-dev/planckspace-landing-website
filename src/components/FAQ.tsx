@@ -17,10 +17,12 @@ const FAQS = [
     q: "Do you ever see our code or prompts?",
     a: "No. PlanckSpace syncs usage metadata only: models, token counts, cost, duration, tool, repo name, and git author. Source code, prompts, responses, and file contents never leave the machine. Run planck inspect to see the exact payload before it syncs.",
   },
-  {
-    q: "What does “tracked spend” mean on the pricing page?",
-    a: "It's the dollar value of AI usage PlanckSpace meters for your workspace each calendar month, and it's what plans are sized by. Starter includes $200/month of tracked spend, Pro $500, Business $2,000. It's a measurement limit, not extra charges.",
-  },
+  // Hidden while pricing is off the public site: this one names the tiers and
+  // their dollar limits, and points at a page that isn't routed right now.
+  // {
+  //   q: "What does “tracked spend” mean on the pricing page?",
+  //   a: "It's the dollar value of AI usage PlanckSpace meters for your workspace each calendar month, and it's what plans are sized by. Starter includes $200/month of tracked spend, Pro $500, Business $2,000. It's a measurement limit, not extra charges.",
+  // },
   {
     q: "How is this different from each provider's own usage page?",
     a: "Provider dashboards show one tool, one account, and no team context. No vendor can show you a competitor's spend either. PlanckSpace unifies every tool into per-team, per-repo, per-developer attribution, reconciles it against the actual invoice, and flags waste like idle seats and cache misses. Neutrality across tools is only available to something that belongs to none of them.",
@@ -41,9 +43,15 @@ const FAQS = [
     q: "How do we get access?",
     a: "Through a demo. We spend 30 minutes on your setup, agree the right plan, then provision the workspace and help your team roll it out. There's no self-serve sign-up, because onboarding runs with us so your numbers are right from the first session.",
   },
+  // Hidden while pricing is off the public site: it quotes tier names, limits,
+  // and trial terms. Restore alongside the pricing page.
+  // {
+  //   q: "Is there a free plan?",
+  //   a: "Yes. Starter is free forever: 3 users and $200 of tracked spend per month, no credit card. Pro and Business include a 14-day free trial. Every plan, Starter included, starts with a demo so we can set it up with you.",
+  // },
   {
-    q: "Is there a free plan?",
-    a: "Yes. Starter is free forever: 3 users and $200 of tracked spend per month, no credit card. Pro and Business include a 14-day free trial. Every plan, Starter included, starts with a demo so we can set it up with you.",
+    q: "What does it cost?",
+    a: "We size it to your team on the demo call. Tell us how many developers you have and which tools they use, and we'll quote it there — no tiers to decode beforehand.",
   },
 ];
 

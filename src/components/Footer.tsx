@@ -15,7 +15,8 @@ const COLUMNS = [
   {
     head: "Resources",
     links: [
-      { label: "Pricing", href: "/pricing" },
+      // Pricing is hidden for now — restore with the /pricing route.
+      // { label: "Pricing", href: "/pricing" },
       { label: "Privacy model", href: "/#privacy" },
       { label: "Questions", href: "/#faq" },
       {

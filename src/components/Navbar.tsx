@@ -11,7 +11,8 @@ const LINKS = [
   { label: "Approach", href: "/#approach" },
   { label: "Product", href: "/#product" },
   { label: "How it works", href: "/#how-it-works" },
-  { label: "Pricing", href: "/pricing" },
+  // Pricing is hidden for now — restore with the /pricing route.
+  // { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
 ];
 

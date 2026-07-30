@@ -18,8 +18,8 @@ const EXPECT = [
     body: "Usually from a founder. No ticket numbers, no autoresponder maze.",
   },
   {
-    title: "Straight answers on plans",
-    body: "Tell us your team size and tools. If Starter is enough, we'll say so.",
+    title: "Straight answers on pricing",
+    body: "Tell us your team size and tools. If the smallest setup is enough, we'll say so.",
   },
   {
     title: "A real demo, on your data",

@@ -125,11 +125,10 @@ export default function DemoPage() {
                 <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
                   Not ready for a call?
                 </p>
+                {/* A "Compare plans" → /pricing link sat first in this line
+                    while pricing was public. */}
                 <p className="mt-3 text-[13.5px] leading-relaxed text-[var(--text-2)]">
-                  <Link href="/pricing" className="link-quiet">
-                    Compare plans
-                  </Link>
-                  , read{" "}
+                  Read{" "}
                   <Link href="/#how-it-works" className="link-quiet">
                     how it works
                   </Link>

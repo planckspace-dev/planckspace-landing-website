@@ -36,8 +36,9 @@ export default function Hero() {
                 <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
               </span>
             </Link>
-            <Link href="/pricing" className="btn btn-secondary">
-              See pricing
+            {/* Was "See pricing" → /pricing while that page was public. */}
+            <Link href="/#how-it-works" className="btn btn-secondary">
+              See how it works
             </Link>
           </div>
         </div>
