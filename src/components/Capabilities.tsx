@@ -166,14 +166,17 @@ const CAPS: Capability[] = [
 function Detail({ cap }: { cap: Capability }) {
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-[0_1px_2px_rgba(17,19,26,0.04),0_18px_40px_-24px_rgba(17,19,26,0.28)]">
-      {/* header, self-identifying since all six panels are stacked now */}
+      {/* Header, self-identifying since all six panels are stacked now. Below
+          lg it is the ONLY place the detector is named — the index that used
+          to carry the name and blurb is hidden there — so the title wraps
+          rather than truncating and the blurb comes along for the ride. */}
       <div className="border-b border-[var(--border)] px-5 py-3.5">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
           <span className="flex min-w-0 items-baseline gap-3">
             <span className="num shrink-0 text-[12px] text-[var(--text-3)]">{cap.n}</span>
             <h3
               id={`cap-title-${cap.id}`}
-              className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)]"
+              className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)] lg:truncate"
             >
               {cap.name}
             </h3>
@@ -182,6 +185,9 @@ function Detail({ cap }: { cap: Capability }) {
             {cap.confidence} confidence
           </span>
         </div>
+        <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-2)] lg:hidden">
+          {cap.blurb}
+        </p>
         <div className="num mt-1.5 text-[11px] text-[var(--text-3)]">
           detector <span className="text-[var(--ink)]">{cap.detector}</span>
         </div>
@@ -218,7 +224,9 @@ function Detail({ cap }: { cap: Capability }) {
         <div className="text-[10px] font-medium uppercase tracking-[0.09em] text-[var(--text-3)]">
           How the number is built
         </div>
-        <div className="mt-2 overflow-x-auto">
+        {/* overscroll-contain so flicking the formula sideways doesn't drag
+            the page with it on a touch screen. */}
+        <div className="mt-2 min-w-0 overflow-x-auto overscroll-x-contain">
           <div className="num w-max text-[12.5px] whitespace-nowrap text-[var(--text-2)]">
             {cap.math}
           </div>
@@ -337,7 +345,7 @@ export default function Capabilities() {
   return (
     <section
       id="engine"
-      className="scroll-mt-24 border-t border-[var(--border)] py-24 sm:py-36"
+      className="section-y scroll-mt-24 border-t border-[var(--border)]"
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -353,9 +361,13 @@ export default function Capabilities() {
         {/* Deliberately no items-start: the columns stretch to the row height,
             which is what gives the pinned index room to stick against the
             scrolling panel column. */}
-        <div className="mt-16 grid gap-4 lg:grid-cols-12 lg:gap-6">
-          {/* the pinned index */}
-          <div className="lg:col-span-5">
+        <div className="mt-12 grid gap-4 sm:mt-16 lg:grid-cols-12 lg:gap-6">
+          {/* The pinned index, desktop only. Nothing pins below lg, so on a
+              phone this rendered as six nav rows stacked directly above the
+              six panels they point at: ~540px of scrolling to reach content
+              that then repeats every one of these labels. The panels are
+              self-identifying by design, so the index has no job here. */}
+          <div className="hidden lg:col-span-5 lg:block">
             <nav
               aria-label="Detectors"
               className="flex flex-col lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto"
@@ -407,8 +419,18 @@ export default function Capabilities() {
             </nav>
           </div>
 
-          {/* the column that actually moves */}
-          <div className="lg:col-span-7">
+          {/* The column that actually moves.
+
+              min-w-0 is load-bearing, not defensive. A grid item defaults to
+              min-width:auto, so its track cannot size below its content's
+              min-content width. The "How the number is built" line is
+              whitespace-nowrap inside an overflow-x-auto scroller, and that
+              355px min-content propagated up here and pinned every panel at
+              412px wide on every phone. Because <main> is overflow-x-clip the
+              page never gained a scrollbar to reveal it — the right edge of
+              all six panels was simply cut off. min-width:0 lets the track
+              shrink, which in turn lets the scroller actually scroll. */}
+          <div className="min-w-0 lg:col-span-7">
             <div className="space-y-4 lg:space-y-6">
               {CAPS.map((c, i) => (
                 <article

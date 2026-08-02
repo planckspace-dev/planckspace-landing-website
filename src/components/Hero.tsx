@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden pt-36 pb-28 sm:pt-44 sm:pb-36">
+    <section className="page-top relative overflow-hidden pb-20 sm:pb-36">
       {/* Pixel field plus two washes, all defined in globals.css. Deliberately
           a sibling rather than a background on the section: it has to be able
           to bleed past the container while the content stays on the measure. */}
@@ -18,18 +18,21 @@ export default function Hero() {
 
       <div className="container-x relative">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="eyebrow mb-7" data-center="true">
+          <p className="eyebrow mb-6 sm:mb-7" data-center="true">
             The management layer for AI coding
           </p>
 
           <h1 className="display-1">Every AI team, more efficient.</h1>
 
-          <p className="lead mx-auto mt-6 max-w-xl">
+          <p className="lead mx-auto mt-5 max-w-xl sm:mt-6">
             PlanckSpace measures what your team’s AI coding costs, cuts the waste
             it finds, and verifies the savings from your own telemetry.
           </p>
 
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          {/* Full-width and equal on a phone, intrinsic and side-by-side from
+              sm up. Two centred auto-width pills stacked in a column read as a
+              layout that ran out of room. */}
+          <div className="btn-row mx-auto mt-8 max-w-sm sm:mt-9 sm:max-w-none" data-center="true">
             <Link href={DEMO_PATH} className="btn btn-primary">
               Book a demo
               <span className="btn-disc">

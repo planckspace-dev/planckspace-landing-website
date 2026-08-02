@@ -57,9 +57,9 @@ const FAQS = [
 
 export default function FAQ() {
   return (
-    <section id="faq" className="scroll-mt-24 py-24 sm:py-36">
+    <section id="faq" className="section-y scroll-mt-24">
       <div className="container-x">
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-20">
+        <div className="grid gap-9 sm:gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-20">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <Reveal>
               <h2 className="display-2">Fair questions, straight answers.</h2>
@@ -82,12 +82,12 @@ export default function FAQ() {
                   className="border-t border-[var(--border)] last:border-b"
                 >
                   <Accordion.Header>
-                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left">
-                      <span className="flex items-baseline gap-4">
+                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-5 text-left sm:gap-6 sm:py-6">
+                      <span className="flex min-w-0 items-baseline gap-3 sm:gap-4">
                         <span className="num shrink-0 text-[12px] tabular-nums text-[var(--text-3)] transition-colors duration-300 group-data-[state=open]:text-[var(--brand-600)]">
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <span className="text-[16px] font-medium tracking-[-0.01em] text-[var(--ink)] sm:text-[17px]">
+                        <span className="text-[15.5px] font-medium leading-snug tracking-[-0.01em] text-[var(--ink)] sm:text-[17px]">
                           {f.q}
                         </span>
                       </span>
@@ -100,7 +100,9 @@ export default function FAQ() {
                     </Accordion.Trigger>
                   </Accordion.Header>
                   <Accordion.Content className="overflow-hidden data-[state=closed]:animate-[acc-up_0.35s_cubic-bezier(0.32,0.72,0,1)] data-[state=open]:animate-[acc-down_0.35s_cubic-bezier(0.32,0.72,0,1)]">
-                    <p className="max-w-xl pb-7 pr-10 text-[14.5px] leading-relaxed text-[var(--text-2)]">
+                    {/* pl matches the trigger's numeral column so the answer
+                        hangs off the question rather than the border. */}
+                    <p className="max-w-xl pb-6 pl-[calc(12px+0.75rem)] text-[14.5px] leading-relaxed text-[var(--text-2)] sm:pb-7 sm:pl-0 sm:pr-10">
                       {f.a}
                     </p>
                   </Accordion.Content>

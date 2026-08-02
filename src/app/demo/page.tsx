@@ -42,7 +42,7 @@ const ASSURANCES = [
 /** Matches the form card's footprint so the layout doesn't jump before hydration. */
 function FormFallback() {
   return (
-    <div className="card min-h-[34rem] p-7 sm:p-9" aria-busy="true">
+    <div className="card min-h-[34rem] p-6 sm:p-9" aria-busy="true">
       <div className="h-5 w-32 rounded-full bg-[var(--inset)]" />
       <div className="mt-4 flex gap-1.5">
         <span className="h-[3px] flex-1 rounded-full bg-[var(--ink)]" />
@@ -63,16 +63,16 @@ export default function DemoPage() {
     <main className="overflow-x-clip">
       <Navbar />
 
-      <section className="pt-36 pb-24 sm:pt-44 sm:pb-32">
+      <section className="page-top pb-20 sm:pb-32">
         <div className="container-x">
-          <div className="grid gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
+          <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
             {/* left: the pitch for spending 30 minutes */}
             <div>
-              <p className="eyebrow mb-7">Book a demo</p>
-              <h1 className="display-1 !text-[clamp(2.5rem,4.5vw,3.75rem)]">
+              <p className="eyebrow mb-6 sm:mb-7">Book a demo</p>
+              <h1 className="display-1 !text-[clamp(2.25rem,4.5vw,3.75rem)]">
                 See it on your own numbers.
               </h1>
-              <p className="lead mt-6 max-w-md">
+              <p className="lead mt-5 max-w-md sm:mt-6">
                 PlanckSpace is rolled out with us, not around us. Tell us about
                 your team, we’ll walk you through what your AI spend actually
                 looks like, then set your workspace up ourselves.
@@ -98,13 +98,13 @@ export default function DemoPage() {
                 ))}
               </div>
 
-              <div className="mt-12">
-                <p className="num mb-7 text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
+              <div className="mt-10 sm:mt-12">
+                <p className="num mb-6 text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)] sm:mb-7">
                   What we’ll cover
                 </p>
-                <div className="space-y-8">
+                <div className="space-y-7 sm:space-y-8">
                   {AGENDA.map((a, i) => (
-                    <div key={a.title} className="flex gap-5">
+                    <div key={a.title} className="flex gap-4 sm:gap-5">
                       <span className="num pt-0.5 text-[12px] text-[var(--text-3)]">
                         {String(i + 1).padStart(2, "0")}
                       </span>
@@ -121,7 +121,7 @@ export default function DemoPage() {
                 </div>
               </div>
 
-              <div className="mt-12 border-t border-[var(--border)] pt-7">
+              <div className="mt-10 border-t border-[var(--border)] pt-6 sm:mt-12 sm:pt-7">
                 <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
                   Not ready for a call?
                 </p>

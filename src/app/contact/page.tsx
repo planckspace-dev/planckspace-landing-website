@@ -32,16 +32,16 @@ export default function ContactPage() {
     <main className="overflow-x-clip">
       <Navbar />
 
-      <section className="pt-36 pb-24 sm:pt-44 sm:pb-32">
+      <section className="page-top pb-20 sm:pb-32">
         <div className="container-x">
-          <div className="grid gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
+          <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
             {/* left: editorial intro */}
             <div>
-              <p className="eyebrow mb-7">Contact</p>
-              <h1 className="display-1 !text-[clamp(2.5rem,4.5vw,3.75rem)]">
+              <p className="eyebrow mb-6 sm:mb-7">Contact</p>
+              <h1 className="display-1 !text-[clamp(2.25rem,4.5vw,3.75rem)]">
                 Talk to the people who built it.
               </h1>
-              <p className="lead mt-6 max-w-md">
+              <p className="lead mt-5 max-w-md sm:mt-6">
                 Sales, support, Enterprise, or partnerships. One form, straight
                 to the founding team’s inbox.
               </p>
@@ -66,9 +66,9 @@ export default function ContactPage() {
                 </span>
               </Link>
 
-              <div className="mt-12 space-y-8">
+              <div className="mt-10 space-y-7 sm:mt-12 sm:space-y-8">
                 {EXPECT.map((e, i) => (
-                  <div key={e.title} className="flex gap-5">
+                  <div key={e.title} className="flex gap-4 sm:gap-5">
                     <span className="num pt-0.5 text-[12px] text-[var(--text-3)]">
                       {String(i + 1).padStart(2, "0")}
                     </span>
@@ -84,13 +84,13 @@ export default function ContactPage() {
                 ))}
               </div>
 
-              <div className="mt-12 border-t border-[var(--border)] pt-7">
+              <div className="mt-10 border-t border-[var(--border)] pt-6 sm:mt-12 sm:pt-7">
                 <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
                   Prefer email?
                 </p>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="link-quiet mt-2 inline-block text-[15px]"
+                  className="link-quiet mt-1 inline-block break-all py-2 text-[15px]"
                 >
                   {CONTACT_EMAIL}
                 </a>

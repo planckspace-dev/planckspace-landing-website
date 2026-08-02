@@ -46,9 +46,9 @@ const ADOPTION = [
 
 export default function Problem() {
   return (
-    <section className="py-24 sm:py-36">
+    <section className="section-y">
       <div className="container-x">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.35fr] lg:gap-24">
+        <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.35fr] lg:gap-24">
           {/* sticky editorial statement */}
           <div className="lg:sticky lg:top-32 lg:self-start">
             <Reveal>
@@ -71,8 +71,8 @@ export default function Problem() {
           <div>
             {QUESTIONS.map((q, i) => (
               <Reveal key={q.index} delay={i * 0.08}>
-                <div className="border-t border-[var(--border)] py-9 last:border-b sm:py-11">
-                  <div className="flex gap-6 sm:gap-10">
+                <div className="border-t border-[var(--border)] py-7 last:border-b sm:py-11">
+                  <div className="flex gap-4 sm:gap-10">
                     <span className="num pt-1 text-[13px] text-[var(--text-3)]">
                       {q.index}
                     </span>
@@ -95,15 +95,15 @@ export default function Problem() {
         </div>
 
         {/* the scale of the budget forming underneath all of this */}
-        <Reveal className="mt-16 sm:mt-24">
+        <Reveal className="mt-12 sm:mt-24">
           <p className="mb-8 max-w-md text-[15px] leading-relaxed text-[var(--text-3)]">
             This is not a niche line item. It is the fastest-growing budget in
             most engineering organizations.
           </p>
           <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
             {ADOPTION.map((a) => (
-              <div key={a.source + a.value} className="bg-white p-7 sm:p-8">
-                <div className="num text-[40px] leading-none font-medium tracking-[-0.05em] text-[var(--ink)] sm:text-[52px]">
+              <div key={a.source + a.value} className="bg-white p-6 sm:p-8">
+                <div className="num text-[40px] leading-none font-medium tracking-[-0.04em] text-[var(--ink)] sm:text-[52px]">
                   {a.value}
                 </div>
                 <p className="mt-4 text-[14.5px] leading-relaxed text-[var(--text-2)]">

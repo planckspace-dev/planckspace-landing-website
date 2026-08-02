@@ -387,7 +387,7 @@ export default function DemoForm() {
   /* ---------------------------------------------------------------- form -- */
 
   return (
-    <form onSubmit={onSubmit} className="card relative p-7 sm:p-9" noValidate>
+    <form onSubmit={onSubmit} className="card relative p-6 sm:p-9" noValidate>
       {/* progress */}
       <div className="mb-8">
         <div className="flex items-baseline justify-between">

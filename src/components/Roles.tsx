@@ -35,7 +35,7 @@ const ROLES = [
 
 export default function Roles() {
   return (
-    <section className="border-t border-[var(--border)] py-24 sm:py-36">
+    <section className="section-y border-t border-[var(--border)]">
       <div className="container-x">
         <Reveal className="max-w-2xl">
           <h2 className="display-2">
@@ -43,11 +43,11 @@ export default function Roles() {
           </h2>
         </Reveal>
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] lg:grid-cols-3">
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)] sm:mt-14 lg:grid-cols-3">
           {ROLES.map((r, i) => (
             <Reveal key={r.eyebrow} delay={i * 0.08} className="h-full">
-              <div className="flex h-full flex-col bg-white p-8 sm:p-10">
-                <p className="num mb-5 text-[11px] uppercase tracking-[0.16em] text-[var(--brand-700)]">
+              <div className="flex h-full flex-col bg-white p-7 sm:p-10">
+                <p className="num mb-4 text-[11px] uppercase tracking-[0.16em] text-[var(--brand-700)] sm:mb-5">
                   {r.eyebrow}
                 </p>
                 <h3 className="text-[20px] font-semibold leading-snug tracking-[-0.02em] text-[var(--ink)]">
