@@ -93,5 +93,9 @@ export const PLANS: Plan[] = [
 export const DEMO_PATH = "/demo";
 /** Shown illustratively in How it works. Onboarding runs with us, post-demo. */
 export const INSTALL_CMD = "curl -fsSL https://planckspace.dev/install | sh";
-/** Public inbox shown on the site and used as the mailto fallback. */
-export const CONTACT_EMAIL = "admin.planckspace@gmail.com";
+/**
+ * Public inbox shown on the site, and the delivery address the contact route
+ * falls back to when CONTACT_TO_EMAIL is unset. The env var wins where it is
+ * set, so production delivery is governed there, not here.
+ */
+export const CONTACT_EMAIL = "we@planckspace.dev";
