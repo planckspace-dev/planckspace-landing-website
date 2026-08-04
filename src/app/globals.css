@@ -56,6 +56,20 @@
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-swift: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Nav metrics. The floating pill is the only fixed chrome on the page, so
+     everything that has to clear it (hero padding, the mobile menu panel,
+     scroll-margin on anchor targets) derives from these rather than
+     re-guessing the number. */
+  --nav-h: 3.25rem;
+  --nav-top: 1rem;
+  --nav-block: calc(var(--nav-h) + var(--nav-top));
+
+  /* Semantic z-index scale. Nothing on this site should invent a value. */
+  --z-raised: 10;
+  --z-sticky: 30;
+  --z-menu: 50;
+  --z-nav: 60;
 }
 
 @theme inline {
@@ -80,12 +94,43 @@ html {
   scroll-behavior: smooth;
   background: var(--page);
   color: var(--ink);
+  /* Stops iOS bumping type up a size when a phone is turned to landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* The grey flash mobile WebKit/Blink paint over any tapped element. We draw
+     our own press states, so the default just makes taps look broken. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch devices: give every control a 44px target without changing how any of
+   them look on a mouse-driven screen. Padding stays as designed; the minimum
+   is enforced on the box. */
+@media (pointer: coarse) {
+  a[href],
+  button,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+/* iOS Safari zooms the whole viewport when a focused form control is under
+   16px. Every input on this site is set at 14.5px for density, which is right
+   on a desktop and a bug on a phone, so the phone gets 16px. This is also why
+   the viewport export does not pin maximum-scale: fixing the cause means we
+   never have to disable pinch-zoom to hide the symptom. */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 ::selection {
@@ -99,12 +144,36 @@ body {
   margin-inline: auto;
   width: 100%;
   max-width: 76rem; /* 1216px */
-  padding-inline: 1.25rem;
+  /* max() rather than a plain value so a landscape iPhone's rounded corner and
+     notch push the gutter out instead of clipping the first character. */
+  padding-inline: max(1.25rem, env(safe-area-inset-left))
+    max(1.25rem, env(safe-area-inset-right));
 }
 @media (min-width: 640px) {
   .container-x {
-    padding-inline: 2rem;
+    padding-inline: max(2rem, env(safe-area-inset-left))
+      max(2rem, env(safe-area-inset-right));
   }
+}
+
+/* Section rhythm. Was a flat py-24/py-36 pair on every section, which on a
+   390px screen puts 96px of dead space between ten consecutive sections and
+   makes the page feel padded rather than paced. Fluid instead: 72px on a
+   phone, unchanged 144px from the large breakpoint up. */
+.section-y {
+  padding-block: clamp(4.5rem, 11vw, 9rem);
+}
+/* Half-step, for sections that sit tight against the one before them. */
+.section-y-sm {
+  padding-block: clamp(3rem, 7vw, 5rem);
+}
+
+/* Top padding for any section that opens a page underneath the floating nav.
+   Derived from the pill's own metrics, so the clearance stays correct if the
+   nav height ever changes, and fluid so a phone doesn't spend 144px of an
+   844px screen on empty space above the headline. */
+.page-top {
+  padding-top: calc(var(--nav-block) + clamp(2rem, 7vw, 5.5rem));
 }
 
 /* mono eyebrow with structural rule. Rationed: at most one per three sections,
@@ -136,19 +205,42 @@ body {
   background: var(--border-strong);
 }
 
+/* On a phone the centred variant is the problem case: "The management layer
+   for AI coding" plus two 24px rules plus their gaps overruns 350px of usable
+   width, the label wraps to two lines, and the rules end up floating beside a
+   two-line block looking like a rendering fault. Drop the rules there and the
+   label sits on one line as a clean mono kicker. The left-aligned variant
+   keeps its leading rule: those labels are two or three words and always fit. */
+@media (max-width: 639px) {
+  .eyebrow {
+    letter-spacing: 0.13em;
+  }
+  .eyebrow[data-center="true"] {
+    gap: 0;
+  }
+  .eyebrow[data-center="true"]::before,
+  .eyebrow[data-center="true"]::after {
+    display: none;
+  }
+}
+
 .display-1 {
-  font-size: clamp(2.75rem, 6vw, 4.5rem);
-  line-height: 1.03;
-  letter-spacing: -0.045em;
+  /* Only the floor moved: 2.75rem overran the measure on a 360px handset. The
+     6vw coefficient and 4.5rem ceiling are untouched, so every viewport from
+     733px up renders exactly as it did before. Tracking eased from -0.045em to
+     -0.04em, below which the letterforms start touching at display size. */
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
   font-weight: 600;
   color: var(--ink);
   text-wrap: balance;
 }
 
 .display-2 {
-  font-size: clamp(1.9rem, 3.4vw, 2.75rem);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+  line-height: 1.09;
+  letter-spacing: -0.033em;
   font-weight: 600;
   color: var(--ink);
   text-wrap: balance;
@@ -278,6 +370,29 @@ body {
     );
 }
 
+/* ── mobile menu backdrop ─────────────────────────────────────────────────
+   The same raster the hero sits on, faded out by the top third of the panel.
+   The panel is fully opaque, so this is the only thing keeping it from
+   reading as a blank white sheet dropped over the site. Held well below the
+   hero's strength: here it sits behind live navigation, not behind a
+   headline, so anything more competes with the links.
+   ────────────────────────────────────────────────────────────────────── */
+
+.menu-field {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 44%;
+  pointer-events: none;
+  /* Half the hero's strength. Behind a headline 0.14 is a texture; behind
+     live navigation the same value reads as dirt on the screen. */
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='2' height='2' fill='%2311131A'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+
 /* ── buttons ──────────────────────────────────────────────────────────── */
 
 .btn {
@@ -300,6 +415,44 @@ body {
 }
 .btn:active {
   transform: scale(0.98);
+}
+/* 41px at the designed padding, just under the 44px touch minimum. Raised on
+   coarse pointers only, so mouse-driven layouts keep the tighter proportion. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 2.875rem;
+  }
+}
+
+/* Stacked CTA rows. Auto-width buttons centred in a column give you two pills
+   of different widths sitting one above the other, which reads as an accident;
+   matching full-width buttons read as a decision. Reverts to intrinsic width
+   the moment there is room to sit them side by side. */
+.btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.btn-row > .btn {
+  width: 100%;
+}
+@media (min-width: 640px) {
+  .btn-row {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  .btn-row > .btn {
+    width: auto;
+  }
+}
+.btn-row[data-center="true"] {
+  align-items: stretch;
+}
+@media (min-width: 640px) {
+  .btn-row[data-center="true"] {
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .btn-primary {
@@ -409,6 +562,18 @@ body {
 .terminal .t-body {
   padding: 1rem 1.25rem;
   overflow-x: auto;
+  /* The install line is ~48 characters and will not fit a phone at any size
+     worth reading. It scrolls, as it would in a real terminal — but contain
+     the chain, or flicking it sideways drags the whole page with it. */
+  overscroll-behavior-x: contain;
+}
+@media (max-width: 639px) {
+  .terminal {
+    font-size: 0.75rem;
+  }
+  .terminal .t-body {
+    padding: 0.875rem 1rem;
+  }
 }
 .terminal .t-prompt {
   color: var(--brand-300);

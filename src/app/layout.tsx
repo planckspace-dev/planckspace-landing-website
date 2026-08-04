@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -71,6 +71,26 @@ export const metadata: Metadata = {
     apple: { url: "/favicon/apple-touch-icon.png", sizes: "180x180" },
   },
   manifest: "/site.webmanifest",
+};
+
+/* Next injects width=device-width, initial-scale=1 by default; this export is
+   here for the two things it does not do.
+
+   viewportFit "cover" lets the page paint under a notch and the home-indicator
+   bar, which is what makes env(safe-area-inset-*) return anything other than 0.
+   The container and the mobile nav panel both read those insets, so without
+   this the site is letterboxed on every modern iPhone in landscape.
+
+   maximumScale is deliberately absent. Capping it stops pinch-zoom, which is
+   an accessibility failure; the iOS focus-zoom it is usually there to suppress
+   is fixed properly in globals.css by sizing form controls at 16px. */
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0d12" },
+  ],
+  colorScheme: "light",
 };
 
 export default function RootLayout({

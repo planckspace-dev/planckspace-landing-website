@@ -64,7 +64,7 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <div className="card flex flex-col items-center p-12 text-center">
+      <div className="card flex flex-col items-center p-8 text-center sm:p-12">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--green-50)]">
           <Check className="h-5 w-5 text-[var(--green-700)]" strokeWidth={2} />
         </span>
@@ -87,7 +87,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="card relative p-7 sm:p-9">
+    <form onSubmit={onSubmit} className="card relative p-6 sm:p-9">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="cf-name" className={labelCls}>

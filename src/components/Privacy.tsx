@@ -18,13 +18,13 @@ const NEVER = [
 /* The one deliberate dark moment on the page. */
 export default function Privacy() {
   return (
-    <section id="privacy" className="scroll-mt-24 py-24 sm:py-36">
+    <section id="privacy" className="section-y scroll-mt-24">
       <div className="container-x">
         <Reveal>
           <div className="overflow-hidden rounded-[1.5rem] border border-[var(--dark-border)] bg-[var(--dark-page)] shadow-[var(--shadow-float)]">
             <div className="grid lg:grid-cols-[1.15fr_1fr]">
-              <div className="p-10 sm:p-14 lg:p-16">
-                <p className="eyebrow mb-7 !text-[#6b7183] before:!bg-[rgba(255,255,255,0.15)]">
+              <div className="p-7 sm:p-14 lg:p-16">
+                <p className="eyebrow mb-6 !text-[#6b7183] before:!bg-[rgba(255,255,255,0.15)] sm:mb-7">
                   Privacy by architecture
                 </p>
                 <h2 className="display-2 !text-white">
@@ -32,7 +32,9 @@ export default function Privacy() {
                   <br />
                   Never your prompts.
                 </h2>
-                <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--dark-text-2)]">
+                {/* Light type on a dark ground reads a weight lighter than it
+                    is; the extra leading is the compensation. */}
+                <p className="mt-5 max-w-md text-[15.5px] leading-[1.7] text-[var(--dark-text-2)] sm:mt-6 sm:text-[16px]">
                   PlanckSpace meters receipts, not work. It parses the metadata
                   your AI tools already write to disk: token counts, models,
                   costs. Your source, prompts, and responses never leave the
@@ -48,7 +50,7 @@ export default function Privacy() {
               </div>
 
               <div className="grid grid-cols-1 gap-px border-t border-[var(--dark-border)] bg-[var(--dark-border)] sm:grid-cols-2 lg:border-l lg:border-t-0">
-                <div className="bg-[var(--ink-2)] p-8 sm:p-10">
+                <div className="bg-[var(--ink-2)] p-7 sm:p-10">
                   <p className="num mb-6 text-[11px] uppercase tracking-[0.16em] text-[#6b7183]">
                     Synced
                   </p>
@@ -61,7 +63,7 @@ export default function Privacy() {
                     ))}
                   </ul>
                 </div>
-                <div className="bg-[var(--dark-page)] p-8 sm:p-10">
+                <div className="bg-[var(--dark-page)] p-7 sm:p-10">
                   <p className="num mb-6 text-[11px] uppercase tracking-[0.16em] text-[#6b7183]">
                     Never synced
                   </p>

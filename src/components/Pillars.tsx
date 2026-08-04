@@ -41,7 +41,7 @@ export default function Pillars() {
   return (
     <section
       id="approach"
-      className="scroll-mt-24 border-t border-[var(--border)] py-24 sm:py-36"
+      className="section-y scroll-mt-24 border-t border-[var(--border)]"
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -55,7 +55,7 @@ export default function Pillars() {
 
         {/* Four moves, in order. The top rules read as one broken rail across
             the row on wide screens, which is the progression. */}
-        <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        <div className="mt-12 grid gap-9 sm:mt-16 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-8">
           {PILLARS.map((p, i) => (
             <Reveal key={p.n} delay={i * 0.07}>
               <div className="flex h-full flex-col border-t border-[var(--border-strong)] pt-6">
@@ -75,8 +75,8 @@ export default function Pillars() {
           ))}
         </div>
 
-        <Reveal className="mt-14 flex justify-center">
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-[var(--brand-100)] bg-[var(--brand-50)] px-4 py-2 text-[13.5px] font-medium text-[var(--brand-900)]">
+        <Reveal className="mt-12 flex justify-center sm:mt-14">
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-[var(--brand-100)] bg-[var(--brand-50)] px-4 py-2 text-center text-[13px] font-medium text-[var(--brand-900)] sm:text-[13.5px]">
             <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
             Never your code. Never your prompts.
           </span>

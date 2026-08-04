@@ -53,7 +53,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="scroll-mt-24 border-t border-[var(--border)] bg-[var(--panel)] py-24 sm:py-36"
+      className="section-y scroll-mt-24 border-t border-[var(--border)] bg-[var(--panel)]"
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -68,7 +68,7 @@ export default function HowItWorks() {
           </p>
         </Reveal>
 
-        <div className="mt-16 grid gap-10 lg:grid-cols-3 lg:gap-8">
+        <div className="mt-12 grid gap-9 sm:mt-16 sm:gap-10 lg:grid-cols-3 lg:gap-8">
           {STEPS.map((s, i) => (
             <Reveal key={s.index} delay={i * 0.08}>
               <div className="flex h-full flex-col">

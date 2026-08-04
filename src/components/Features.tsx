@@ -55,15 +55,18 @@ function Lede({
   body: string;
   facts: string[];
 }) {
+  /* Padding stacks on a phone: 20px of container gutter plus the slab's own
+     inset. At p-8 that left ~286px of measure inside a 390px screen. p-6 to
+     sm, unchanged above it. Same reasoning in Cell and EditorLoop below. */
   return (
-    <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
-      <h3 className="max-w-sm text-[25px] font-semibold leading-[1.15] tracking-[-0.03em] text-[var(--ink)] sm:text-[28px]">
+    <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12">
+      <h3 className="max-w-sm text-[23px] font-semibold leading-[1.15] tracking-[-0.03em] text-[var(--ink)] sm:text-[28px]">
         {title}
       </h3>
       <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[var(--text-2)]">
         {body}
       </p>
-      <ul className="mt-8 space-y-2.5 border-t border-[var(--border)] pt-6">
+      <ul className="mt-7 space-y-2.5 border-t border-[var(--border)] pt-5 sm:mt-8 sm:pt-6">
         {facts.map((f) => (
           <li key={f} className="num text-[12px] leading-relaxed text-[var(--text-3)]">
             {f}
@@ -85,13 +88,13 @@ function Cell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col bg-white p-7 sm:p-8">
+    <div className="flex flex-col bg-white p-6 sm:p-8">
       <h3 className="text-[18px] font-semibold leading-snug tracking-[-0.02em] text-[var(--ink)]">
         {title}
       </h3>
       <p className="mt-2.5 text-[14px] leading-relaxed text-[var(--text-2)]">{body}</p>
-      <div className="mt-8 flex-1" />
-      <div className="border-t border-[var(--border)] pt-6">{children}</div>
+      <div className="mt-7 flex-1 sm:mt-8" />
+      <div className="border-t border-[var(--border)] pt-5 sm:pt-6">{children}</div>
     </div>
   );
 }
@@ -115,14 +118,17 @@ function Stat({
       : tone === "neg"
         ? "var(--coral-700)"
         : "var(--text-3)";
+  /* Three across at 390px leaves ~116px a cell. The value and its delta side
+     by side do not fit in that, so on a phone the delta drops to its own line
+     under the value; from sm they sit on one baseline as designed. */
   return (
-    <div className="bg-white px-5 py-5 sm:px-6">
+    <div className="bg-white px-3.5 py-4 sm:px-6 sm:py-5">
       <Cap>{label}</Cap>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="num text-[22px] font-medium tracking-[-0.04em] text-[var(--ink)] sm:text-[25px]">
+      <div className="mt-1.5 flex flex-col items-start gap-x-2 sm:mt-2 sm:flex-row sm:items-baseline">
+        <span className="num text-[18px] font-medium tracking-[-0.04em] text-[var(--ink)] sm:text-[25px]">
           {value}
         </span>
-        <span className="num text-[11px] font-medium" style={{ color }}>
+        <span className="num text-[10.5px] font-medium sm:text-[11px]" style={{ color }}>
           {delta}
         </span>
       </div>
@@ -172,7 +178,7 @@ function Dashboard() {
         <Stat label="Shipped rate" value="88%" delta="↓ 8.4 pts" />
       </div>
 
-      <div className="flex flex-1 flex-col p-6 sm:p-8">
+      <div className="flex flex-1 flex-col p-5 sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <Cap>Spend over time</Cap>
@@ -191,8 +197,8 @@ function Dashboard() {
                 key={t}
                 className={
                   i === 0
-                    ? "rounded-md bg-[var(--ink)] px-2.5 py-1 text-[10.5px] font-medium text-white"
-                    : "rounded-md px-2.5 py-1 text-[10.5px] text-[var(--text-3)]"
+                    ? "rounded-md bg-[var(--ink)] px-2 py-1 text-[10.5px] font-medium text-white sm:px-2.5"
+                    : "rounded-md px-2 py-1 text-[10.5px] text-[var(--text-3)] sm:px-2.5"
                 }
               >
                 {t}
@@ -378,7 +384,7 @@ function EditorLoop() {
   ];
   return (
     <div className="flex flex-col">
-      <div className="border-b border-[var(--border)] p-8 sm:p-10">
+      <div className="border-b border-[var(--border)] p-6 sm:p-10">
         <div className="flex items-baseline justify-between gap-3">
           <Cap>Insight in your editor</Cap>
           <span className="num text-[10.5px] text-[var(--text-3)]">high confidence</span>
@@ -404,7 +410,7 @@ function EditorLoop() {
         </div>
       </div>
 
-      <div className="flex-1 p-8 sm:p-10">
+      <div className="flex-1 p-6 sm:p-10">
         <Cap>Booked from telemetry</Cap>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="num text-[28px] font-medium tracking-[-0.04em] text-[var(--green-700)]">
@@ -456,7 +462,7 @@ export default function Features() {
   return (
     <section
       id="product"
-      className="scroll-mt-24 border-t border-[var(--border)] bg-[var(--panel)] py-24 sm:py-36"
+      className="section-y scroll-mt-24 border-t border-[var(--border)] bg-[var(--panel)]"
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -473,7 +479,7 @@ export default function Features() {
           </p>
         </Reveal>
 
-        <div className="mt-16 space-y-4 sm:mt-20">
+        <div className="mt-12 space-y-4 sm:mt-20">
           {/* act 1 */}
           <Reveal>
             <Slab>
@@ -548,7 +554,7 @@ export default function Features() {
             <Slab>
               <div className="grid gap-px bg-[var(--border)] sm:grid-cols-3">
                 {ALSO.map((a) => (
-                  <div key={a.title} className="bg-white p-7 sm:p-8">
+                  <div key={a.title} className="bg-white p-6 sm:p-8">
                     <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)]">
                       {a.title}
                     </h3>
