@@ -68,29 +68,6 @@ const MEETING_TIMES = [
   "I'm flexible",
 ];
 
-/** Consumer mailbox providers. A demo request should come from a work domain. */
-const FREE_EMAIL_DOMAINS = new Set([
-  "gmail.com",
-  "googlemail.com",
-  "yahoo.com",
-  "yahoo.co.uk",
-  "hotmail.com",
-  "outlook.com",
-  "live.com",
-  "msn.com",
-  "icloud.com",
-  "me.com",
-  "aol.com",
-  "proton.me",
-  "protonmail.com",
-  "pm.me",
-  "gmx.com",
-  "mail.com",
-  "yandex.com",
-  "zoho.com",
-  "rediffmail.com",
-]);
-
 const STEPS = [
   { id: "you", label: "About you" },
   { id: "team", label: "Your team" },
@@ -225,14 +202,15 @@ export default function DemoForm() {
     if (index === 0) {
       if (!form.name.trim()) next.name = "Please tell us your name.";
       const email = form.email.trim().toLowerCase();
-      const domain = email.split("@")[1] ?? "";
       if (!email) {
         next.email = "Please enter your email.";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         next.email = "That doesn't look like a valid email address.";
-      } else if (FREE_EMAIL_DOMAINS.has(domain)) {
-        next.email = "Please use your work email so we can look up your team.";
       }
+      // Consumer domains (gmail, outlook, …) used to be rejected here. Plenty of
+      // the founders this page is aimed at book demos from a personal address, so
+      // a hard block silently cost real requests. The "Work email" label still
+      // nudges; it no longer stops anyone.
       if (!form.company.trim()) next.company = "Please add your company name.";
     }
 
