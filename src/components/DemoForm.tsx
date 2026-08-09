@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 /**
  * Posts to this app's own /api/contact route handler, which treats `demo` as a
  * first-class topic so these land with a "Demo request" subject rather than
- * looking like generic sales mail. Every qualifying answer is composed into
- * `message`; the structured `demo` mirror is sent too, which the route ignores
- * today and a later consumer can pick up.
+ * looking like generic sales mail. The structured `demo` object is what the
+ * notification email renders; the same answers are also composed into `message`
+ * as a plain-text transcript, which stands in if that object ever fails to
+ * parse.
  */
 const DEMO_TOPIC = "demo";
 

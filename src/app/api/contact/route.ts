@@ -1,19 +1,12 @@
 import { Resend } from "resend";
 
+import { buildContactEmail, type ContactSubmission, type DemoDetails } from "@/lib/contact-email";
 import { CONTACT_EMAIL } from "@/lib/plans";
 
 // The Resend SDK and the in-memory rate limiter both need a real Node runtime.
 export const runtime = "nodejs";
 // Never prerender or cache a submission endpoint.
 export const dynamic = "force-dynamic";
-
-const TOPIC_LABELS: Record<string, string> = {
-  sales: "Sales & plans",
-  support: "Product support",
-  partnership: "Partnership",
-  demo: "Demo request",
-  other: "Something else",
-};
 
 /** Mirrors the `maxLength` attributes on the two forms, so a normal submission
  *  can never trip these — they exist to bound what a scripted caller can post. */
@@ -24,18 +17,10 @@ const LIMITS = {
   teamSize: 40,
   topic: 40,
   message: 5000,
+  /** Demo answers are picked from fixed lists, so these are generous bounds. */
+  demoField: 120,
+  demoList: 20,
 } as const;
-
-type ContactPayload = {
-  name: string;
-  email: string;
-  company?: string;
-  teamSize?: string;
-  topic: string;
-  message: string;
-};
-// The demo form also posts a structured `demo` object, but every field in it is
-// already rendered into `message` by that form — so it is intentionally ignored.
 
 /* -------------------------------------------------------------------------- */
 /* rate limiting                                                              */
@@ -80,6 +65,40 @@ function str(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+function strList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value
+    .slice(0, LIMITS.demoList)
+    .map((v) => str(v, LIMITS.demoField))
+    .filter(Boolean);
+  return items.length ? items : undefined;
+}
+
+/** The demo form posts this structured object alongside the transcript it
+ *  composes into `message`. The object is what the email renders, so the brief
+ *  arrives as real rows rather than a wall of preformatted text.
+ *
+ *  Returns undefined unless at least one answer came through, so an empty
+ *  `demo: {}` cannot suppress the free-text message block. */
+function demoDetails(value: unknown): DemoDetails | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+
+  const demo: DemoDetails = {
+    role: str(raw.role, LIMITS.demoField) || undefined,
+    teamSize: str(raw.teamSize, LIMITS.demoField) || undefined,
+    tools: strList(raw.tools),
+    monthlySpend: str(raw.monthlySpend, LIMITS.demoField) || undefined,
+    goals: strList(raw.goals),
+    timeline: str(raw.timeline, LIMITS.demoField) || undefined,
+    meetingTime: str(raw.meetingTime, LIMITS.demoField) || undefined,
+    plan: str(raw.plan, LIMITS.demoField) || undefined,
+    notes: str(raw.notes, LIMITS.message) || undefined,
+  };
+
+  return Object.values(demo).some((v) => v !== undefined) ? demo : undefined;
+}
+
 /** Deliberately permissive: the goal is to catch typos and obvious junk, not to
  *  adjudicate RFC 5322. Anything stricter starts rejecting real addresses. */
 function looksLikeEmail(value: string): boolean {
@@ -88,58 +107,6 @@ function looksLikeEmail(value: string): boolean {
 
 function badRequest(error: string) {
   return Response.json({ error }, { status: 400 });
-}
-
-/* -------------------------------------------------------------------------- */
-/* email composition                                                          */
-/* -------------------------------------------------------------------------- */
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function fieldRows(payload: ContactPayload): Array<[string, string]> {
-  const rows: Array<[string, string]> = [
-    ["Name", payload.name],
-    ["Email", payload.email],
-  ];
-  if (payload.company) rows.push(["Company", payload.company]);
-  if (payload.teamSize) rows.push(["Team size", `${payload.teamSize} engineers`]);
-  rows.push(["Topic", TOPIC_LABELS[payload.topic] ?? payload.topic]);
-  return rows;
-}
-
-function textBody(payload: ContactPayload): string {
-  const rows = fieldRows(payload)
-    .map(([label, value]) => `${label.padEnd(12)} ${value}`)
-    .join("\n");
-  return `${rows}\n\n---\n\n${payload.message}\n`;
-}
-
-function htmlBody(payload: ContactPayload): string {
-  const rows = fieldRows(payload)
-    .map(
-      ([label, value]) =>
-        `<tr>
-           <td style="padding:6px 16px 6px 0;color:#6b7280;font-size:13px;white-space:nowrap;vertical-align:top">${escapeHtml(label)}</td>
-           <td style="padding:6px 0;color:#111827;font-size:14px">${escapeHtml(value)}</td>
-         </tr>`,
-    )
-    .join("");
-
-  return `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:640px">
-      <p style="margin:0 0 16px;color:#6b7280;font-size:12px;letter-spacing:.08em;text-transform:uppercase">
-        planckspace.dev — ${escapeHtml(TOPIC_LABELS[payload.topic] ?? payload.topic)}
-      </p>
-      <table style="border-collapse:collapse;margin-bottom:20px">${rows}</table>
-      <div style="border-top:1px solid #e5e7eb;padding-top:20px;color:#111827;font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(
-        payload.message,
-      )}</div>
-    </div>`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -162,13 +129,15 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
-  const payload: ContactPayload = {
+  const payload: ContactSubmission = {
     name: str(body.name, LIMITS.name),
     email: str(body.email, LIMITS.email),
     company: str(body.company, LIMITS.company) || undefined,
     teamSize: str(body.teamSize, LIMITS.teamSize) || undefined,
     topic: str(body.topic, LIMITS.topic) || "sales",
     message: str(body.message, LIMITS.message),
+    demo: demoDetails(body.demo),
+    receivedAt: new Date(),
   };
 
   if (!payload.name) return badRequest("please include your name");
@@ -198,17 +167,23 @@ export async function POST(req: Request) {
   // is the unverified fallback and only ever delivers to the Resend account owner.
   const from = process.env.CONTACT_FROM_EMAIL ?? "PlanckSpace <onboarding@resend.dev>";
 
+  const { subject, html, text } = buildContactEmail(payload);
+
   try {
     const { error } = await new Resend(apiKey).emails.send({
       from,
       to,
       // Replying in the mail client goes straight to the person who wrote in.
       replyTo: payload.email,
-      subject: `[${TOPIC_LABELS[payload.topic] ?? payload.topic}] ${payload.name}${
-        payload.company ? ` · ${payload.company}` : ""
-      }`,
-      text: textBody(payload),
-      html: htmlBody(payload),
+      subject,
+      text,
+      html,
+      headers: {
+        // Two people writing in about the same topic produce near-identical
+        // subjects; without a unique reference Gmail folds them into one thread
+        // and the second submission hides behind the first.
+        "X-Entity-Ref-ID": crypto.randomUUID(),
+      },
     });
 
     if (error) {
