@@ -317,7 +317,10 @@ body {
 
 .hero-field {
   position: absolute;
-  inset: 0;
+  /* Held to the copy block. The console below carries its own depth, and the
+     washes were tuned against ~48rem of hero, not the full section. */
+  inset: 0 0 auto 0;
+  height: min(100%, 48rem);
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
@@ -585,6 +588,27 @@ body {
 .terminal .t-green {
   color: #4ade80;
 }
+/* Zero-width so the caret never pushes the not-yet-typed text around. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.terminal .t-caret {
+  position: relative;
+  display: inline-block;
+  width: 0;
+}
+.terminal .t-caret::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: -0.95em;
+  width: 0.5em;
+  height: 1.15em;
+  background: var(--brand-300);
+  animation: caret-blink 1s steps(1) infinite;
+}
 
 /* ── radix accordion height animation ─────────────────────────────────── */
 
@@ -625,5 +649,277 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIVING LAYER
+   Everything that makes the page feel instrumented rather than printed.
+
+   Rules this layer keeps:
+   - Motion is entry motion. A chart draws once when it arrives and then holds
+     still. The only things that loop are the ones that are *about* live data
+     (the session feed, the metering pixels, the privacy packets), and those
+     pause off-screen via useLive().
+   - Ease-out only, no bounce, nothing faster than a reader can follow.
+   - Every state below has a reduced-motion end state: the global rule above
+     zeroes durations, and the block at the bottom zeroes delays, so charts
+     simply appear finished.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── entry motion, keyed off <InView data-in> ─────────────────────────── */
+
+[data-in] .iv-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.4s var(--ease-out-quart) var(--d, 0s);
+}
+[data-in="true"] .iv-draw {
+  stroke-dashoffset: 0;
+}
+
+[data-in] .iv-grow-x,
+[data-in] .iv-grow-y,
+[data-in] .iv-pop {
+  transform-box: fill-box;
+  transition:
+    transform 0.9s var(--ease-out-quart) var(--d, 0s),
+    opacity 0.5s var(--ease-out-quart) var(--d, 0s);
+}
+[data-in] .iv-grow-x {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+[data-in] .iv-grow-y {
+  transform: scaleY(0);
+  transform-origin: center bottom;
+}
+[data-in] .iv-pop {
+  opacity: 0;
+  transform: scale(0.3);
+  transform-origin: center;
+}
+/* Only the pop variant touches opacity. Grow and fade marks often carry their
+   own SVG opacity attribute (tints, washes), and a CSS opacity: 1 here would
+   silently override it. */
+[data-in="true"] .iv-grow-x,
+[data-in="true"] .iv-grow-y {
+  transform: none;
+}
+[data-in="true"] .iv-pop {
+  transform: none;
+  opacity: 1;
+}
+
+[data-in] .iv-fade {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.7s var(--ease-out-quart) var(--d, 0s),
+    transform 0.7s var(--ease-out-quart) var(--d, 0s);
+}
+[data-in="true"] .iv-fade {
+  opacity: 1;
+  transform: none;
+}
+
+/* pixel waffle: the Planck raster, used as a unit chart */
+.waffle {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  width: 5.5rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+.waffle > i {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  background: var(--inset);
+}
+.waffle > i[data-on] {
+  background: var(--brand-600);
+}
+[data-in] .waffle > i[data-on] {
+  background: var(--inset);
+  transition: background-color 0.35s var(--ease-out-quart) calc(var(--i) * 9ms);
+}
+[data-in="true"] .waffle > i[data-on] {
+  background: var(--brand-600);
+}
+
+/* ── first-load orchestration (hero) ──────────────────────────────────── */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise-in 1s var(--ease-out-quart) both;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes bar-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+.bar-up {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: bar-up 0.9s var(--ease-out-quart) both;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes draw-in {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.draw-in {
+  stroke-dasharray: 1;
+  animation: draw-in 1.6s var(--ease-out-quart) both;
+  animation-delay: var(--d, 0s);
+}
+
+/* a quiet "live" beacon: a ring that breathes out, never a flashing dot */
+@keyframes beacon {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  80%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.beacon {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--green-500);
+}
+.beacon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: beacon 2.4s var(--ease-out-quart) infinite;
+}
+
+/* the console frame sits a notch deeper than a product shot */
+.console-shadow {
+  box-shadow:
+    0 1px 2px rgba(17, 19, 26, 0.05),
+    0 30px 70px -30px rgba(29, 83, 207, 0.22),
+    0 80px 160px -60px rgba(17, 19, 26, 0.28);
+}
+
+/* The metering pixels share the static field's mask so a lit pixel can never
+   appear anywhere the raster itself has faded out. */
+.hero-pixels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    ellipse 82% 76% at 50% 40%,
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 80%
+  );
+  mask-image: radial-gradient(
+    ellipse 82% 76% at 50% 40%,
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 80%
+  );
+}
+
+/* ── privacy data-flow ─────────────────────────────────────────────────── */
+
+/* Packets cross the lane by `left` rather than a transform because the run is
+   the lane's width, not the packet's; these are three tiny absolutely
+   positioned pills, so there is no layout cost worth trading clarity for. */
+@keyframes packet-x {
+  0% {
+    left: 0%;
+    transform: translate(0, -50%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    transform: translate(-100%, -50%);
+    opacity: 0;
+  }
+}
+.packet {
+  position: absolute;
+  top: 50%;
+  left: var(--rest, 0%);
+  transform: translate(0, -50%);
+  animation: packet-x 6s linear infinite both;
+  animation-delay: var(--d, 0s);
+  animation-play-state: paused;
+}
+[data-live="true"] .packet {
+  animation-play-state: running;
+}
+
+/* ── closing CTA: the Aperture mark drawn in the Planck raster ─────────── */
+
+.cta-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(44rem, 120vw);
+  aspect-ratio: 320 / 300;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Crect width='4' height='4' fill='%232E6BF2'/%3E%3C/svg%3E");
+  background-size: 12px 12px;
+  opacity: 0.1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 300'%3E%3Cpath d='M90 0H313A7 7 0 0 1 320 7V155L175 300H145V200H250V80H60V300H7A7 7 0 0 1 0 293V90Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 300'%3E%3Cpath d='M90 0H313A7 7 0 0 1 320 7V155L175 300H145V200H250V80H60V300H7A7 7 0 0 1 0 293V90Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-in] *,
+  .rise,
+  .bar-up,
+  .draw-in {
+    transition-delay: 0s !important;
+    animation-delay: 0s !important;
+  }
+  .beacon::after {
+    display: none;
+  }
+  /* packets rest along the lane instead of travelling it */
+  .packet {
+    animation: none !important;
+    opacity: 1;
   }
 }

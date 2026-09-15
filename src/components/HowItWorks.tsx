@@ -1,51 +1,47 @@
 import { Reveal } from "@/components/ui/reveal";
+import { TypedTerminal, type TermLine } from "@/components/ui/typed-terminal";
 import { INSTALL_CMD } from "@/lib/plans";
 
 /* Rollout. This section owns the #how-it-works anchor the nav and footer
-   point at, so its id is load-bearing. */
+   point at, so its id is load-bearing.
 
-const STEPS = [
+   The three terminals play in sequence as the row arrives, each starting
+   roughly where the previous one finishes, so the section reads as one
+   continuous install rather than three screenshots of one. The workspace
+   name matches the hero console. */
+
+const STEPS: Array<{ index: string; title: string; body: string; lines: TermLine[]; delay: number }> = [
   {
     index: "01",
     title: "Install the CLI",
     body: "One command. The installer sets up the planck binary and a background daemon that watches local session logs.",
-    terminal: (
-      <>
-        <div>
-          <span className="t-prompt">$ </span>
-          {INSTALL_CMD}
-        </div>
-        <div className="t-green">✓ planck v1 installed</div>
-      </>
-    ),
+    lines: [
+      { kind: "cmd", text: INSTALL_CMD },
+      { kind: "ok", text: "✓ planck v1 installed" },
+    ],
+    delay: 0,
   },
   {
     index: "02",
     title: "Connect your workspace",
     body: "Log in once and every future session syncs automatically: token counts, model, cost. Metadata only.",
-    terminal: (
-      <>
-        <div>
-          <span className="t-prompt">$ </span>planck login
-        </div>
-        <div className="t-green">✓ workspace linked: acme-eng</div>
-        <div className="t-dim">daemon syncing, 12 sessions found</div>
-      </>
-    ),
+    lines: [
+      { kind: "cmd", text: "planck login" },
+      { kind: "ok", text: "✓ workspace linked: meridian-eng" },
+      { kind: "dim", text: "daemon syncing, 12 sessions found" },
+    ],
+    delay: 1.9,
   },
   {
     index: "03",
     title: "Invite the team",
     body: "Teammates join with an email invite. Spend appears in the shared dashboard, and in the VS Code extension right inside the editor.",
-    terminal: (
-      <>
-        <div>
-          <span className="t-prompt">$ </span>planck status
-        </div>
-        <div className="t-dim">workspace&ensp;acme-eng, 11 members</div>
-        <div className="t-green">✓ live at console.planckspace.dev</div>
-      </>
-    ),
+    lines: [
+      { kind: "cmd", text: "planck status" },
+      { kind: "dim", text: "workspace meridian-eng, 11 members" },
+      { kind: "ok", text: "✓ live at console.planckspace.dev" },
+    ],
+    delay: 3.3,
   },
 ];
 
@@ -82,14 +78,7 @@ export default function HowItWorks() {
                 <p className="mb-6 mt-2.5 text-[14.5px] leading-relaxed text-[var(--text-2)]">
                   {s.body}
                 </p>
-                <div className="terminal mt-auto">
-                  <div className="t-head">
-                    <span className="t-dot" />
-                    <span className="t-dot" />
-                    <span className="t-dot" />
-                  </div>
-                  <div className="t-body">{s.terminal}</div>
-                </div>
+                <TypedTerminal lines={s.lines} delay={s.delay} />
               </div>
             </Reveal>
           ))}

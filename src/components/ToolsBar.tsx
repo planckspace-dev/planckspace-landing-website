@@ -1,12 +1,14 @@
 import { Reveal } from "@/components/ui/reveal";
+import { TOOLS } from "@/components/brand/ToolLogos";
 
 /* The strip directly under the hero: what we meter, and the four facts that
    answer the first objections before any section has to argue for them. One
    slab, hairline-divided, so it reads as a spec plate rather than eight boxes.
 
-   The tool list is the supported set and must stay in sync with the FAQ. */
+   Tools carry their real marks, in ink. Brand colours are kept for the charts,
+   where they encode identity; here they would only compete with each other.
 
-const TOOLS = ["Claude Code", "Cursor", "Windsurf", "Antigravity"];
+   The tool list is the supported set and must stay in sync with the FAQ. */
 
 const FACTS = [
   { value: "4 tools", label: "one shared dashboard" },
@@ -24,12 +26,16 @@ export default function ToolsBar() {
             Meters every major AI coding tool your team already runs.
           </p>
 
-          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)]">
+          <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)]">
             <div className="grid grid-cols-2 gap-px sm:grid-cols-4">
               {TOOLS.map((t) => (
-                <div key={t} className="flex items-center justify-center bg-white px-4 py-5">
+                <div
+                  key={t.id}
+                  className="group flex items-center justify-center gap-2.5 bg-white px-4 py-6"
+                >
+                  <t.Logo className="h-[22px] w-[22px] text-[var(--ink)] transition-transform duration-500 ease-[var(--ease-swift)] group-hover:scale-110" />
                   <span className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
-                    {t}
+                    {t.name}
                   </span>
                 </div>
               ))}

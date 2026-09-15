@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/reveal";
+import { InView } from "@/components/ui/in-view";
 
 /* ─────────────────────────────────────────────────────────────────────────
    The detection engine.
@@ -161,6 +162,176 @@ const CAPS: Capability[] = [
   },
 ];
 
+/* ── the signal, drawn ──────────────────────────────────────────────────────
+   One small chart per detector, each showing the measurement against the
+   threshold that fired it. Same 240×88 grid, same three inks: grey for the
+   population, coral for what tripped the detector, green for a confirmed fix.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const dl = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
+const T = { fontSize: 9.5, fill: "var(--text-3)" } as const;
+
+function VizContext() {
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="Cache reads are 3,592 times input tokens; the detector fires above 0.40 times.">
+      <text x="0" y="12" {...T} className="num">input / session</text>
+      <text x="240" y="12" {...T} textAnchor="end" className="num">48.2k</text>
+      <rect x="0" y="18" width="240" height="8" rx="2" fill="var(--inset)" />
+      <rect className="iv-grow-x" style={dl(0.1)} x="0" y="18" width="3" height="8" rx="1" fill="var(--ink)" />
+      <text x="0" y="48" {...T} className="num">cache reads / session</text>
+      <text x="240" y="48" textAnchor="end" className="num" fontSize="9.5" fill="var(--coral-700)">173.2M</text>
+      <rect className="iv-grow-x" style={dl(0.3)} x="0" y="54" width="240" height="8" rx="2" fill="var(--coral-500)" />
+      <text className="num iv-fade" style={dl(0.9)} x="0" y="82" fontSize="9" fill="var(--text-3)">fires above 0.40× · measured at 3,592×</text>
+    </svg>
+  );
+}
+
+function VizRouting() {
+  const row = (y: number, label: string, opus: number, d: number) => (
+    <g>
+      <text x="0" y={y - 5} {...T} className="num">{label}</text>
+      <text x="240" y={y - 5} textAnchor="end" className="num" fontSize="9.5" fill="var(--ink)">{opus}% opus</text>
+      <rect x="0" y={y} width="240" height="10" rx="2" fill="var(--inset)" />
+      <rect className="iv-grow-x" style={dl(d)} x="0" y={y} width={2.4 * opus} height="10" rx="2" fill="var(--ink)" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="Opus runs 62% of sessions but produces 24% of shipped work.">
+      {row(16, "share of sessions", 62, 0.1)}
+      {row(52, "share of shipped work", 24, 0.3)}
+      {/* the gap between the two is the money */}
+      <path className="iv-draw" style={dl(0.8)} pathLength={1} d="M148.8,26 V71 H57.6 V62" fill="none" stroke="var(--coral-500)" strokeDasharray="0" />
+      <text className="num iv-fade" style={dl(1.2)} x="103.2" y="84" textAnchor="middle" fontSize="9.5" fill="var(--coral-700)">gap: $104.30 never shipped</text>
+    </svg>
+  );
+}
+
+function VizCache() {
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="Cache-hit rate is 11.4%, below the 30% threshold.">
+      <text x="0" y="12" {...T} className="num">cache-hit rate</text>
+      <text x="240" y="12" {...T} textAnchor="end" className="num">fires below 30%</text>
+      <rect x="0" y="20" width="240" height="22" rx="4" fill="var(--inset)" />
+      <rect className="iv-grow-x" style={dl(0.25)} x="0" y="20" width={11.4 * 2.4} height="22" rx="4" fill="var(--coral-500)" />
+      <line x1="72" x2="72" y1="16" y2="46" stroke="var(--ink)" />
+      <text className="num iv-fade" style={dl(0.8)} x={11.4 * 2.4 + 6} y="35" fontSize="10" fontWeight="500" fill="var(--coral-700)">11.4%</text>
+      <text x="72" y="58" fontSize="8.5" className="num" textAnchor="middle" fill="var(--ink)">30%</text>
+      {[0, 100].map((p) => (
+        <text key={p} x={p * 2.4} y="58" fontSize="8.5" className="num" fill="var(--text-3)" textAnchor={p === 0 ? "start" : p === 100 ? "end" : "middle"}>
+          {p}%
+        </text>
+      ))}
+      <text x="0" y="82" fontSize="9" className="num" fill="var(--text-3)">across 8.2M tokens · volume floor 1.0M</text>
+    </svg>
+  );
+}
+
+function VizMarathon() {
+  const turns = [6, 9, 11, 14, 18, 23, 27, 58, 96, 131, 152, 188, 214, 253];
+  const max = 260;
+  const base = 68;
+  const h = 56;
+  const bw = 12;
+  const gap = (240 - turns.length * bw) / (turns.length - 1);
+  const thY = base - (30 / max) * h;
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="Turn counts per session; six sessions run far past the 30-turn threshold.">
+      {turns.map((t, i) => {
+        const bh = Math.max(2, (t / max) * h);
+        return (
+          <rect
+            key={i}
+            className="iv-grow-y"
+            style={dl(0.05 + i * 0.04)}
+            x={i * (bw + gap)}
+            y={base - bh}
+            width={bw}
+            height={bh}
+            rx="2"
+            fill={t >= 30 ? "var(--coral-500)" : "var(--border-strong)"}
+          />
+        );
+      })}
+      <line x1="0" x2="240" y1={base} y2={base} stroke="var(--border-strong)" />
+      <line x1="0" x2="240" y1={thY} y2={thY} stroke="var(--ink)" strokeDasharray="3 3" />
+      <text x="0" y={thY - 5} fontSize="9" className="num" fill="var(--ink)">30 turns</text>
+      <text x="0" y="84" fontSize="9" className="num" fill="var(--text-3)">turns per session, last 30 days</text>
+    </svg>
+  );
+}
+
+function VizSeats() {
+  const dormant = new Set([3, 9, 14, 17]);
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="Four of twenty seats consume under 10% of their cost.">
+      {Array.from({ length: 20 }).map((_, i) => {
+        const x = (i % 10) * 24.45;
+        const y = 2 + Math.floor(i / 10) * 26;
+        const off = dormant.has(i);
+        return (
+          <g key={i} className="iv-pop" style={dl(0.03 * i)}>
+            <rect
+              x={x + 0.6}
+              y={y + 0.6}
+              width="20"
+              height="20"
+              rx="5"
+              fill={off ? "white" : "var(--ink)"}
+              stroke={off ? "var(--coral-500)" : "none"}
+              strokeDasharray={off ? "3 2" : undefined}
+              strokeWidth="1.2"
+            />
+            {!off && <circle cx={x + 10.6} cy={y + 8.6} r="3" fill="white" opacity="0.9" />}
+            {!off && <path d={`M${x + 5.1},${y + 17.6} a5.5,4.5 0 0 1 11,0`} fill="white" opacity="0.9" />}
+          </g>
+        );
+      })}
+      <text x="0" y="68" fontSize="9" className="num" fill="var(--text-3)">16 active</text>
+      <text x="240" y="68" fontSize="9" className="num" textAnchor="end" fill="var(--coral-700)">4 dormant · $1.14/mo avg</text>
+      <text x="0" y="84" fontSize="9" className="num" fill="var(--text-3)">dormant below 10% of a $30.00 seat</text>
+    </svg>
+  );
+}
+
+function VizVerify() {
+  const base = 62;
+  const tall = 48;
+  const short = Math.max(3, tall * (212 / 3592));
+  return (
+    <svg viewBox="0 0 240 88" className="block h-auto w-full" role="img" aria-label="The cache-read ratio fell from 3,592 times to 212 times after the fix, a 94% reduction, confirmed across at least three post-fix sessions.">
+      <rect className="iv-grow-y" style={dl(0.1)} x="0" y={base - tall} width="44" height={tall} rx="3" fill="var(--coral-500)" />
+      <rect className="iv-grow-y" style={dl(0.7)} x="104" y={base - short} width="44" height={short} rx="1.5" fill="var(--green-500)" />
+      <line x1="0" x2="240" y1={base} y2={base} stroke="var(--border-strong)" />
+      <text x="0" y={base - tall - 4} fontSize="9.5" className="num" fill="var(--coral-700)">3,592×</text>
+      <text x="104" y={base - short - 5} fontSize="9.5" className="num" fill="var(--green-700)">212×</text>
+      <path
+        className="iv-draw"
+        style={dl(0.35)}
+        pathLength={1}
+        d={`M50,${base - tall + 6} C78,${base - tall + 6} 84,${base - 18} 98,${base - 12}`}
+        fill="none"
+        stroke="var(--text-3)"
+      />
+      {[0, 1, 2].map((i) => (
+        <circle key={i} className="iv-pop" style={dl(1 + i * 0.12)} cx={180 + i * 22} cy={base - 8} r="4" fill="var(--green-500)" />
+      ))}
+      <text x="240" y={base - 20} fontSize="8.5" className="num" textAnchor="end" fill="var(--text-3)">post-fix sessions</text>
+      <text x="0" y="78" fontSize="9" className="num" fill="var(--text-3)">at detection</text>
+      <text x="104" y="78" fontSize="9" className="num" fill="var(--text-3)">re-measured</text>
+      <text x="240" y="78" fontSize="10" fontWeight="500" className="num" textAnchor="end" fill="var(--green-700)">−94%</text>
+    </svg>
+  );
+}
+
+const VIZ: Record<string, () => React.JSX.Element> = {
+  "context-bloat": VizContext,
+  "model-routing": VizRouting,
+  "cache-efficiency": VizCache,
+  "marathon-sessions": VizMarathon,
+  "seat-efficiency": VizSeats,
+  verification: VizVerify,
+};
+
 /* ── panel ──────────────────────────────────────────────────────────────── */
 
 function Detail({ cap }: { cap: Capability }) {
@@ -193,16 +364,20 @@ function Detail({ cap }: { cap: Capability }) {
         </div>
       </div>
 
-      {/* measured signal */}
-      <div className="border-b border-[var(--border)] px-5 py-6">
-        <div className="text-[10px] font-medium uppercase tracking-[0.09em] text-[var(--text-3)]">
-          Measured signal
+      {/* measured signal, stated and drawn */}
+      <InView className="grid gap-5 border-b border-[var(--border)] px-5 py-6 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] sm:items-center sm:gap-8">
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.09em] text-[var(--text-3)]">
+            Measured signal
+          </div>
+          <div className="num mt-2 text-[38px] leading-none font-medium tracking-[-0.04em] text-[var(--ink)]">
+            {cap.signal.value}
+          </div>
+          <div className="mt-2 text-[13px] text-[var(--text-2)]">{cap.signal.label}</div>
         </div>
-        <div className="num mt-2 text-[38px] leading-none font-medium tracking-[-0.04em] text-[var(--ink)]">
-          {cap.signal.value}
-        </div>
-        <div className="mt-2 text-[13px] text-[var(--text-2)]">{cap.signal.label}</div>
-      </div>
+        {/* capped so the chart's type stays at the panel's own scale */}
+        <div className="w-full max-w-[290px] sm:justify-self-end">{VIZ[cap.id] ? VIZ[cap.id]() : null}</div>
+      </InView>
 
       {/* readout */}
       <div className="grid grid-cols-1 gap-px border-b border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">

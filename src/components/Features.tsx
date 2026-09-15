@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/ui/reveal";
+import { InView } from "@/components/ui/in-view";
 
 /* ─────────────────────────────────────────────────────────────────────────
    The product.
@@ -13,8 +14,9 @@ import { Reveal } from "@/components/ui/reveal";
    the same way the real product separates them, which is the only thing that
    keeps a section this dense from reading as decoration.
 
-   Figures match the Overview capture used in the hero. Keep them in sync if
-   that screenshot is ever regenerated.
+   Figures here are one team's slice ($1,134 window spend) and feed the
+   detector math in Capabilities.tsx, so change them together. The hero
+   console shows the whole workspace and is deliberately a larger number.
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ── primitives ─────────────────────────────────────────────────────────── */
@@ -207,9 +209,10 @@ function Dashboard() {
           </div>
         </div>
 
+        <InView className="mt-6">
         <svg
           viewBox={`0 0 ${CHART.W} ${CHART.H}`}
-          className="mt-6 block h-auto w-full"
+          className="block h-auto w-full overflow-visible"
           role="img"
           aria-label="Workspace spend rising across the last thirty days, with one flagged peak near the end of week four."
         >
@@ -231,14 +234,17 @@ function Dashboard() {
               strokeDasharray="3 5"
             />
           ))}
-          <path d={CHART.area} fill="url(#spendFill)" />
+          <path d={CHART.area} fill="url(#spendFill)" className="iv-fade" style={{ "--d": "0.6s" } as React.CSSProperties} />
           <path
+            className="iv-draw"
+            pathLength={1}
             d={CHART.line}
             fill="none"
             stroke="var(--brand-600)"
             strokeWidth="2"
             strokeLinecap="round"
           />
+          <g className="iv-fade" style={{ "--d": "1.2s" } as React.CSSProperties}>
           <line
             x1={CHART.peak[0]}
             x2={CHART.peak[0]}
@@ -257,7 +263,9 @@ function Dashboard() {
             fill="var(--coral-500)"
             opacity="0.16"
           />
+          </g>
         </svg>
+        </InView>
 
         <div className="num mt-3 flex justify-between text-[10px] text-[var(--text-3)]">
           <span>Week 1</span>
@@ -273,9 +281,9 @@ function Dashboard() {
 /* ── act 2 mocks ────────────────────────────────────────────────────────── */
 
 const LEAKS = [
-  { label: "Context re-reads, api-service", note: "3,592× cache to input", save: "$204" },
-  { label: "Marathon sessions that never shipped", note: "3 sessions, 152 turns each", save: "$195" },
-  { label: "Opus on trivial edits", note: "route to Haiku", save: "$104" },
+  { label: "Context re-reads, api-service", note: "3,592× cache to input", save: "$204", bar: "100%", hot: true, d: "0.2s" },
+  { label: "Marathon sessions that never shipped", note: "3 sessions, 152 turns each", save: "$195", bar: "96%", hot: false, d: "0.3s" },
+  { label: "Opus on trivial edits", note: "route to Haiku", save: "$104", bar: "51%", hot: false, d: "0.4s" },
 ];
 
 function LeakList() {
@@ -298,8 +306,16 @@ function LeakList() {
                 {l.note}
               </span>
             </span>
-            <span className="num shrink-0 text-[12.5px] font-medium text-[var(--green-700)]">
-              {l.save}
+            <span className="flex shrink-0 flex-col items-end gap-1.5">
+              <span className="num text-[12.5px] font-medium text-[var(--green-700)]">
+                {l.save}
+              </span>
+              <span className="block h-[3px] w-14 overflow-hidden rounded-full bg-[var(--inset)]">
+                <span
+                  className="iv-grow-x block h-full rounded-full"
+                  style={{ width: l.bar, background: l.hot ? "var(--brand-600)" : "var(--border-strong)", "--d": l.d } as React.CSSProperties}
+                />
+              </span>
             </span>
           </li>
         ))}
@@ -328,6 +344,13 @@ function Ledger() {
           <dd className="num text-[15px] font-medium text-[var(--brand-700)]">$340</dd>
         </div>
       </dl>
+      <div className="mt-3 flex h-[6px] gap-[2px] overflow-hidden rounded-full" aria-hidden>
+        <span className="iv-grow-x block h-full rounded-l-full bg-[var(--ink)]" style={{ width: "94.4%" }} />
+        <span
+          className="iv-grow-x block h-full rounded-r-full bg-[var(--brand-500)]"
+          style={{ width: "5.6%", "--d": "0.7s" } as React.CSSProperties}
+        />
+      </div>
       <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-3)]">
         One engineer is running without the agent installed. Invite them and the
         gap closes.
@@ -352,7 +375,7 @@ function Budget() {
       {/* One bar, and it earns it: progress against a real ceiling, with the
           tick marking where the month's pace says you should be on day 19. */}
       <div className="relative mt-3.5 h-1.5 overflow-hidden rounded-full bg-[var(--inset)]">
-        <div className="h-full w-[64%] rounded-full bg-[var(--brand-600)]" />
+        <div className="iv-grow-x h-full w-[64%] rounded-full bg-[var(--brand-600)]" style={{ "--d": "0.2s" } as React.CSSProperties} />
         <div className="absolute inset-y-0 left-[72%] w-px bg-[var(--ink)]" />
       </div>
       <p className="num mt-2.5 text-[10.5px] text-[var(--text-3)]">
@@ -441,16 +464,63 @@ function EditorLoop() {
 
 /* ── the quiet strip ────────────────────────────────────────────────────── */
 
+/* One glyph each, drawn on the same 64×40 grid in ink and the one accent. */
+function TeamsGlyph() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
+      {[
+        { y: 4, w: 52 },
+        { y: 16, w: 36 },
+        { y: 28, w: 18 },
+      ].map((r, i) => (
+        <g key={r.y}>
+          <rect x="0" y={r.y} width="6" height="8" rx="2" fill="var(--border-strong)" />
+          <rect className="iv-grow-x" style={{ "--d": `${0.1 + i * 0.1}s` } as React.CSSProperties} x="10" y={r.y} width={r.w} height="8" rx="2" fill="var(--brand-600)" opacity={1 - i * 0.3} />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function ReceiptGlyph() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
+      <path d="M14 2h36v36l-4.5-3-4.5 3-4.5-3-4.5 3-4.5-3-4.5 3-4.5-3-4.5 3z" fill="white" stroke="var(--border-strong)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.1s" } as React.CSSProperties} x="20" y="9" width="16" height="3" rx="1.5" fill="var(--ink)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.2s" } as React.CSSProperties} x="20" y="16" width="24" height="2" rx="1" fill="var(--border-strong)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.3s" } as React.CSSProperties} x="20" y="21" width="20" height="2" rx="1" fill="var(--border-strong)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.4s" } as React.CSSProperties} x="34" y="27" width="10" height="3" rx="1.5" fill="var(--brand-600)" />
+    </svg>
+  );
+}
+
+function ExportGlyph() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
+      <rect x="6" y="3" width="42" height="34" rx="4" fill="white" stroke="var(--border-strong)" />
+      <path d="M6 13h42M6 21h42M6 29h42M20 3v34" stroke="var(--border)" />
+      {[13, 21, 29].map((y, i) => (
+        <rect key={y} className="iv-fade" style={{ "--d": `${0.15 + i * 0.1}s` } as React.CSSProperties} x="24" y={y + 3} width={18 - i * 5} height="2" rx="1" fill="var(--text-3)" />
+      ))}
+      <circle className="iv-pop" style={{ "--d": "0.55s" } as React.CSSProperties} cx="52" cy="31" r="8" fill="var(--ink)" />
+      <path className="iv-fade" style={{ "--d": "0.65s" } as React.CSSProperties} d="M52 27.5v6.5m-2.8-2.6 2.8 2.8 2.8-2.8" stroke="white" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const ALSO = [
   {
+    Glyph: TeamsGlyph,
     title: "Per-team attribution",
     body: "Spend rolls up by team, repo, and developer, with the unattributed remainder always visible.",
   },
   {
+    Glyph: ReceiptGlyph,
     title: "Session-level receipts",
     body: "Every dollar traces back to one session: model, token mix, cache efficiency, and repo.",
   },
   {
+    Glyph: ExportGlyph,
     title: "Finance-ready exports",
     body: "Chargeback and showback CSVs cut by team or cost centre, sized for the monthly close.",
   },
@@ -500,6 +570,7 @@ export default function Features() {
 
           {/* act 2 */}
           <Reveal delay={0.05}>
+            <InView>
             <Slab>
               {/* Straight from one column to three. A two-column tablet step
                   would leave a fourth grid area empty, and with gap-px over the
@@ -525,6 +596,7 @@ export default function Features() {
                 </Cell>
               </div>
             </Slab>
+            </InView>
           </Reveal>
 
           {/* act 3, mirrored so the page does not read the same row twice */}
@@ -551,11 +623,13 @@ export default function Features() {
 
           {/* the rest, stated plainly */}
           <Reveal delay={0.05}>
+            <InView>
             <Slab>
               <div className="grid gap-px bg-[var(--border)] sm:grid-cols-3">
                 {ALSO.map((a) => (
                   <div key={a.title} className="bg-white p-6 sm:p-8">
-                    <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)]">
+                    <a.Glyph />
+                    <h3 className="mt-5 text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)]">
                       {a.title}
                     </h3>
                     <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--text-2)]">
@@ -565,6 +639,7 @@ export default function Features() {
                 ))}
               </div>
             </Slab>
+            </InView>
           </Reveal>
         </div>
       </div>

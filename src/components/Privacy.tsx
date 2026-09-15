@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
+import PrivacyFlow from "@/components/PrivacyFlow";
 
 const SYNCED = [
   "Model and token counts",
@@ -77,6 +78,11 @@ export default function Privacy() {
                   </ul>
                 </div>
               </div>
+            </div>
+
+            {/* where the data actually goes */}
+            <div className="border-t border-[var(--dark-border)] p-5 sm:p-10 lg:px-16 lg:py-12">
+              <PrivacyFlow />
             </div>
           </div>
         </Reveal>

@@ -14,8 +14,11 @@ const EXPECT = [
 
 export default function CTA() {
   return (
-    <section className="section-y border-t border-[var(--border)] bg-[var(--panel)]">
-      <div className="container-x">
+    <section className="section-y relative overflow-hidden border-t border-[var(--border)] bg-[var(--panel)]">
+      {/* The Aperture mark, rendered in the same raster the hero opens on, so
+          the page closes on the brand it started with. Faint by design. */}
+      <div aria-hidden className="cta-mark" />
+      <div className="container-x relative">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="display-1 !text-[clamp(2.25rem,5vw,3.75rem)]">
             Stop estimating.
