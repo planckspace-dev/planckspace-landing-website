@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
+import { SOCIAL_LINKS } from "@/lib/social-links";
 
 const COLUMNS = [
   {
@@ -91,6 +92,25 @@ export default function Footer() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="mt-10 flex flex-wrap gap-2.5 sm:mt-12">
+          {SOCIAL_LINKS.map((social) => {
+            const Icon = social.icon;
+            return (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={social.label}
+                title={social.label}
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[linear-gradient(180deg,#ffffff_0%,#f4f6fb_100%)] text-[var(--ink)] shadow-[0_1px_2px_rgba(17,19,26,0.04),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ink)] hover:bg-[var(--surface)] hover:shadow-[var(--shadow-soft)]"
+              >
+                <Icon className="h-4 w-4 text-[var(--ink)] transition-transform duration-300 group-hover:scale-110" strokeWidth={2.1} />
+              </a>
+            );
+          })}
         </div>
 
         <div className="mt-12 flex flex-col gap-2.5 border-t border-[var(--border)] pt-6 sm:mt-16 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pt-7">

@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DemoForm from "@/components/DemoForm";
 import { CONTACT_EMAIL } from "@/lib/plans";
+import { SOCIAL_LINKS } from "@/lib/social-links";
 
 export const metadata: Metadata = {
   title: "Book a demo",
@@ -138,6 +139,30 @@ export default function DemoPage() {
                   </a>
                   .
                 </p>
+              </div>
+
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)] sm:p-5">
+                <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
+                  Follow us
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2.5">
+                  {SOCIAL_LINKS.map((social) => {
+                    const Icon = social.icon;
+                    return (
+                      <a
+                        key={social.label}
+                        href={social.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={social.label}
+                        title={social.label}
+                        className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[linear-gradient(180deg,#ffffff_0%,#f4f6fb_100%)] text-[var(--ink)] shadow-[0_1px_2px_rgba(17,19,26,0.04),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ink)] hover:bg-[var(--surface)] hover:shadow-[var(--shadow-soft)]"
+                      >
+                        <Icon className="h-4 w-4 text-[var(--ink)] transition-transform duration-300 group-hover:scale-110" strokeWidth={2.1} />
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
