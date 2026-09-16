@@ -1,24 +1,29 @@
-import { AtSign, BriefcaseBusiness, Camera, MessageCircle } from "lucide-react";
+import {
+  InstagramLogo,
+  LinkedInLogo,
+  RedditLogo,
+  XLogo,
+} from "@/components/brand/SocialLogos";
 
 export const SOCIAL_LINKS = [
   {
     label: "X",
     href: "https://x.com/planckspace_dev",
-    icon: AtSign,
+    icon: XLogo,
   },
   {
     label: "Reddit",
     href: "https://www.reddit.com/user/planckspace_dev/",
-    icon: MessageCircle,
+    icon: RedditLogo,
   },
   {
     label: "Instagram",
     href: "https://www.instagram.com/planckspace_dev",
-    icon: Camera,
+    icon: InstagramLogo,
   },
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/company/planckspace",
-    icon: BriefcaseBusiness,
+    icon: LinkedInLogo,
   },
 ] as const;

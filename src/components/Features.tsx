@@ -1,5 +1,4 @@
 import { Reveal } from "@/components/ui/reveal";
-import { InView } from "@/components/ui/in-view";
 
 /* ─────────────────────────────────────────────────────────────────────────
    The product.
@@ -38,12 +37,43 @@ function Slab({
   );
 }
 
-/** Uppercase mono micro-label used as in-product chrome. */
+/** Uppercase mono micro-label used as in-product chrome. See .cap. */
 function Cap({ children }: { children: React.ReactNode }) {
+  return <span className="cap">{children}</span>;
+}
+
+/** Stagger step for a card's own regions, in seconds. */
+const d = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
+
+/**
+ * The header over one act.
+ *
+ * The three slabs below were always a sequence — measure, then find, then
+ * verify, which is the same promise the footer makes in one line — but nothing
+ * on the page ever said so. Read cold they were three mocks stacked in a
+ * column, and a reader who did not already know the product had no reason to
+ * believe the third followed from the first.
+ *
+ * Naming and numbering them is the whole fix. It costs one row of chrome per
+ * act and turns a stack into an argument you can feel moving.
+ */
+function Act({ n, name, line }: { n: string; name: string; line: string }) {
   return (
-    <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--text-3)]">
-      {children}
-    </span>
+    <Reveal className="mt-14 mb-5 first:mt-0 sm:mt-20 sm:mb-6">
+      <div className="flex items-center gap-3">
+        <span className="num text-[12px] font-medium text-[var(--brand-700)]">{n}</span>
+        <span className="cap">{name}</span>
+        {/* The rule runs to the edge of the slab below it, which is what ties
+            the label to the thing it labels rather than leaving it floating. */}
+        <span className="h-px flex-1 bg-[var(--border-strong)]" />
+      </div>
+      <p
+        className="iv-fade mt-3.5 max-w-xl text-[15.5px] leading-[1.55] tracking-[-0.011em] text-[var(--text-2)]"
+        style={d(0.08)}
+      >
+        {line}
+      </p>
+    </Reveal>
   );
 }
 
@@ -62,15 +92,25 @@ function Lede({
      sm, unchanged above it. Same reasoning in Cell and EditorLoop below. */
   return (
     <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12">
-      <h3 className="max-w-sm text-[23px] font-semibold leading-[1.15] tracking-[-0.03em] text-[var(--ink)] sm:text-[28px]">
+      <h3
+        className="iv-fade max-w-sm text-[23px] leading-[1.13] font-[580] tracking-[-0.026em] text-[var(--ink)] sm:text-[28px]"
+        style={d(0.04)}
+      >
         {title}
       </h3>
-      <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[var(--text-2)]">
+      <p
+        className="iv-fade mt-4 max-w-md text-[15px] leading-[1.62] text-[var(--text-2)]"
+        style={d(0.1)}
+      >
         {body}
       </p>
       <ul className="mt-7 space-y-2.5 border-t border-[var(--border)] pt-5 sm:mt-8 sm:pt-6">
-        {facts.map((f) => (
-          <li key={f} className="num text-[12px] leading-relaxed text-[var(--text-3)]">
+        {facts.map((f, i) => (
+          <li
+            key={f}
+            className="num iv-fade iv-step text-[12.5px] leading-relaxed text-[var(--text-3)]"
+            style={{ "--i": i + 3 } as React.CSSProperties}
+          >
             {f}
           </li>
         ))}
@@ -91,10 +131,15 @@ function Cell({
 }) {
   return (
     <div className="flex flex-col bg-white p-6 sm:p-8">
-      <h3 className="text-[18px] font-semibold leading-snug tracking-[-0.02em] text-[var(--ink)]">
+      <h3 className="iv-fade text-[18px] leading-snug font-[580] tracking-[-0.018em] text-[var(--ink)]">
         {title}
       </h3>
-      <p className="mt-2.5 text-[14px] leading-relaxed text-[var(--text-2)]">{body}</p>
+      <p
+        className="iv-fade mt-2.5 text-[14px] leading-[1.6] text-[var(--text-2)]"
+        style={d(0.06)}
+      >
+        {body}
+      </p>
       <div className="mt-7 flex-1 sm:mt-8" />
       <div className="border-t border-[var(--border)] pt-5 sm:pt-6">{children}</div>
     </div>
@@ -126,11 +171,11 @@ function Stat({
   return (
     <div className="bg-white px-3.5 py-4 sm:px-6 sm:py-5">
       <Cap>{label}</Cap>
-      <div className="mt-1.5 flex flex-col items-start gap-x-2 sm:mt-2 sm:flex-row sm:items-baseline">
-        <span className="num text-[18px] font-medium tracking-[-0.04em] text-[var(--ink)] sm:text-[25px]">
+      <div className="mt-2 flex flex-col items-start gap-x-2 sm:flex-row sm:items-baseline">
+        <span className="num text-[19px] font-medium tracking-[-0.045em] text-[var(--ink)] sm:text-[26px]">
           {value}
         </span>
-        <span className="num text-[10.5px] font-medium sm:text-[11px]" style={{ color }}>
+        <span className="num text-[11.5px] font-medium" style={{ color }}>
           {delta}
         </span>
       </div>
@@ -181,26 +226,29 @@ function Dashboard() {
       </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-8">
-        <div className="flex items-start justify-between gap-4">
+        <div className="iv-fade flex items-start justify-between gap-4" style={d(0.18)}>
           <div>
             <Cap>Spend over time</Cap>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="num text-[24px] font-medium tracking-[-0.04em] text-[var(--ink)]">
+              <span className="num text-[25px] font-medium tracking-[-0.045em] text-[var(--ink)]">
                 $1,132
               </span>
-              <span className="num text-[11px] font-medium text-[var(--green-700)]">
+              <span className="num text-[11.5px] font-medium text-[var(--green-700)]">
                 ↑ 120%
               </span>
             </div>
           </div>
-          <div className="flex shrink-0 gap-1">
+          {/* A real segmented control rather than three loose chips: the
+              inactive two now sit in a shared inset track, which is what says
+              "these are the other two positions of one switch". */}
+          <div className="flex shrink-0 gap-0.5 rounded-lg bg-[var(--inset)] p-0.5">
             {["Total", "By team", "By repo"].map((t, i) => (
               <span
                 key={t}
                 className={
                   i === 0
-                    ? "rounded-md bg-[var(--ink)] px-2 py-1 text-[10.5px] font-medium text-white sm:px-2.5"
-                    : "rounded-md px-2 py-1 text-[10.5px] text-[var(--text-3)] sm:px-2.5"
+                    ? "rounded-[6px] bg-[var(--ink)] px-2 py-1 text-[11px] font-medium text-white shadow-[0_1px_2px_rgba(14,16,23,0.18)] sm:px-2.5"
+                    : "rounded-[6px] px-2 py-1 text-[11px] font-medium text-[var(--text-3)] sm:px-2.5"
                 }
               >
                 {t}
@@ -209,7 +257,13 @@ function Dashboard() {
           </div>
         </div>
 
-        <InView className="mt-6">
+        {/* vector-effect is the fix for the whole section looking slightly
+            out of focus. This viewBox is 520 units wide and renders at ~700,
+            so every "1px" stroke was being drawn at 1.35 device pixels and
+            landing across two of them — a grey smear instead of a hairline.
+            non-scaling-stroke pins the stroke width to the device, not to the
+            viewBox, so a hairline stays a hairline at any column width. */}
+        <div className="mt-6">
         <svg
           viewBox={`0 0 ${CHART.W} ${CHART.H}`}
           className="block h-auto w-full overflow-visible"
@@ -231,7 +285,8 @@ function Dashboard() {
               y2={y}
               stroke="var(--border)"
               strokeWidth="1"
-              strokeDasharray="3 5"
+              strokeDasharray="2 6"
+              vectorEffect="non-scaling-stroke"
             />
           ))}
           <path d={CHART.area} fill="url(#spendFill)" className="iv-fade" style={{ "--d": "0.6s" } as React.CSSProperties} />
@@ -241,8 +296,9 @@ function Dashboard() {
             d={CHART.line}
             fill="none"
             stroke="var(--brand-600)"
-            strokeWidth="2"
+            strokeWidth="2.25"
             strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
           />
           <g className="iv-fade" style={{ "--d": "1.2s" } as React.CSSProperties}>
           <line
@@ -253,7 +309,8 @@ function Dashboard() {
             stroke="var(--coral-500)"
             strokeWidth="1"
             strokeDasharray="2 3"
-            opacity="0.45"
+            opacity="0.5"
+            vectorEffect="non-scaling-stroke"
           />
           <circle cx={CHART.peak[0]} cy={CHART.peak[1]} r="3.5" fill="var(--coral-500)" />
           <circle
@@ -265,9 +322,9 @@ function Dashboard() {
           />
           </g>
         </svg>
-        </InView>
+        </div>
 
-        <div className="num mt-3 flex justify-between text-[10px] text-[var(--text-3)]">
+        <div className="num iv-fade mt-3 flex justify-between text-[11px] text-[var(--text-3)]" style={d(0.9)}>
           <span>Week 1</span>
           <span>Week 2</span>
           <span>Week 3</span>
@@ -296,18 +353,22 @@ function LeakList() {
         </span>
       </div>
       <ul className="mt-4 divide-y divide-[var(--border)]">
-        {LEAKS.map((l) => (
-          <li key={l.label} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+        {LEAKS.map((l, i) => (
+          <li
+            key={l.label}
+            className="iv-fade iv-step flex items-start justify-between gap-3 py-3 first:pt-0"
+            style={{ "--i": i + 2 } as React.CSSProperties}
+          >
             <span className="min-w-0">
-              <span className="block text-[12.5px] font-medium leading-snug text-[var(--ink)]">
+              <span className="block text-[13px] leading-snug font-medium text-[var(--ink)]">
                 {l.label}
               </span>
-              <span className="num mt-0.5 block text-[10.5px] text-[var(--text-3)]">
+              <span className="num mt-0.5 block text-[11.5px] text-[var(--text-3)]">
                 {l.note}
               </span>
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1.5">
-              <span className="num text-[12.5px] font-medium text-[var(--green-700)]">
+              <span className="num text-[13px] font-medium text-[var(--green-700)]">
                 {l.save}
               </span>
               <span className="block h-[3px] w-14 overflow-hidden rounded-full bg-[var(--inset)]">
@@ -333,15 +394,22 @@ function Ledger() {
     <div>
       <Cap>October, reconciled</Cap>
       <dl className="mt-4 space-y-2.5">
-        {rows.map((r) => (
-          <div key={r.k} className="flex items-baseline justify-between gap-3">
-            <dt className="text-[12.5px] text-[var(--text-2)]">{r.k}</dt>
-            <dd className="num text-[13px] font-medium text-[var(--ink)]">{r.v}</dd>
+        {rows.map((r, i) => (
+          <div
+            key={r.k}
+            className="iv-fade iv-step flex items-baseline justify-between gap-3"
+            style={{ "--i": i + 2 } as React.CSSProperties}
+          >
+            <dt className="text-[13px] text-[var(--text-2)]">{r.k}</dt>
+            <dd className="num text-[13.5px] font-medium text-[var(--ink)]">{r.v}</dd>
           </div>
         ))}
-        <div className="flex items-baseline justify-between gap-3 border-t border-[var(--border)] pt-3">
-          <dt className="text-[12.5px] font-medium text-[var(--ink)]">Unattributed</dt>
-          <dd className="num text-[15px] font-medium text-[var(--brand-700)]">$340</dd>
+        <div
+          className="iv-fade iv-step flex items-baseline justify-between gap-3 border-t border-[var(--border)] pt-3"
+          style={{ "--i": 4 } as React.CSSProperties}
+        >
+          <dt className="text-[13px] font-medium text-[var(--ink)]">Unattributed</dt>
+          <dd className="num text-[16px] font-medium text-[var(--brand-700)]">$340</dd>
         </div>
       </dl>
       <div className="mt-3 flex h-[6px] gap-[2px] overflow-hidden rounded-full" aria-hidden>
@@ -351,7 +419,7 @@ function Ledger() {
           style={{ width: "5.6%", "--d": "0.7s" } as React.CSSProperties}
         />
       </div>
-      <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-3)]">
+      <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-3)]">
         One engineer is running without the agent installed. Invite them and the
         gap closes.
       </p>
@@ -367,10 +435,10 @@ function Budget() {
         <span className="num text-[11px] font-medium text-[var(--green-700)]">on pace</span>
       </div>
       <div className="num mt-2 flex items-baseline gap-1.5">
-        <span className="text-[20px] font-medium tracking-[-0.04em] text-[var(--ink)]">
+        <span className="text-[21px] font-medium tracking-[-0.045em] text-[var(--ink)]">
           $5,120
         </span>
-        <span className="text-[11px] text-[var(--text-3)]">of $8,000</span>
+        <span className="text-[11.5px] text-[var(--text-3)]">of $8,000</span>
       </div>
       {/* One bar, and it earns it: progress against a real ceiling, with the
           tick marking where the month's pace says you should be on day 19. */}
@@ -378,19 +446,17 @@ function Budget() {
         <div className="iv-grow-x h-full w-[64%] rounded-full bg-[var(--brand-600)]" style={{ "--d": "0.2s" } as React.CSSProperties} />
         <div className="absolute inset-y-0 left-[72%] w-px bg-[var(--ink)]" />
       </div>
-      <p className="num mt-2.5 text-[10.5px] text-[var(--text-3)]">
+      <p className="num mt-2.5 text-[11.5px] text-[var(--text-3)]">
         projected close $7,430
       </p>
       <div className="mt-5 border-t border-[var(--border)] pt-4">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[12.5px] font-medium text-[var(--ink)]">
+          <span className="text-[13px] font-medium text-[var(--ink)]">
             Session outlier
           </span>
-          <span className="num text-[10px] uppercase tracking-[0.08em] text-[var(--coral-700)]">
-            critical
-          </span>
+          <span className="cap cap-hot">critical</span>
         </div>
-        <p className="num mt-1 text-[10.5px] text-[var(--text-3)]">
+        <p className="num mt-1.5 text-[11.5px] text-[var(--text-3)]">
           $190 against a $16 median, posted to #eng-spend
         </p>
       </div>
@@ -408,49 +474,59 @@ function EditorLoop() {
   return (
     <div className="flex flex-col">
       <div className="border-b border-[var(--border)] p-6 sm:p-10">
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="iv-fade flex items-baseline justify-between gap-3" style={d(0.04)}>
           <Cap>Insight in your editor</Cap>
-          <span className="num text-[10.5px] text-[var(--text-3)]">high confidence</span>
+          <span className="num text-[11.5px] text-[var(--text-3)]">high confidence</span>
         </div>
-        <div className="mt-4 flex items-baseline justify-between gap-4">
-          <span className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-[var(--ink)]">
+        <div
+          className="iv-fade mt-4 flex items-baseline justify-between gap-4"
+          style={d(0.1)}
+        >
+          <span className="text-[15.5px] leading-snug font-medium tracking-[-0.012em] text-[var(--ink)]">
             CLAUDE.md is re-read 212× per session in api-service
           </span>
-          <span className="num shrink-0 text-[15px] font-medium text-[var(--green-700)]">
+          <span className="num shrink-0 text-[15.5px] font-medium text-[var(--green-700)]">
             $34/mo
           </span>
         </div>
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <span className="rounded-md bg-[var(--brand-600)] px-3.5 py-2 text-[11.5px] font-medium text-white">
+        {/* These are a drawing of the extension's own buttons, so they get the
+            extension's own weight: a real contact shadow under the primary and
+            a true hairline on the secondary. Flat rectangles read as wireframe,
+            and this row is meant to read as a screenshot. */}
+        <div className="iv-fade mt-5 flex flex-wrap items-center gap-2" style={d(0.16)}>
+          <span className="rounded-lg bg-[var(--brand-600)] px-3.5 py-2 text-[12px] font-medium text-white shadow-[0_1px_2px_rgba(29,83,207,0.35)]">
             Fix now
           </span>
-          <span className="rounded-md border border-[var(--border-strong)] px-3.5 py-2 text-[11.5px] font-medium text-[var(--text-2)]">
+          <span className="rounded-lg border border-[var(--border-strong)] bg-white px-3.5 py-2 text-[12px] font-medium text-[var(--text-2)] shadow-[0_1px_1px_rgba(14,16,23,0.04)]">
             Fix with Claude Code
           </span>
-          <span className="num text-[10.5px] text-[var(--text-3)]">
+          <span className="num text-[11.5px] text-[var(--text-3)]">
             backed up, one click to undo
           </span>
         </div>
       </div>
 
       <div className="flex-1 p-6 sm:p-10">
-        <Cap>Booked from telemetry</Cap>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="num text-[28px] font-medium tracking-[-0.04em] text-[var(--green-700)]">
+        <div className="iv-fade" style={d(0.24)}>
+          <Cap>Booked from telemetry</Cap>
+        </div>
+        <div className="iv-fade mt-2 flex items-baseline gap-2" style={d(0.28)}>
+          <span className="num text-[30px] font-medium tracking-[-0.045em] text-[var(--green-700)]">
             $212
           </span>
-          <span className="text-[12px] text-[var(--text-2)]">saved since May 12</span>
+          <span className="text-[12.5px] text-[var(--text-2)]">saved since May 12</span>
         </div>
         <ul className="mt-5 divide-y divide-[var(--border)] border-t border-[var(--border)]">
-          {receipts.map((r) => (
+          {receipts.map((r, i) => (
             <li
               key={r.label}
-              className="flex items-baseline justify-between gap-3 py-3"
+              className="iv-fade iv-step flex items-baseline justify-between gap-3 py-3"
+              style={{ "--i": i + 6 } as React.CSSProperties}
             >
-              <span className="min-w-0 truncate text-[12.5px] text-[var(--ink)]">
+              <span className="min-w-0 truncate text-[13px] text-[var(--ink)]">
                 {r.label}
               </span>
-              <span className="num shrink-0 text-[11px] text-[var(--text-3)]">
+              <span className="num shrink-0 text-[11.5px] text-[var(--text-3)]">
                 <span className="font-medium text-[var(--ink)]">{r.value}</span>{" "}
                 {r.date}
               </span>
@@ -464,18 +540,52 @@ function EditorLoop() {
 
 /* ── the quiet strip ────────────────────────────────────────────────────── */
 
-/* One glyph each, drawn on the same 64×40 grid in ink and the one accent. */
+/* One glyph each, drawn on a 72×44 grid at 1:1 — the SVG is rendered at
+   exactly its viewBox size, so nothing is ever resampled and a 1px rule stays
+   a 1px rule. Ink plus the one accent, no third colour.
+
+   The old set was drawn at 64×40 and read as three grey smudges at a glance:
+   abstract enough that you had to look at the heading to learn what they were,
+   which is the one job an icon has. These say their nouns — a ranked rollup,
+   a torn receipt, a sheet being exported — before the heading does. */
+
 function TeamsGlyph() {
+  const rows = [
+    { y: 2, bar: 40, rest: 12, o: 1 },
+    { y: 17, bar: 28, o: 0.55 },
+    { y: 32, bar: 15, o: 0.28 },
+  ];
   return (
-    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
-      {[
-        { y: 4, w: 52 },
-        { y: 16, w: 36 },
-        { y: 28, w: 18 },
-      ].map((r, i) => (
+    <svg viewBox="0 0 72 44" className="h-11 w-[72px]" aria-hidden>
+      {rows.map((r, i) => (
         <g key={r.y}>
-          <rect x="0" y={r.y} width="6" height="8" rx="2" fill="var(--border-strong)" />
-          <rect className="iv-grow-x" style={{ "--d": `${0.1 + i * 0.1}s` } as React.CSSProperties} x="10" y={r.y} width={r.w} height="8" rx="2" fill="var(--brand-600)" opacity={1 - i * 0.3} />
+          <rect x="0" y={r.y} width="10" height="10" rx="3" fill="var(--ink)" opacity={r.o} />
+          <rect
+            className="iv-grow-x"
+            style={{ "--d": `${0.1 + i * 0.09}s` } as React.CSSProperties}
+            x="15"
+            y={r.y}
+            width={r.bar}
+            height="10"
+            rx="3"
+            fill="var(--brand-600)"
+            opacity={r.o}
+          />
+          {/* the unattributed remainder the copy promises is always visible */}
+          {r.rest ? (
+            <rect
+              className="iv-grow-x"
+              style={{ "--d": "0.4s" } as React.CSSProperties}
+              x={15 + r.bar + 2}
+              y={r.y}
+              width={r.rest}
+              height="10"
+              rx="3"
+              fill="none"
+              stroke="var(--border-strong)"
+              strokeDasharray="2 2"
+            />
+          ) : null}
         </g>
       ))}
     </svg>
@@ -484,26 +594,51 @@ function TeamsGlyph() {
 
 function ReceiptGlyph() {
   return (
-    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
-      <path d="M14 2h36v36l-4.5-3-4.5 3-4.5-3-4.5 3-4.5-3-4.5 3-4.5-3-4.5 3z" fill="white" stroke="var(--border-strong)" />
-      <rect className="iv-grow-x" style={{ "--d": "0.1s" } as React.CSSProperties} x="20" y="9" width="16" height="3" rx="1.5" fill="var(--ink)" />
-      <rect className="iv-grow-x" style={{ "--d": "0.2s" } as React.CSSProperties} x="20" y="16" width="24" height="2" rx="1" fill="var(--border-strong)" />
-      <rect className="iv-grow-x" style={{ "--d": "0.3s" } as React.CSSProperties} x="20" y="21" width="20" height="2" rx="1" fill="var(--border-strong)" />
-      <rect className="iv-grow-x" style={{ "--d": "0.4s" } as React.CSSProperties} x="34" y="27" width="10" height="3" rx="1.5" fill="var(--brand-600)" />
+    <svg viewBox="0 0 72 44" className="h-11 w-[72px]" aria-hidden>
+      <path
+        d="M16 1h40v40l-5-3.2-5 3.2-5-3.2-5 3.2-5-3.2-5 3.2-5-3.2-5 3.2z"
+        fill="white"
+        stroke="var(--border-strong)"
+      />
+      <rect className="iv-grow-x" style={{ "--d": "0.1s" } as React.CSSProperties} x="22" y="8" width="20" height="3.5" rx="1.75" fill="var(--ink)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.18s" } as React.CSSProperties} x="22" y="16" width="28" height="2.5" rx="1.25" fill="var(--border-strong)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.26s" } as React.CSSProperties} x="22" y="22" width="22" height="2.5" rx="1.25" fill="var(--border-strong)" />
+      <rect className="iv-grow-x" style={{ "--d": "0.34s" } as React.CSSProperties} x="36" y="29" width="14" height="3.5" rx="1.75" fill="var(--brand-600)" />
     </svg>
   );
 }
 
 function ExportGlyph() {
   return (
-    <svg viewBox="0 0 64 40" className="h-10 w-16" aria-hidden>
-      <rect x="6" y="3" width="42" height="34" rx="4" fill="white" stroke="var(--border-strong)" />
-      <path d="M6 13h42M6 21h42M6 29h42M20 3v34" stroke="var(--border)" />
-      {[13, 21, 29].map((y, i) => (
-        <rect key={y} className="iv-fade" style={{ "--d": `${0.15 + i * 0.1}s` } as React.CSSProperties} x="24" y={y + 3} width={18 - i * 5} height="2" rx="1" fill="var(--text-3)" />
+    <svg viewBox="0 0 72 44" className="h-11 w-[72px]" aria-hidden>
+      <rect x="1" y="2" width="50" height="40" rx="5" fill="white" stroke="var(--border-strong)" />
+      <path d="M1 14h50M1 25h50M1 36h50M18 2v40" stroke="var(--border)" />
+      <rect x="1" y="2" width="50" height="12" rx="5" fill="var(--inset)" />
+      <path d="M1 14h50M18 2v40" stroke="var(--border)" />
+      {[17, 28].map((y, i) => (
+        <rect
+          key={y}
+          className="iv-grow-x"
+          style={{ "--d": `${0.15 + i * 0.09}s` } as React.CSSProperties}
+          x="23"
+          y={y}
+          width={22 - i * 7}
+          height="3"
+          rx="1.5"
+          fill="var(--text-3)"
+        />
       ))}
-      <circle className="iv-pop" style={{ "--d": "0.55s" } as React.CSSProperties} cx="52" cy="31" r="8" fill="var(--ink)" />
-      <path className="iv-fade" style={{ "--d": "0.65s" } as React.CSSProperties} d="M52 27.5v6.5m-2.8-2.6 2.8 2.8 2.8-2.8" stroke="white" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle className="iv-pop" style={{ "--d": "0.5s" } as React.CSSProperties} cx="59" cy="33" r="10" fill="var(--ink)" />
+      <path
+        className="iv-fade"
+        style={{ "--d": "0.6s" } as React.CSSProperties}
+        d="M59 28.5v8m-3.4-3.2 3.4 3.4 3.4-3.4"
+        stroke="white"
+        strokeWidth="1.6"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -536,21 +671,32 @@ export default function Features() {
     >
       <div className="container-x">
         <Reveal className="mx-auto max-w-2xl text-center">
+          {/* The eyebrow now carries the three surfaces. They used to be the
+              last clause of the lead ("in the dashboard, in the CLI, and in
+              your editor"), where they read as a feature list tacked onto an
+              argument. As chrome they are simply a fact about where this runs,
+              and the lead gets to stay an argument. */}
           <p className="eyebrow mb-6" data-center="true">
-            The product
+            Dashboard · CLI · Editor
           </p>
           <h2 className="display-2">
-            Turn AI coding into clear engineering decisions.
+            Measure the spend. Cut the waste. Prove the saving.
           </h2>
           <p className="lead mt-5">
-            Every session your team runs becomes attributed, explainable spend,
-            tied to the work that actually shipped. In the dashboard, in the CLI,
-            and in your editor.
+            Every session your team runs becomes attributed spend, tied to the
+            work that actually shipped. The waste inside it arrives itemised in
+            dollars, and a saving is only ever counted once your own telemetry
+            confirms it.
           </p>
         </Reveal>
 
-        <div className="mt-12 space-y-4 sm:mt-20">
+        <div className="mt-12 sm:mt-20">
           {/* act 1 */}
+          <Act
+            n="01"
+            name="Measure"
+            line="Every session your team closes, attributed and priced as it happens."
+          />
           <Reveal>
             <Slab>
               <div className="grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
@@ -569,8 +715,12 @@ export default function Features() {
           </Reveal>
 
           {/* act 2 */}
+          <Act
+            n="02"
+            name="Find"
+            line="The waste inside that spend, itemised in dollars and traced back to the invoice it hides in."
+          />
           <Reveal delay={0.05}>
-            <InView>
             <Slab>
               {/* Straight from one column to three. A two-column tablet step
                   would leave a fourth grid area empty, and with gap-px over the
@@ -596,10 +746,14 @@ export default function Features() {
                 </Cell>
               </div>
             </Slab>
-            </InView>
           </Reveal>
 
           {/* act 3, mirrored so the page does not read the same row twice */}
+          <Act
+            n="03"
+            name="Verify"
+            line="The fix applied where you work, then the saving confirmed from the sessions that follow."
+          />
           <Reveal delay={0.05}>
             <Slab>
               <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
@@ -621,25 +775,29 @@ export default function Features() {
             </Slab>
           </Reveal>
 
-          {/* the rest, stated plainly */}
-          <Reveal delay={0.05}>
-            <InView>
+          {/* The rest, stated plainly. No act label: this is the shelf under
+              the argument, not a fourth beat of it, and numbering it would
+              promise a step that is not there. */}
+          <Reveal delay={0.05} className="mt-4">
             <Slab>
               <div className="grid gap-px bg-[var(--border)] sm:grid-cols-3">
-                {ALSO.map((a) => (
-                  <div key={a.title} className="bg-white p-6 sm:p-8">
+                {ALSO.map((a, i) => (
+                  <div
+                    key={a.title}
+                    className="iv-fade iv-step bg-white p-6 transition-colors duration-500 [transition-timing-function:var(--ease-swift)] hover:bg-[var(--panel)] sm:p-8"
+                    style={{ "--i": i } as React.CSSProperties}
+                  >
                     <a.Glyph />
-                    <h3 className="mt-5 text-[15px] font-semibold tracking-[-0.015em] text-[var(--ink)]">
+                    <h3 className="mt-5 text-[16px] font-[580] tracking-[-0.016em] text-[var(--ink)]">
                       {a.title}
                     </h3>
-                    <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--text-2)]">
+                    <p className="mt-2 text-[14px] leading-[1.6] text-[var(--text-2)]">
                       {a.body}
                     </p>
                   </div>
                 ))}
               </div>
             </Slab>
-            </InView>
           </Reveal>
         </div>
       </div>

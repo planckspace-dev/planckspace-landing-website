@@ -1,18 +1,38 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Instrument_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
+/* ── the two voices ───────────────────────────────────────────────────────
+   Instrument Sans carries everything that is prose or interface. It is a
+   slightly narrow grotesque with flat, cut terminals and small apertures,
+   which is what lets a headline hold tight tracking at 4.5rem without the
+   letterforms going soft, and what keeps a 13px table label legible where a
+   rounder face turns to grey. It replaces Geist, which is drawn to
+   disappear — the right call for a framework's own docs, the wrong one for a
+   product that has to look like somebody designed it.
+
+   IBM Plex Mono is the metering voice: every figure, threshold, field name
+   and unit on this site. It is deliberately not chosen as a code font. Its
+   numerals carry real contrast — a slashed zero, a flagged one, a $ that
+   survives at 10px — so a column of money reads as an instrument's readout
+   rather than as a terminal dump.
+
+   Neither is given a weight where the face is variable: the whole axis ships
+   as one file, so a heading can sit at 580 instead of snapping to the nearest
+   static cut.
+   ────────────────────────────────────────────────────────────────────── */
+
+const sans = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-geist",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-instrument",
   display: "swap",
 });
 
-const jetbrains = JetBrains_Mono({
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains",
-  weight: ["400", "500"],
+  variable: "--font-plex",
+  // Plex Mono is not variable, so the cuts are named explicitly.
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -99,7 +119,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} ${jetbrains.variable} h-full`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable} h-full`}>
       <body className="antialiased min-h-full bg-[var(--page)] text-[var(--ink)]">
         {children}
       </body>

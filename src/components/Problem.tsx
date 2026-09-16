@@ -179,7 +179,12 @@ export default function Problem() {
         <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.35fr] lg:gap-24">
           {/* sticky editorial statement */}
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <Reveal>
+            {/* marks={false} because the Invoice chart below sits a long way
+                under this block's top edge and keeps its own <InView>. Every
+                other Reveal on the site wraps the same box as the marks it
+                drives; this one does not, and letting it drive them would
+                start the bars while the chart is still under the fold. */}
+            <Reveal marks={false}>
               <h2 className="display-2">
                 AI changed how we write code. Nobody knows what it’s costing.
               </h2>

@@ -4,21 +4,32 @@
    PlanckSpace marketing site: design tokens.
    Unified with the product dashboard's UI 2.0 contract (frontend docs/DESIGN.md):
    white data surfaces, ink primaries, ONE brand blue, hairline borders,
-   ultra-diffused shadows. Geist for type, JetBrains Mono for labels/numbers.
+   ultra-diffused shadows. Instrument Sans for type, IBM Plex Mono for
+   labels/numbers; see the note in layout.tsx for why those two.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   --page: #ffffff;
-  --panel: #f7f8fb; /* alternating section wash */
+  /* Darkened a step. White cards on #f7f8fb separate by about one percent of
+     luminance, which is why the product mocks read as one continuous pale
+     field rather than as cards resting on a wash — the single biggest reason
+     that section looked unfocused before any type was touched. Still quiet
+     enough to stay a wash rather than becoming a colour. */
+  --panel: #f3f5fa; /* alternating section wash */
   --surface: #ffffff;
   --inset: #f0f2f6;
-  --border: #e7e9f0;
-  --border-strong: #d6dae3;
+  --border: #e3e6ef;
+  --border-strong: #c9cfdd;
 
-  --ink: #11131a;
+  --ink: #0e1017;
   --ink-2: #1d2029; /* dark-panel elevated surface */
-  --text-2: #5a6172;
-  --text-3: #8a91a3;
+  /* Both greys were raised a full step. At #5a6172 / #8a91a3 the old pair
+     measured 6.0:1 and 3.1:1 on white — the second fails AA outright, and it
+     was carrying every mono micro-label in the product mocks. That is the
+     whole reason those mocks read as soft rather than as instrument chrome:
+     the labels were literally too pale to resolve. Now 8.3:1 and 4.8:1. */
+  --text-2: #4b5261;
+  --text-3: #6f7789;
 
   --brand-50: #eef4ff;
   --brand-100: #dce8fe;
@@ -42,9 +53,14 @@
   --dark-border: rgba(255, 255, 255, 0.08);
   --dark-text-2: #9ba1b0;
 
+  /* Three steps, not two. A 1px contact shadow and a 24px haze with nothing
+     between them is what makes a card look printed on the page instead of
+     resting above it; the 6px step is the one the eye actually reads as
+     lift. */
   --shadow-soft:
-    0 1px 2px rgba(17, 19, 26, 0.04),
-    0 8px 24px -12px rgba(17, 19, 26, 0.08);
+    0 1px 1px rgba(14, 16, 23, 0.04),
+    0 4px 10px -5px rgba(14, 16, 23, 0.07),
+    0 18px 36px -20px rgba(14, 16, 23, 0.1);
   --shadow-float:
     0 1px 2px rgba(17, 19, 26, 0.05),
     0 12px 32px -16px rgba(29, 83, 207, 0.14),
@@ -73,8 +89,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex), ui-monospace, "SFMono-Regular", monospace;
 
   --color-page: var(--page);
   --color-panel: var(--panel);
@@ -102,7 +118,18 @@ html {
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* text-rendering: optimizeLegibility is deliberately gone. It is not a
+     sharpness dial — it asks for ligatures and full kerning and then renders
+     inconsistently between engines, which on a page this dense showed up as
+     labels that looked subtly different widths in different cards. Kerning is
+     requested explicitly instead.
+
+     font-synthesis-weight: none matters because the sans is variable: without
+     it, any weight requested before the font file lands gets faked by
+     smearing the fallback, and the headline visibly re-draws on swap. */
+  font-kerning: normal;
+  font-synthesis-weight: none;
+  font-optical-sizing: auto;
   /* The grey flash mobile WebKit/Blink paint over any tapped element. We draw
      our own press states, so the default just makes taps look broken. */
   -webkit-tap-highlight-color: transparent;
@@ -224,40 +251,75 @@ body {
   }
 }
 
+/* Display sizes are unchanged; the tracking and weight are not. Instrument
+   Sans sets tighter than Geist and its counters are smaller, so the old
+   -0.04em closed the o/e/a bowls at 4.5rem and the headline turned into a
+   texture. -0.028em is where this face holds its shape at display size.
+
+   Weight moved off the static 600 onto 580. On a variable axis that reads as
+   a hair more authority than a semibold without tipping into the slightly
+   shouty 600 — which is the exact difference between "designed" and
+   "bolded". */
 .display-1 {
-  /* Only the floor moved: 2.75rem overran the measure on a 360px handset. The
-     6vw coefficient and 4.5rem ceiling are untouched, so every viewport from
-     733px up renders exactly as it did before. Tracking eased from -0.045em to
-     -0.04em, below which the letterforms start touching at display size. */
   font-size: clamp(2.5rem, 6vw, 4.5rem);
-  line-height: 1.04;
-  letter-spacing: -0.04em;
-  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.028em;
+  font-weight: 580;
   color: var(--ink);
   text-wrap: balance;
 }
 
 .display-2 {
   font-size: clamp(1.75rem, 3.4vw, 2.75rem);
-  line-height: 1.09;
-  letter-spacing: -0.033em;
-  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.024em;
+  font-weight: 580;
   color: var(--ink);
   text-wrap: balance;
 }
 
 .lead {
   font-size: clamp(1.0625rem, 1.5vw, 1.1875rem);
-  line-height: 1.65;
+  line-height: 1.6;
+  letter-spacing: -0.008em;
   color: var(--text-2);
   text-wrap: pretty;
 }
 
-/* numbers, money, metrics: tabular, mono */
+/* numbers, money, metrics: tabular, mono.
+
+   Plex Mono runs wider than JetBrains at the same px, so the old -0.02em is
+   not enough to stop a currency column from out-measuring its label. -0.03em
+   brings the advance back to roughly where it was while keeping Plex's
+   figures, which are the reason for the swap. */
 .num {
   font-family: var(--font-mono), monospace;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+}
+
+/* ── the micro-label ──────────────────────────────────────────────────────
+   The uppercase mono chrome that titles every region of every product mock.
+   It was being re-declared inline at 10px / 10.5px / 11px with three
+   different tracking values across Features, Capabilities, Problem and
+   Roles. At 10px uppercase mono is past the point where tracking can rescue
+   it — it stops being read and starts being texture, which is most of why
+   those mocks looked blurry rather than dense.
+
+   One declaration, 11px, tracked open, and at a grey that actually resolves.
+   ────────────────────────────────────────────────────────────────────── */
+.cap {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+/* The same label where it has to sit on the accent it describes. */
+.cap-hot {
+  color: var(--coral-700);
 }
 
 /* ── cards & bezels ───────────────────────────────────────────────────── */
@@ -667,7 +729,45 @@ body {
      simply appear finished.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── entry motion, keyed off <InView data-in> ─────────────────────────── */
+/* ── the block reveal ─────────────────────────────────────────────────────
+   <Reveal> wears .rv. It lifts the block in AND flips data-in, so the marks
+   below run on the same clock as the box that contains them.
+
+   Three things here are doing real work.
+
+   will-change is declared in the resting state rather than being added when
+   the animation starts: a layer promoted on the first frame of a transition
+   costs a re-raster of the whole card, and on a slab carrying a hairline grid
+   and a soft shadow that re-raster is visible as a shimmer down the borders.
+   It is retired again via [data-done], because a box parked on a composited
+   layer keeps its text on grayscale antialiasing forever.
+
+   The travel is 12px, not 24px. The reader is scrolling while this plays; the
+   further the card moves against the scroll, the more it reads as the page
+   losing its grip rather than as the card arriving.
+
+   And the duration is long (0.85s) against a quart ease, so almost all of the
+   distance is covered in the first third and the card spends the rest of the
+   time settling. A short fast lift is what makes an entry feel like a jolt.
+   ────────────────────────────────────────────────────────────────────── */
+
+.rv[data-lift="true"] {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  will-change: opacity, transform;
+  transition:
+    opacity 0.85s var(--ease-out-quart) var(--rv-d, 0s),
+    transform 0.85s var(--ease-out-quart) var(--rv-d, 0s);
+}
+.rv[data-lift="true"][data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+.rv[data-done="true"] {
+  will-change: auto;
+}
+
+/* ── entry motion, keyed off data-in ──────────────────────────────────── */
 
 [data-in] .iv-draw {
   stroke-dasharray: 1;
@@ -711,16 +811,27 @@ body {
   opacity: 1;
 }
 
+/* The workhorse for staggering a card's own regions. Deliberately a smaller
+   move than the card's: the slab travels 12px, the rows inside it travel 5,
+   so the contents read as settling into a box that is already arriving rather
+   than as a second, competing animation. */
 [data-in] .iv-fade {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translate3d(0, 5px, 0);
   transition:
-    opacity 0.7s var(--ease-out-quart) var(--d, 0s),
-    transform 0.7s var(--ease-out-quart) var(--d, 0s);
+    opacity 0.65s var(--ease-out-quart) var(--d, 0s),
+    transform 0.65s var(--ease-out-quart) var(--d, 0s);
 }
 [data-in="true"] .iv-fade {
   opacity: 1;
   transform: none;
+}
+
+/* Index-driven stagger, so a list does not need a hand-written delay per row.
+   Set --i on the child; the step is fixed here so every staggered list on the
+   site runs at the same cadence. */
+[data-in] .iv-step {
+  --d: calc(var(--i, 0) * 55ms);
 }
 
 /* pixel waffle: the Planck raster, used as a unit chart */
@@ -792,6 +903,21 @@ body {
   stroke-dasharray: 1;
   animation: draw-in 1.6s var(--ease-out-quart) both;
   animation-delay: var(--d, 0s);
+}
+
+/* A row landing in the session feed. One keyframe on the newest row, which
+   is a freshly mounted element every tick, so it plays once and is never
+   taken off again — no state, no re-render, nothing for React to clean up. */
+@keyframes feed-arrive {
+  from {
+    background-color: var(--brand-50);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.feed-new {
+  animation: feed-arrive 1.9s var(--ease-out-quart) both;
 }
 
 /* a quiet "live" beacon: a ring that breathes out, never a flashing dot */

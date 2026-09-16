@@ -107,7 +107,7 @@ export default function Footer() {
                 title={social.label}
                 className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[linear-gradient(180deg,#ffffff_0%,#f4f6fb_100%)] text-[var(--ink)] shadow-[0_1px_2px_rgba(17,19,26,0.04),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ink)] hover:bg-[var(--surface)] hover:shadow-[var(--shadow-soft)]"
               >
-                <Icon className="h-4 w-4 text-[var(--ink)] transition-transform duration-300 group-hover:scale-110" strokeWidth={2.1} />
+                <Icon className="h-[17px] w-[17px] text-[var(--ink)] transition-transform duration-300 group-hover:scale-110" />
               </a>
             );
           })}

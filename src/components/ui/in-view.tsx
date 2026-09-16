@@ -46,6 +46,36 @@ export function InView({
 }
 
 /**
+ * True once the element has been on screen, and true for good after that.
+ *
+ * Same trigger as <InView>, handed back as a boolean rather than as an
+ * attribute, for the callers that have to gate React state on it instead of
+ * CSS — the detector rail needs to know whether the section has been reached
+ * before it will let a panel play.
+ */
+export function useSeen<T extends Element>(margin = "0px 0px -10% 0px") {
+  const ref = useRef<T>(null);
+  const [seen, setSeen] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setSeen(true);
+        io.disconnect();
+      },
+      { rootMargin: margin, threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [margin]);
+
+  return [ref, seen] as const;
+}
+
+/**
  * True while the element is on screen and the reader has not asked for reduced
  * motion. Every looping animation on the page (the live session feed, the
  * metering pixels, the privacy packets) gates on this, so nothing burns a

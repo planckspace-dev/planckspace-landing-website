@@ -32,8 +32,6 @@ import { useLive } from "@/components/ui/in-view";
    legend shares and the tooltip can never disagree with each other.
    ───────────────────────────────────────────────────────────────────────── */
 
-const EASE = [0.22, 1, 0.36, 1] as const;
-
 /* ── data ───────────────────────────────────────────────────────────────── */
 
 /** mulberry32: tiny, seeded, identical on server and client. */
@@ -115,7 +113,18 @@ const POOL: Session[] = [
 ];
 
 const AGO = ["just now", "14s ago", "39s ago", "1m ago", "2m ago", "4m ago"];
-const FEED_LEN = 5;
+/* Rows held in state. Deliberately more than can ever be on screen: the
+   window takes whatever height the column has spare, and a list that ran out
+   of rows would show white space under the last one. Clipped rows cost a few
+   DOM nodes and remove the whole class of bug. */
+const FEED_LEN = 9;
+/* The shortest the window is allowed to get, in rows. Independent of
+   FEED_LEN — this one is about how much of the feed is worth showing, that
+   one is about never running out of list. */
+const FEED_MIN_ROWS = 5;
+/* Every row is exactly this tall, border included. The feed's whole
+   animation rests on that number being true — see Feed. */
+const ROW_H = 52;
 const TICK_MS = 3400;
 
 /* ── number motion ──────────────────────────────────────────────────────── */
@@ -158,11 +167,7 @@ function useTween(target: number, { from, duration = 1400, delay = 0 }: { from?:
 /* ── pieces ─────────────────────────────────────────────────────────────── */
 
 function Cap({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--text-3)]">
-      {children}
-    </span>
-  );
+  return <span className="cap">{children}</span>;
 }
 
 function Sparkline() {
@@ -425,12 +430,39 @@ function SpendChart() {
 
 type Row = Session & { key: number };
 
+/**
+ * The live session feed: a fixed window that new rows slide into.
+ *
+ * This used to be an AnimatePresence list where every row carried framer's
+ * `layout` prop, and it was the most destructive thing on the page. Two
+ * faults, compounding:
+ *
+ *   1. The exiting row animated only its opacity, so it stayed in flow for
+ *      the whole 0.55s. The list held six rows instead of five, grew by a row
+ *      height, grew the console, and reflowed the entire document — every
+ *      section below the hero jumped, once every 3.4 seconds.
+ *
+ *   2. `layout` and `y` both write to transform. Framer resolves that by
+ *      measuring the real box and projecting a correction onto it, so the two
+ *      fought each other across a subtree that fault 1 was busy resizing.
+ *      That is what turned a jump into the screen coming apart.
+ *
+ * So the list no longer changes size, ever, and nothing measures anything.
+ * The window is clipped, and its height is owned by the flex column rather
+ * than by its contents — min-height is explicit and overflow is hidden, so
+ * the rows inside cannot push it. Rows are a known ROW_H tall, which lets the
+ * arrival be one transform on one element: start the list a row high and let
+ * it fall back to rest. No projection, no reflow, and nothing below the hero
+ * can feel it.
+ */
 function Feed({ live, onSession }: { live: boolean; onSession: (cost: number) => void }) {
   const [rows, setRows] = useState<Row[]>(() =>
     POOL.slice(0, FEED_LEN).map((s, i) => ({ ...s, key: i })),
   );
   const cursor = useRef(FEED_LEN);
   const started = useRef(false);
+  const listRef = useRef<HTMLUListElement>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (!live) return;
@@ -438,12 +470,27 @@ function Feed({ live, onSession }: { live: boolean; onSession: (cost: number) =>
     const lead = started.current ? TICK_MS : 2600;
     started.current = true;
     let id: ReturnType<typeof setInterval> | undefined;
+
     const push = () => {
       const s = POOL[cursor.current % POOL.length];
       const key = cursor.current++;
       setRows((r) => [{ ...s, key }, ...r].slice(0, FEED_LEN));
       onSession(s.cost);
+
+      /* Run straight off the DOM rather than through state. The new row is
+         already painted in its final place by the time this fires; all this
+         does is start the list one row high and let it settle, which reads as
+         the arrival pushing the others down. On WAAPI it stays off React's
+         clock, so a dropped render cannot park the list mid-slide. */
+      const el = listRef.current;
+      if (el && !reduce) {
+        el.animate(
+          [{ transform: `translateY(-${ROW_H}px)` }, { transform: "translateY(0)" }],
+          { duration: 520, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        );
+      }
     };
+
     const t = setTimeout(() => {
       push();
       id = setInterval(push, TICK_MS);
@@ -452,54 +499,76 @@ function Feed({ live, onSession }: { live: boolean; onSession: (cost: number) =>
       clearTimeout(t);
       if (id) clearInterval(id);
     };
-  }, [live, onSession]);
+  }, [live, onSession, reduce]);
 
   return (
-    <ul className="divide-y divide-[var(--border)]">
-      <AnimatePresence initial={false}>
-        {rows.map((r, i) => {
-          const Tool = TOOL_BY_ID[r.tool];
-          return (
-            <motion.li
-              key={r.key}
-              layout
-              initial={{ opacity: 0, y: -10, backgroundColor: "rgba(238,244,255,1)" }}
-              animate={{ opacity: 1, y: 0, backgroundColor: "rgba(238,244,255,0)" }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.55,
-                ease: EASE,
-                backgroundColor: { duration: 1.8, ease: "easeOut" },
-                layout: { duration: 0.5, ease: EASE },
-              }}
-              className="flex items-center gap-2.5 px-4 py-2.5"
-            >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[var(--border)] bg-[var(--panel)]">
-                <Tool.Logo className="h-3.5 w-3.5" style={{ color: TOOL_COLOR[r.tool] }} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-1.5">
-                  <span className="truncate text-[12px] font-medium text-[var(--ink)]">{r.repo}</span>
-                  <span className="num hidden truncate text-[10px] text-[var(--text-3)] sm:inline">{r.dev}</span>
+    /* The clip, and it is two elements for one specific reason.
+
+       overflow:hidden does not stop a box sizing itself to its contents — it
+       only clips what spills afterwards — and min-height is a floor, not a
+       ceiling. So a single div here still grew to fit all nine rows, pushed
+       the right column past the chart column beside it, and left a bank of
+       dead white space under the chart.
+
+       Taking the list out of flow is what actually fixes it. An absolutely
+       positioned child contributes nothing to its parent's height, so the
+       outer box is sized purely by its own min-height and by whatever the
+       grid row gives it — the rows inside can no longer vote. That is also
+       what lets the feed end level with the chart instead of dragging the
+       console taller than it needs to be. */
+    <div className="relative flex-1" style={{ minHeight: FEED_MIN_ROWS * ROW_H }}>
+      {/* The clip is its own element, separate from the list that moves
+          inside it. Putting overflow on the same box that gets the transform
+          drags the window along with the contents, so the feed would slide
+          out of its own frame instead of the rows sliding through it. */}
+      <div className="absolute inset-0 overflow-hidden">
+        <ul ref={listRef}>
+          {rows.map((r, i) => {
+            const Tool = TOOL_BY_ID[r.tool];
+            return (
+              <li
+                key={r.key}
+                /* feed-new runs once, on mount, for whichever row is newest: a
+                   CSS keyframe rather than an animated style, so React never has
+                   to re-render anything to take the highlight back off. */
+                className={`box-border flex items-center gap-2.5 border-b border-[var(--border)] px-4${
+                  i === 0 ? " feed-new" : ""
+                }`}
+                style={{ height: ROW_H }}
+              >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[var(--border)] bg-[var(--panel)]">
+                  <Tool.Logo className="h-3.5 w-3.5" style={{ color: TOOL_COLOR[r.tool] }} />
                 </span>
-                <span className="num block truncate text-[10px] text-[var(--text-3)]">
-                  {r.model} · {r.tokens} tok
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-1.5">
+                    <span className="truncate text-[12px] leading-[16px] font-medium text-[var(--ink)]">
+                      {r.repo}
+                    </span>
+                    <span className="num hidden truncate text-[10px] leading-[16px] text-[var(--text-3)] sm:inline">
+                      {r.dev}
+                    </span>
+                  </span>
+                  <span className="num block truncate text-[10px] leading-[14px] text-[var(--text-3)]">
+                    {r.model} · {r.tokens} tok
+                  </span>
                 </span>
-              </span>
-              <span className="flex shrink-0 flex-col items-end">
-                <span className="num text-[12px] font-medium text-[var(--ink)]">{usd(r.cost, 2)}</span>
-                <span
-                  className="num text-[9.5px]"
-                  style={{ color: r.shipped ? "var(--green-700)" : "var(--text-3)" }}
-                >
-                  {i === 0 ? AGO[0] : r.shipped ? "shipped" : "no commit"}
+                <span className="flex shrink-0 flex-col items-end">
+                  <span className="num text-[12px] leading-[16px] font-medium text-[var(--ink)]">
+                    {usd(r.cost, 2)}
+                  </span>
+                  <span
+                    className="num text-[9.5px] leading-[14px]"
+                    style={{ color: r.shipped ? "var(--green-700)" : "var(--text-3)" }}
+                  >
+                    {i === 0 ? AGO[0] : r.shipped ? "shipped" : "no commit"}
+                  </span>
                 </span>
-              </span>
-            </motion.li>
-          );
-        })}
-      </AnimatePresence>
-    </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -658,7 +727,9 @@ export default function HeroConsole() {
                   <span className="num text-[10px] text-[var(--text-3)]">metadata only</span>
                 </div>
                 <Feed live={live} onSession={onSession} />
-                <div className="mt-auto border-t border-[var(--border)] bg-[var(--panel)] px-4 py-3 sm:px-5">
+                {/* No border-t: the feed rows carry their own bottom rule, so
+                    one here would double the hairline at the clip edge. */}
+                <div className="mt-auto bg-[var(--panel)] px-4 py-3 sm:px-5">
                   <div className="flex items-center justify-between gap-3">
                     <span className="min-w-0">
                       <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--brand-700)]">
