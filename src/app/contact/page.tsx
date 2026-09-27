@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/site/Navbar";
+import Footer from "@/components/site/Footer";
 import ContactForm from "@/components/ContactForm";
 import { CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
 import { SOCIAL_LINKS } from "@/lib/social-links";
@@ -24,113 +24,85 @@ const EXPECT = [
   },
   {
     title: "A real demo, on your data",
-    body: "Evaluations run against your own workspace, not a canned dataset. Want one now? Book a demo instead.",
+    body: "Evaluations run against your own workspace, not a canned dataset.",
   },
 ];
 
 export default function ContactPage() {
   return (
-    <main className="overflow-x-clip">
+    <>
       <Navbar />
-
-      <section className="page-top pb-20 sm:pb-32">
-        <div className="container-x">
-          <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.25fr] lg:gap-20">
-            {/* left: editorial intro */}
+      <main id="main" className="overflow-x-clip">
+        <section className="relative pb-24 pt-[calc(var(--nav-h)+4.5rem)] sm:pb-32 sm:pt-[calc(var(--nav-h)+6rem)]">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 h-[34rem] w-[60%] bg-[radial-gradient(rgb(198_255_61/0.22)_1px,transparent_1.4px)] [background-size:22px_22px] [mask-image:radial-gradient(70%_70%_at_80%_20%,#000,transparent)]"
+          />
+          <div className="wrap relative grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-20">
             <div>
-              <p className="eyebrow mb-6 sm:mb-7">Contact</p>
-              <h1 className="display-1 !text-[clamp(2.25rem,4.5vw,3.75rem)]">
+              <p className="t-kicker">Contact</p>
+              <h1 className="t-display mt-5 text-[clamp(2.6rem,5vw,4.4rem)] leading-[0.95] [--wdth:106]">
                 Talk to the people who built it.
               </h1>
-              <p className="lead mt-5 max-w-md sm:mt-6">
-                Sales, support, Enterprise, or partnerships. One form, straight
-                to the founding team’s inbox.
+              <p className="t-lead mt-6 max-w-md">
+                Sales, support, Enterprise or partnerships. One form, straight to the founding team&apos;s inbox.
               </p>
 
-              <Link
-                href={DEMO_PATH}
-                className="group mt-8 flex max-w-md items-center gap-4 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-[var(--shadow-soft)] transition-colors duration-300 hover:border-[var(--ink)]"
-              >
+              <Link href={DEMO_PATH} className="group ch-br mt-9 flex max-w-md items-center gap-4 bg-ink-2 p-5 [--ch:14px]">
                 <div className="flex-1">
-                  <p className="text-[14.5px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
-                    Want to see the product?
-                  </p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-2)]">
-                    Book a 30-minute demo. That’s how workspaces get set up.
-                  </p>
+                  <p className="text-[1rem] font-semibold text-fg">Want to see the product?</p>
+                  <p className="mt-1 text-[0.9rem] leading-relaxed text-fg-3">Book a 30-minute demo. That&apos;s how workspaces get set up.</p>
                 </div>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--inset)] transition-colors duration-300 group-hover:bg-[var(--ink)]">
-                  <ArrowUpRight
-                    className="h-4 w-4 text-[var(--ink)] transition-colors duration-300 group-hover:text-white"
-                    strokeWidth={1.75}
-                  />
+                <span className="ch-br grid h-10 w-10 shrink-0 place-items-center bg-lime text-ink transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 [--ch:7px]">
+                  <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </Link>
 
-              <div className="mt-10 space-y-7 sm:mt-12 sm:space-y-8">
+              <ol className="mt-10 space-y-6">
                 {EXPECT.map((e, i) => (
-                  <div key={e.title} className="flex gap-4 sm:gap-5">
-                    <span className="num pt-0.5 text-[12px] text-[var(--text-3)]">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
+                  <li key={e.title} className="flex gap-5">
+                    <span className="t-meter w-6 shrink-0 pt-0.5 text-[1.25rem] text-lime">{i + 1}</span>
                     <div>
-                      <h3 className="text-[15.5px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
-                        {e.title}
-                      </h3>
-                      <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--text-2)]">
-                        {e.body}
-                      </p>
+                      <h2 className="text-[1rem] font-semibold text-fg">{e.title}</h2>
+                      <p className="mt-1 text-[0.92rem] leading-relaxed text-fg-3">{e.body}</p>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
 
-              <div className="mt-10 border-t border-[var(--border)] pt-6 sm:mt-12 sm:pt-7">
-                <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
-                  Prefer email?
-                </p>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="link-quiet mt-1 inline-block break-all py-2 text-[15px]"
-                >
+              <div className="mt-12 border-t border-[var(--line)] pt-7">
+                <p className="text-[0.95rem] text-fg-3">Prefer email?</p>
+                <a href={`mailto:${CONTACT_EMAIL}`} className="link-lined mt-1 inline-block break-all py-1 text-[1.05rem] text-fg">
                   {CONTACT_EMAIL}
                 </a>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)] sm:p-5">
-                <p className="num text-[11px] uppercase tracking-[0.16em] text-[var(--text-3)]">
-                  Follow us
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2.5">
-                  {SOCIAL_LINKS.map((social) => {
-                    const Icon = social.icon;
+                <ul className="mt-6 flex gap-2">
+                  {SOCIAL_LINKS.map((s) => {
+                    const Icon = s.icon;
                     return (
-                      <a
-                        key={social.label}
-                        href={social.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={social.label}
-                        title={social.label}
-                        className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[linear-gradient(180deg,#ffffff_0%,#f4f6fb_100%)] text-[var(--ink)] shadow-[0_1px_2px_rgba(17,19,26,0.04),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ink)] hover:bg-[var(--surface)] hover:shadow-[var(--shadow-soft)]"
-                      >
-                        <Icon className="h-[17px] w-[17px] text-[var(--ink)] transition-transform duration-300 group-hover:scale-110" />
-                      </a>
+                      <li key={s.label}>
+                        <a
+                          href={s.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={s.label}
+                          className="ch-br grid h-11 w-11 place-items-center bg-ink-3 text-fg-2 transition-colors duration-300 hover:bg-lime hover:text-ink [--ch:8px]"
+                        >
+                          <Icon className="h-[17px] w-[17px]" />
+                        </a>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               </div>
             </div>
 
-            {/* right: the form */}
-            <div>
+            <div className="lg:sticky lg:top-24 lg:self-start">
               <ContactForm />
             </div>
           </div>
-        </div>
-      </section>
-
+        </section>
+      </main>
       <Footer />
-    </main>
+    </>
   );
 }

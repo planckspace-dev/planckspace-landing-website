@@ -1,85 +1,91 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Science_Gothic, Doto, Geist, Geist_Mono } from "next/font/google";
+import SmoothScroll from "@/components/site/SmoothScroll";
 import "./globals.css";
 
-/* ── the two voices ───────────────────────────────────────────────────────
-   Instrument Sans carries everything that is prose or interface. It is a
-   slightly narrow grotesque with flat, cut terminals and small apertures,
-   which is what lets a headline hold tight tracking at 4.5rem without the
-   letterforms going soft, and what keeps a 13px table label legible where a
-   rounder face turns to grey. It replaces Geist, which is drawn to
-   disappear — the right call for a framework's own docs, the wrong one for a
-   product that has to look like somebody designed it.
+/* ── the voices ───────────────────────────────────────────────────────────
+   Science Gothic is the display face. Its counters are squared off the way
+   the Aperture mark is, and it carries a width axis from 50 to 200, which is
+   what the headlines animate along: type that stretches into place instead
+   of fading in. Only the width axis is requested; weight comes with it.
 
-   IBM Plex Mono is the metering voice: every figure, threshold, field name
-   and unit on this site. It is deliberately not chosen as a code font. Its
-   numerals carry real contrast — a slashed zero, a flagged one, a $ that
-   survives at 10px — so a column of money reads as an instrument's readout
-   rather than as a terminal dump.
+   Doto is a dot-matrix face kept for one job, numbers being counted. A total
+   drawn in discrete dots reads as metered.
 
-   Neither is given a weight where the face is variable: the whole axis ships
-   as one file, so a heading can sit at 580 instead of snapping to the nearest
-   static cut.
+   Geist and Geist Mono carry everything you actually read. The product and
+   the wordmark are set in Geist, so the page and the app share a voice.
    ────────────────────────────────────────────────────────────────────── */
 
-const sans = Instrument_Sans({
+const display = Science_Gothic({
   subsets: ["latin"],
-  variable: "--font-instrument",
+  variable: "--font-science",
+  axes: ["wdth"],
+  display: "swap",
+  // next/font has no metric overrides for this face, so name the fallback
+  // instead of letting it guess (and warn on every compile).
+  adjustFontFallback: false,
+  fallback: ["Arial Black", "Arial", "sans-serif"],
+});
+
+const meter = Doto({
+  subsets: ["latin"],
+  variable: "--font-doto",
+  display: "swap",
+  preload: false,
+});
+
+const sans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
   display: "swap",
 });
 
-const mono = IBM_Plex_Mono({
+const mono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-plex",
-  // Plex Mono is not variable, so the cuts are named explicitly.
-  weight: ["400", "500", "600"],
+  variable: "--font-geist-mono",
   display: "swap",
+  preload: false,
 });
 
-// The "Aperture" logo kit, served straight out of /public.
-const KIT = "/planckspace-logo-kit";
-const OG_IMAGE = `${KIT}/png/og-1200x630.png`;
+const OG_IMAGE = "/og.png";
+const DESCRIPTION =
+  "PlanckSpace meters what your team spends on Claude Code, Cursor and the AI APIs, finds the waste, fixes it in one click, and proves every saving from your own telemetry. Metadata only: your code never leaves your machine.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://planckspace.dev"),
   title: {
-    default: "PlanckSpace: Every AI team, more efficient",
+    default: "PlanckSpace: Every token, accounted for",
     template: "%s | PlanckSpace",
   },
-  description:
-    "PlanckSpace measures, optimizes, and verifies what your team's AI coding costs across Claude Code, Cursor, Windsurf, and Antigravity. Per-developer and per-repo attribution, waste found and priced, and savings verified from your own telemetry. Metadata only, so your code never leaves your machine.",
+  description: DESCRIPTION,
   keywords: [
     "AI coding costs",
-    "Claude Code spend tracker",
+    "Claude Code spend",
     "Cursor spend analytics",
     "AI token usage dashboard",
-    "AI budget management for teams",
-    "engineering cost visibility",
-    "AI coding observability",
+    "AI spend management",
+    "AI budget alerts",
+    "verified AI savings",
     "cost per shipped session",
-    "AI spend reconciliation",
+    "AI invoice reconciliation",
   ],
   authors: [{ name: "PlanckSpace" }],
   openGraph: {
-    title: "PlanckSpace: Every AI team, more efficient",
+    title: "PlanckSpace: Every token, accounted for",
     description:
-      "Measure what AI coding costs across Claude Code, Cursor, Windsurf, and Antigravity, cut the waste it finds, and verify the savings from your own telemetry, all without touching your code.",
+      "Meter your team's AI coding spend across every tool, fix the waste in one click, and prove every saving from your own telemetry.",
     type: "website",
     url: "https://planckspace.dev",
     siteName: "PlanckSpace",
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "PlanckSpace" }],
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "PlanckSpace: Every token, accounted for" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PlanckSpace: Every AI team, more efficient",
+    title: "PlanckSpace: Every token, accounted for",
     description:
-      "Measure what AI coding costs across Claude Code, Cursor, Windsurf, and Antigravity, cut the waste it finds, and verify the savings from your own telemetry, all without touching your code.",
+      "Meter your team's AI coding spend across every tool, fix the waste in one click, and prove every saving from your own telemetry.",
     images: [OG_IMAGE],
   },
-  // Tab icons come from /favicon (generated by the frontend's scripts/gen-favicons.mjs)
-  // rather than straight from the kit: the kit's favicons are the bare ink mark on
-  // transparency, which disappears against a dark browser tab strip. These are the
-  // mark on an ink tile.
   icons: {
     icon: [
       { url: "/favicon/favicon.ico", sizes: "any" },
@@ -93,34 +99,26 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-/* Next injects width=device-width, initial-scale=1 by default; this export is
-   here for the two things it does not do.
-
-   viewportFit "cover" lets the page paint under a notch and the home-indicator
-   bar, which is what makes env(safe-area-inset-*) return anything other than 0.
-   The container and the mobile nav panel both read those insets, so without
-   this the site is letterboxed on every modern iPhone in landscape.
-
-   maximumScale is deliberately absent. Capping it stops pinch-zoom, which is
-   an accessibility failure; the iOS focus-zoom it is usually there to suppress
-   is fixed properly in globals.css by sizing form controls at 16px. */
+/* viewportFit "cover" lets the page paint under a notch, which is what makes
+   env(safe-area-inset-*) non-zero; .wrap reads those insets. maximumScale is
+   deliberately absent so pinch zoom keeps working. */
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0d12" },
-  ],
-  colorScheme: "light",
+  themeColor: "#0b0b0c",
+  colorScheme: "dark",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} h-full`}>
-      <body className="antialiased min-h-full bg-[var(--page)] text-[var(--ink)]">
+    <html
+      lang="en"
+      className={`${display.variable} ${meter.variable} ${sans.variable} ${mono.variable}`}
+    >
+      <body>
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+        <SmoothScroll />
         {children}
       </body>
     </html>

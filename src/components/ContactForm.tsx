@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import Button from "@/components/site/Button";
 
 import { CONTACT_EMAIL } from "@/lib/plans";
 
@@ -14,10 +15,9 @@ const TOPICS = [
 
 const TEAM_SIZES = ["1-5", "6-15", "16-50", "51-200", "200+"];
 
-const inputCls =
-  "w-full rounded-xl border border-[var(--border-strong)] bg-white px-4 py-3 text-[14.5px] text-[var(--ink)] placeholder:text-[var(--text-3)] transition-colors duration-300 focus:border-[var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-100)]";
+const inputCls = "field";
 
-const labelCls = "mb-2 block text-[13px] font-medium text-[var(--ink)]";
+const labelCls = "field-label";
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -64,30 +64,26 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <div className="card flex flex-col items-center p-8 text-center sm:p-12">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--green-50)]">
-          <Check className="h-5 w-5 text-[var(--green-700)]" strokeWidth={2} />
-        </span>
-        <h3 className="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
-          Message sent.
-        </h3>
-        <p className="mt-2 max-w-sm text-[14.5px] leading-relaxed text-[var(--text-2)]">
-          Thanks, it’s in our inbox. A human (usually a founder) replies within
-          one business day.
-        </p>
-        <button
-          type="button"
-          onClick={() => setStatus("idle")}
-          className="link-quiet mt-6 text-[13.5px]"
-        >
-          Send another message
-        </button>
+      <div className="frame [--ch:24px]">
+        <div className="frame-in flex flex-col items-start p-8 sm:p-11">
+          <span className="ch-br grid h-12 w-12 place-items-center bg-lime text-ink [--ch:9px]">
+            <Check className="h-5 w-5" strokeWidth={2.2} />
+          </span>
+          <h3 className="t-display mt-6 text-[2rem] leading-none [--wdth:104]">Message sent.</h3>
+          <p className="mt-3 max-w-sm text-[1rem] leading-relaxed text-fg-2">
+            Thanks, it&apos;s in our inbox. A human, usually a founder, replies within one business day.
+          </p>
+          <button type="button" onClick={() => setStatus("idle")} className="link-lined mt-6 text-[0.92rem] text-fg">
+            Send another message
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="card relative p-6 sm:p-9">
+    <form onSubmit={onSubmit} className="frame [--ch:24px]">
+      <div className="frame-in relative p-6 sm:p-9">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="cf-name" className={labelCls}>
@@ -118,13 +114,13 @@ export default function ContactForm() {
         </div>
         <div>
           <label htmlFor="cf-company" className={labelCls}>
-            Company <span className="font-normal text-[var(--text-3)]">(optional)</span>
+            Company <span className="opt">(optional)</span>
           </label>
           <input
             id="cf-company"
             name="company"
             maxLength={200}
-            placeholder="Acme Inc."
+            placeholder="Your company"
             className={inputCls}
           />
         </div>
@@ -178,7 +174,7 @@ export default function ContactForm() {
       </div>
 
       {status === "error" && (
-        <p className="mt-5 rounded-xl border border-[var(--coral-500)]/30 bg-[var(--coral-50)] px-4 py-3 text-[13.5px] text-[var(--coral-700)]">
+        <p role="alert" className="mt-6 bg-sig-coral/10 px-4 py-3 text-[0.9rem] text-sig-coral shadow-[inset_0_0_0_1px_rgb(255_138_92/0.35)]">
           {errorMsg}. You can also email us directly at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium underline">
             {CONTACT_EMAIL}
@@ -187,16 +183,10 @@ export default function ContactForm() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="btn btn-primary mt-7 w-full disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-      >
+      <Button type="submit" disabled={status === "sending"} className="mt-7 w-full sm:w-auto">
         {status === "sending" ? "Sending…" : "Send message"}
-        <span className="btn-disc">
-          <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-        </span>
-      </button>
+      </Button>
+      </div>
     </form>
   );
 }

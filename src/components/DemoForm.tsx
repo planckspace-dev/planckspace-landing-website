@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import Button from "@/components/site/Button";
 
 import { CONTACT_EMAIL, PLANS } from "@/lib/plans";
 import { cn } from "@/lib/utils";
@@ -75,12 +76,11 @@ const STEPS = [
   { id: "goals", label: "What you need" },
 ];
 
-const inputCls =
-  "w-full rounded-xl border border-[var(--border-strong)] bg-white px-4 py-3 text-[14.5px] text-[var(--ink)] placeholder:text-[var(--text-3)] transition-colors duration-300 focus:border-[var(--brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-100)]";
+const inputCls = "field";
 
-const labelCls = "mb-2 block text-[13px] font-medium text-[var(--ink)]";
+const labelCls = "field-label";
 
-const legendCls = "mb-3 block text-[13px] font-medium text-[var(--ink)]";
+const legendCls = "field-label mb-3";
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -125,18 +125,7 @@ function Chip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={cn(
-        "rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all duration-300 ease-[var(--ease-swift)]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-100)]",
-        selected
-          ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-          : "border-[var(--border-strong)] bg-white text-[var(--text-2)] hover:border-[var(--ink)] hover:text-[var(--ink)]",
-      )}
-    >
+    <button type="button" onClick={onClick} aria-pressed={selected} className="chip">
       {label}
     </button>
   );
@@ -144,7 +133,7 @@ function Chip({
 
 function FieldError({ children }: { children: React.ReactNode }) {
   return (
-    <p role="alert" className="mt-2 text-[12.5px] text-[var(--coral-700)]">
+    <p role="alert" className="field-error">
       {children}
     </p>
   );
@@ -308,57 +297,50 @@ export default function DemoForm() {
 
   if (status === "sent") {
     return (
-      <div className="card p-9 sm:p-11">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--green-50)]">
-          <Check className="h-5 w-5 text-[var(--green-700)]" strokeWidth={2} />
-        </span>
-        <h2 className="mt-6 text-[24px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
-          Request received.
-        </h2>
-        <p className="mt-3 max-w-md text-[14.5px] leading-relaxed text-[var(--text-2)]">
-          Thanks, {form.name.trim().split(" ")[0]}. We’ve got your details and
-          we’re already looking at how PlanckSpace would map onto{" "}
-          {form.company.trim()}.
-        </p>
+      <div className="frame [--ch:24px]">
+        <div className="frame-in p-7 sm:p-10">
+          <span className="ch-br grid h-12 w-12 place-items-center bg-lime text-ink [--ch:9px]">
+            <Check className="h-5 w-5" strokeWidth={2.2} />
+          </span>
+          <h2 className="t-display mt-6 text-[2rem] leading-none [--wdth:104]">Request received.</h2>
+          <p className="mt-4 max-w-md text-[1rem] leading-relaxed text-fg-2">
+            Thanks, {form.name.trim().split(" ")[0]}. We have your details and we&apos;re already looking at how
+            PlanckSpace would map onto {form.company.trim()}.
+          </p>
 
-        <ol className="mt-8 space-y-5 border-t border-[var(--border)] pt-7">
-          {[
-            {
-              t: "A founder replies within one business day",
-              b: `We'll send a few times to ${form.email.trim()}, with no scheduling ping-pong.`,
-            },
-            {
-              t: "A 30-minute working session",
-              b: "We walk your setup, not a canned dataset. Bring the questions finance keeps asking.",
-            },
-            {
-              t: "Access to your workspace",
-              b: "If it's a fit, we provision your team and help with the rollout ourselves.",
-            },
-          ].map((s, i) => (
-            <li key={s.t} className="flex gap-5">
-              <span className="num pt-0.5 text-[12px] text-[var(--text-3)]">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
-                  {s.t}
-                </h3>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--text-2)]">
-                  {s.b}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
+          <ol className="mt-8 space-y-5 border-t border-[var(--line)] pt-7">
+            {[
+              {
+                t: "A founder replies within one business day",
+                b: `We'll send a few times to ${form.email.trim()}, with no scheduling ping-pong.`,
+              },
+              {
+                t: "A 30-minute working session",
+                b: "We walk your setup, not a canned dataset. Bring the questions finance keeps asking.",
+              },
+              {
+                t: "Access to your workspace",
+                b: "If it's a fit, we provision your team and help with the rollout ourselves.",
+              },
+            ].map((s, i) => (
+              <li key={s.t} className="flex gap-5">
+                <span className="t-meter w-6 pt-0.5 text-[1.2rem] text-lime">{i + 1}</span>
+                <div>
+                  <h3 className="text-[1rem] font-semibold text-fg">{s.t}</h3>
+                  <p className="mt-1 text-[0.92rem] leading-relaxed text-fg-3">{s.b}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
 
-        <p className="mt-8 border-t border-[var(--border)] pt-6 text-[13.5px] text-[var(--text-2)]">
-          Something to add in the meantime? Reply straight to{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="link-quiet">
-            {CONTACT_EMAIL}
-          </a>
-          .
-        </p>
+          <p className="mt-8 border-t border-[var(--line)] pt-6 text-[0.92rem] text-fg-3">
+            Something to add in the meantime? Reply straight to{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="link-lined text-fg">
+              {CONTACT_EMAIL}
+            </a>
+            .
+          </p>
+        </div>
       </div>
     );
   }
@@ -366,18 +348,19 @@ export default function DemoForm() {
   /* ---------------------------------------------------------------- form -- */
 
   return (
-    <form onSubmit={onSubmit} className="card relative p-6 sm:p-9" noValidate>
+    <form onSubmit={onSubmit} className="frame [--ch:24px]" noValidate>
+      <div className="frame-in relative p-6 sm:p-9">
       {/* progress */}
       <div className="mb-8">
         <div className="flex items-baseline justify-between">
           <p
             ref={headingRef}
             tabIndex={-1}
-            className="text-[17px] font-semibold tracking-[-0.02em] text-[var(--ink)] focus:outline-none"
+            className="t-display text-[1.45rem] leading-none [--wdth:104] focus:outline-none"
           >
             {STEPS[step].label}
           </p>
-          <p className="num text-[11px] uppercase tracking-[0.14em] text-[var(--text-3)]">
+          <p className="t-mono text-[11.5px] text-fg-3">
             Step {step + 1} of {STEPS.length}
           </p>
         </div>
@@ -386,8 +369,8 @@ export default function DemoForm() {
             <span
               key={s.id}
               className={cn(
-                "h-[3px] flex-1 rounded-full transition-colors duration-500 ease-[var(--ease-swift)]",
-                i <= step ? "bg-[var(--ink)]" : "bg-[var(--inset)]",
+                "h-[3px] flex-1 transition-colors duration-500",
+                i <= step ? "bg-lime" : "bg-fg/10",
               )}
             />
           ))}
@@ -441,7 +424,7 @@ export default function DemoForm() {
               maxLength={200}
               autoComplete="organization"
               aria-invalid={!!errors.company}
-              placeholder="Acme Inc."
+              placeholder="Your company"
               className={inputCls}
             />
             {errors.company && <FieldError>{errors.company}</FieldError>}
@@ -493,7 +476,7 @@ export default function DemoForm() {
           <fieldset>
             <legend className={legendCls}>
               Which AI coding tools does the team use?{" "}
-              <span className="font-normal text-[var(--text-3)]">
+              <span className="opt">
                 (select all)
               </span>
             </legend>
@@ -535,7 +518,7 @@ export default function DemoForm() {
           <fieldset>
             <legend className={legendCls}>
               What do you want to walk away with?{" "}
-              <span className="font-normal text-[var(--text-3)]">
+              <span className="opt">
                 (select all)
               </span>
             </legend>
@@ -604,7 +587,7 @@ export default function DemoForm() {
           <div>
             <label htmlFor="df-notes" className={labelCls}>
               Anything else?{" "}
-              <span className="font-normal text-[var(--text-3)]">
+              <span className="opt">
                 (optional)
               </span>
             </label>
@@ -628,7 +611,7 @@ export default function DemoForm() {
       </div>
 
       {status === "error" && (
-        <p className="mt-6 rounded-xl border border-[var(--coral-500)]/30 bg-[var(--coral-50)] px-4 py-3 text-[13.5px] text-[var(--coral-700)]">
+        <p role="alert" className="mt-6 bg-sig-coral/10 px-4 py-3 text-[0.9rem] text-sig-coral shadow-[inset_0_0_0_1px_rgb(255_138_92/0.35)]">
           {errorMsg}. You can also email us directly at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium underline">
             {CONTACT_EMAIL}
@@ -638,12 +621,12 @@ export default function DemoForm() {
       )}
 
       {/* nav */}
-      <div className="mt-8 flex items-center gap-3 border-t border-[var(--border)] pt-7">
+      <div className="mt-8 flex items-center gap-3 border-t border-[var(--line)] pt-7">
         {step > 0 && (
           <button
             type="button"
             onClick={() => setStep((s) => Math.max(s - 1, 0))}
-            className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-medium text-[var(--text-2)] transition-colors duration-300 hover:text-[var(--ink)]"
+            className="flex items-center gap-1.5 px-2 py-2 text-[0.9rem] font-medium text-fg-3 transition-colors duration-300 hover:text-fg"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             Back
@@ -651,30 +634,19 @@ export default function DemoForm() {
         )}
         <div className="flex-1" />
         {step < STEPS.length - 1 ? (
-          <button type="button" onClick={onContinue} className="btn btn-primary">
-            Continue
-            <span className="btn-disc">
-              <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-            </span>
-          </button>
+          <Button onClick={onContinue}>Continue</Button>
         ) : (
-          <button
-            type="submit"
-            disabled={status === "sending"}
-            className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" disabled={status === "sending"}>
             {status === "sending" ? "Sending…" : "Request demo"}
-            <span className="btn-disc">
-              <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-            </span>
-          </button>
+          </Button>
         )}
       </div>
 
-      <p className="mt-5 text-[12px] leading-relaxed text-[var(--text-3)]">
-        We use these answers to prepare the call and nothing else. No newsletter,
-        no sequence, no reselling your details.
+      <p className="mt-5 text-[0.8rem] leading-relaxed text-fg-3">
+        We use these answers to prepare the call and nothing else. No newsletter, no sequence, no reselling your
+        details.
       </p>
+      </div>
     </form>
   );
 }
