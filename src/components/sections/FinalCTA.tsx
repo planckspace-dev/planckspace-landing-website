@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import Button from "@/components/site/Button";
-import TokenStream from "@/components/hero/TokenStream";
 import { PlanckMark } from "@/components/ui/logo";
 import { DEMO_PATH } from "@/lib/plans";
 import { gsap, useGSAP, MOTION_OK } from "@/lib/gsap";
@@ -34,12 +33,10 @@ export default function FinalCTA() {
   return (
     <section ref={root} aria-labelledby="cta-title" className="relative isolate flex min-h-[max(100svh,46rem)] flex-col overflow-hidden border-t border-[var(--line)] bg-ink">
       <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <TokenStream className="absolute inset-0 h-full w-full" cols={52} wobble={0.15} />
         <div className="absolute inset-0 bg-[radial-gradient(46%_30%_at_50%_52%,rgb(11_11_12/0.7),transparent_80%)]" />
         <div data-stream-ap className="cta-mark absolute left-1/2 top-[13%] z-10 aspect-[320/300] w-[clamp(64px,7vw,108px)] -translate-x-1/2">
           <PlanckMark className="h-full w-full" />
         </div>
-        <div data-stream-ledger className="absolute inset-x-0 bottom-[4%] h-[18%]" />
       </div>
 
       <div data-stream-calm className="cta-copy wrap relative my-auto flex flex-col items-center pb-[18vh] pt-[28vh] text-center">
