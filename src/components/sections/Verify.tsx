@@ -9,6 +9,10 @@ import { gsap, useGSAP, MOTION_OK } from "@/lib/gsap";
    the ledger's own accrual (rate x months since each fix was verified), so
    the curve bends upward at every pin. Under it, the receipts, each with the
    metric before and after and how much of the forecast actually held.
+
+   Every figure is the sample workspace's (lib/sample.ts), so the section says
+   so: it is an illustration drawn from the sample receipts, not the savings
+   engine's output.
    ───────────────────────────────────────────────────────────────────────── */
 
 const PROJ = 22;
@@ -41,7 +45,7 @@ export function SavingsCurve({ W, H, compact, className }: { W: number; H: numbe
       viewBox={`0 0 ${W} ${H}`}
       className={`block h-auto w-full overflow-visible ${className ?? ""}`}
       role="img"
-      aria-label={`Cumulative verified savings since August 1, reaching ${usd(savedToDate)} today, with four verified fixes marked.`}
+      aria-label={`Example workspace: cumulative measured savings since August 1, reaching ${usd(savedToDate)} today, with four fixes marked.`}
     >
       <defs>
         <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
@@ -159,11 +163,12 @@ export default function Verify() {
               Savings you can audit.
             </h2>
             <p className="t-lead mt-6 max-w-[34rem]">
-              A fix only counts once your own telemetry shows the metric moved. Every saving carries its receipt, and
-              the part of a forecast that didn&apos;t happen is never booked.
+              Each saved dollar is measured per session against what the same work would have cost before the change.
+              Nothing is booked until enough sessions have run, and every saving is labelled with how it was measured.
             </p>
           </div>
           <div className="vf-num lg:text-right">
+            <p className="t-mono mb-3 text-[11px] tracking-[0.04em] text-fg-3">Illustrative example · sample workspace</p>
             <p className="flex items-baseline gap-3 lg:justify-end">
               <span ref={total} className="t-meter text-[clamp(4rem,11vw,9.5rem)] leading-[0.85] text-lime">
                 {usd(realizedTotal)}
@@ -171,7 +176,7 @@ export default function Verify() {
               <span className="t-mono text-lg text-fg-3">/mo</span>
             </p>
             <p className="t-mono mt-4 text-[13px] text-fg-2">
-              off the bill, verified · {usd(savedToDate)} saved to date · {usd(realizedTotal * 12)} a year at this rate
+              measured per session · {usd(savedToDate)} saved to date · {usd(realizedTotal * 12)} a year at this rate
             </p>
           </div>
         </div>
