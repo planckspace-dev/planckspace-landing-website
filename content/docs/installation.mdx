@@ -1,0 +1,165 @@
+---
+title: Install the CLI
+description: "Install the planck CLI with the install script, npm or npx. What the background daemon does, where its files live, and how to update, disconnect or remove it."
+icon: Terminal
+---
+
+The CLI, `planck`, is the one part of PlanckSpace you install on each developer machine. It reads the usage records your AI coding tools already keep, sends only usage metadata to your workspace, and runs a background daemon that keeps syncing. The [Quickstart](/docs/quickstart) covers the first run. This page covers the install itself and everything it puts on your machine.
+
+## Requirements
+
+| Requirement | Detail |
+| --- | --- |
+| Node.js | 20 or newer. The package declares `node >=20`, and the install script stops if it finds an older version. |
+| npm | Comes with Node. The install script and `init` use it to install the package globally. |
+| Git | The CLI reads each repository's git history for the author email and to tell whether a session's work shipped. |
+| A supported tool | Claude Code, Cursor or Windsurf, used on this machine. See [Supported tools](/docs/reference/supported-tools). |
+| Operating system | macOS, Linux or Windows. See [Operating systems](#operating-systems). |
+
+## Install
+
+<Tabs items={["Install script", "npm", "npx"]}>
+<Tab value="Install script">
+
+```bash
+curl -fsSL https://planckspace.dev/install | sh
+```
+
+The script checks for Node 20 or newer, installs `@planckspace/cli@latest` globally with npm, runs `planck init`, and installs the editor extension with `code --install-extension` when the `code` command is on your PATH. To connect in the same step, pass a CLI token:
+
+```bash
+curl -fsSL https://planckspace.dev/install | sh -s -- --token pk_live_…
+```
+
+The script passes the token to the CLI on stdin rather than as an argument. It is still part of the command you typed, so it lands in your shell history. A connect code or the hidden prompt avoids that. The script needs a POSIX shell: use it on macOS, Linux or WSL. In Git Bash or another native Windows shell it stops and prints the WSL setup steps.
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npm install -g @planckspace/cli
+planck init
+```
+
+Use this when you manage Node yourself, or when the install script is not an option, for example on native Windows.
+
+</Tab>
+<Tab value="npx">
+
+```bash
+npx @planckspace/cli@latest init
+```
+
+Nothing is installed up front. When `init` runs through `npx`, it installs the same version globally before it registers the daemon. The npx cache can be pruned, and an auto-start entry that pointed into it would stop working without any warning.
+
+</Tab>
+</Tabs>
+
+To connect an installed CLI, run `planck init` and follow the [Quickstart](/docs/quickstart#run-the-command), or run `planck login`. It prompts for the token with hidden input, and `--token-stdin` and `PLANCKSPACE_TOKEN` cover scripts. Without a token the CLI still works locally: `planck scan` and `planck status` read and summarize your sessions, and nothing is uploaded until you connect.
+
+Check the install with `planck --version` and `planck status`.
+
+## Operating systems
+
+The CLI reads your tools' data and registers the daemon on all three systems. Only the one-line install script is limited to POSIX shells.
+
+| System | How the daemon starts at login |
+| --- | --- |
+| macOS | A LaunchAgent named `dev.planckspace.sync` in `~/Library/LaunchAgents`. launchd restarts the daemon if it exits. |
+| Linux | A systemd user service named `planckspace-sync.service` in `~/.config/systemd/user`, restarted on failure. It needs `systemctl --user`. Where that is not available, run `planck daemon run` in the foreground instead. |
+| Windows | A Task Scheduler task named `PlanckSpaceSync`, run at logon and restarted every minute if it fails. If Group Policy blocks Task Scheduler, a `PlanckSpaceSync` entry under `HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` starts a small supervisor that keeps the daemon alive. Neither route needs administrator rights. |
+
+On any other platform `planck daemon install` prints a notice and registers nothing. Start the daemon by hand with `planck daemon run`.
+
+If you use WSL, run `planck` in the same environment as your AI tools. The CLI reads Claude Code's logs from the `.claude` folder of the account that runs it, or from the folder `CLAUDE_CONFIG_DIR` names.
+
+## The daemon
+
+The daemon is a background process that keeps your workspace current without you running anything. `planck init` and `planck daemon install` register it to start at every login.
+
+| What it does | When |
+| --- | --- |
+| Picks up new Claude Code activity | As session files change, within about a second |
+| Re-scans every tool, including Cursor, Windsurf and JetBrains, whose data is in local databases rather than log files | Every 60 seconds |
+| Re-checks whether sessions shipped after a `git push` | Within about a second of the push |
+| Uploads queued sessions | As soon as sessions are queued, then every 30 seconds while any are waiting. Within a pass, a batch that hits a network error, a server error or a rate limit is retried up to three times with growing delays. After an authentication failure the daemon pauses and retries every 15 minutes. |
+| Sends a heartbeat so the console can tell it is alive | At start, then every 5 minutes |
+| Re-queues sessions the backend is missing | Every hour |
+| Checks whether your workspace's tracked repositories changed | With each heartbeat |
+| Refreshes the local analysis the editor extension shows when it is not connected or cannot reach PlanckSpace | Every 30 minutes |
+
+After each successful sync it also applies two workspace policies when an owner, leader or admin has switched them on: [model routing](/docs/guides/model-routing) and the [agent policy](/docs/guides/agent-policy). `planck routing off` and `planck autopilot off` opt this machine out.
+
+On Windows and Linux, installing the daemon also registers a `planck://` link handler, so the console's one-click restart can reach it. macOS does not get one. `planck daemon uninstall` removes it.
+
+| Command | What it does |
+| --- | --- |
+| `planck daemon install` | Registers login auto-start and starts the daemon. Safe to run again. |
+| `planck daemon uninstall` | Removes the auto-start registration. |
+| `planck daemon status` | Whether it is running, its uptime, queue depth, last sync and last error. `--verbose` adds the last 50 log events. |
+| `planck daemon fix` | One repair pass: version, connection, restart and verification. Accepts `--workspace <id>`, `--code <code>` and `--api-url <url>`. See [Troubleshooting](/docs/troubleshooting#the-daemon-indicator-is-amber-or-grey). |
+| `planck daemon restart` | Stops the running instance and starts a new one. |
+| `planck daemon stop` | Stops the running instance. The auto-start registration stays, so the daemon comes back at your next login at the latest. |
+| `planck daemon run` | Runs the daemon in the foreground. This is what auto-start calls. |
+| `planck daemon supervise` | Keeps `run` alive across crashes. The Windows fallback uses it. It is not for manual use. |
+
+## Where state lives
+
+Everything the CLI keeps is under `~/.planckspace`, unless `PLANCKSPACE_HOME` moves it.
+
+| Path | Holds |
+| --- | --- |
+| `config.json` | The backend URL, your CLI token, the workspace, the plan you declared, budgets and your routing choice. The token is stored in plain text, so treat the file like an SSH key. On macOS and Linux it is readable only by your user. |
+| `local.db` | A SQLite cache of the sessions the CLI has read, with per-turn detail for its own checks, plus sync state. The file itself is never uploaded. Only the mapped metadata fields are. |
+| `daemon.log` | The daemon's event log, one JSON object per line. It rotates at 10 MB and keeps three older files, `daemon.log.1` to `daemon.log.3`. |
+| `daemon.json`, `daemon.pid` | The daemon's live status and process ID, which `planck daemon status` reads. |
+| `claude-plugin/` | The model-routing plugin files, after `planck routing on`. |
+| `agent-policy.json`, `agent-policy-applied.json`, `backups/` | Agent-policy state: the last policy your workspace sent, what the CLI applied to Claude Code's `settings.json`, and a copy of that file taken before the first write. |
+| `fix-backups/` | Snapshots the editor extension takes before a one-click fix. |
+
+## Environment variables
+
+| Variable | Use |
+| --- | --- |
+| `PLANCKSPACE_TOKEN` | A CLI token for `planck login` and `planck init` when you pass none. Meant for CI and scripts. |
+| `PLANCKSPACE_HOME` | Moves all CLI state to another folder, which gives you a second, fully isolated profile. The registered auto-start does not inherit it, and the editor extension always reads `~/.planckspace`. |
+| `PLANCKSPACE_CLAUDE_BIN` | The path to the `claude` binary used to install model routing, or `none` to edit Claude Code's settings file instead. Without it the CLI looks on your PATH, in `~/.local/bin`, in `~/.claude/local` and in the Claude Code extension bundled with VS Code, Cursor and Windsurf. |
+| `CLAUDE_CONFIG_DIR` | Claude Code's own variable. When it is set, the CLI reads Claude Code's logs and settings from that folder instead of `~/.claude`. |
+| `TYPESAFE_API_KEY` | Your own TypeSafe key. The routing plugin uses it only when your workspace's [agent policy](/docs/guides/agent-policy) sets its decision provider to TypeSafe. See [What leaves your machine](/docs/quickstart#what-leaves-your-machine). |
+| `PLANCKSPACE_API_URL`, `PLANCKSPACE_ALLOW_INSECURE` | For developing against a local backend. With the hosted service you do not set them. `PLANCKSPACE_API_URL` outranks the saved `apiUrl`, and the CLI says so when it is the source. |
+
+The CLI reads these only from variables you export. It never loads a `.env` file, so a stray file in a repository cannot redirect where your token is sent. It also refuses to send a token or code over plain HTTP, except to localhost.
+
+## Update
+
+```bash
+npm install -g @planckspace/cli@latest
+```
+
+You can also run `npx -y @planckspace/cli@latest daemon fix`, which runs the newest build and re-registers auto-start in one step.
+
+The daemon never updates itself. PlanckSpace prompts you instead. `planck daemon status` prints a line such as `Update available: 0.5.0 -> 0.6.0`, and the console's sidebar shows **Update available**. If the backend marks your build unsupported because it cannot price a model now in use, both places say so more loudly. Turns the CLI cannot price are left out of its dollar figures, so the totals that build reports are understated. The daemon also logs a warning at start when it is behind the latest published version.
+
+## Disconnect and uninstall
+
+| Goal | Run |
+| --- | --- |
+| Disconnect this machine and keep the CLI and local data | `planck logout` |
+| Stop the daemon starting at login | `planck daemon uninstall` |
+| Remove model routing from Claude Code | `planck routing off` |
+| Undo what the agent policy applied to Claude Code | `planck autopilot off` |
+| Remove the CLI | `npm uninstall -g @planckspace/cli` |
+| Delete local state | Remove the `~/.planckspace` folder |
+
+`planck logout` clears the token and workspace from `config.json`. The daemon keeps running but has nothing to sync with, so nothing is uploaded. It does not revoke the token on the server: **Regenerate token** under **Settings → CLI / daemon connection** in the console does that.
+
+To remove everything, run `planck routing off` and `planck autopilot off` first if you used them, then `planck daemon uninstall`, and only then `npm uninstall -g`. That way the auto-start entry does not point at a CLI that is gone. Remove the editor extension from your editor's Extensions view. The CLI never modifies Claude Code's session logs, so uninstalling leaves them alone.
+
+## Related
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="Connect a machine and print your first recoverable figure." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="Daemon not syncing, a missing install, or a rejected token." />
+  <Card title="Editor extension" href="/docs/editor-extension" description="The VS Code, Cursor and Windsurf extension that reads the same local data." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every planck command and flag." />
+</Cards>

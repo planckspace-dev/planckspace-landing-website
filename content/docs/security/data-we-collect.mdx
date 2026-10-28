@@ -1,0 +1,204 @@
+---
+title: Data we collect
+description: "Every field sent to PlanckSpace from a developer's machine, what never is, what is computed locally, and how to check it yourself."
+icon: EyeOff
+---
+
+PlanckSpace measures AI usage from metadata alone. The CLI reads your AI tools' local logs and your git history on the machine, copies out counts, names and timings, and sends only those. Your prompts, the model's responses and your code are never sent to PlanckSpace. This page lists every field that is sent, everything that never is, the one opt-in exception for prompt text, and how to check all of it yourself.
+
+## What the CLI reads on your machine
+
+Reading is not sending. These are the sources the CLI opens; the rest of this page is what it copies out of them.
+
+| Source | Read for |
+| --- | --- |
+| Claude Code transcripts in `~/.claude/projects` (or under `CLAUDE_CONFIG_DIR`), including subagent transcripts | Sessions, turns, models, token counts, tool names and file paths |
+| Cursor's local state database, and Windsurf's and JetBrains AI Assistant's local history where present | The same, as far as each tool records it |
+| Git metadata in each repository: the root folder's name, the current branch, `git config user.email` and the commit log | Repository, branch, attribution and outcome |
+| Claude Code's settings files and environment | Whether Claude Code on this machine is billed per token or on a seat |
+| Files that sessions read repeatedly, and `CLAUDE.md` | Size estimates for the CLI's own local checks |
+
+See [Supported tools](/docs/reference/supported-tools) for what each AI tool records.
+
+## Session metadata
+
+One record per session. The wire format is in the [telemetry reference](/docs/reference/telemetry).
+
+| Field | What it holds |
+| --- | --- |
+| Session ID | The AI tool's own ID for the session |
+| Tool | The AI tool, such as Claude Code or Cursor |
+| Model | The session's main model |
+| Start and end | Timestamps of the session's first and last event |
+| Tokens | Input, output, cache-read and cache-write tokens, summed over the session |
+| Cost | The API-rate price of those tokens, computed on the machine |
+| Billing | Metered or seat, which decides whether the cost is [billed or usage value](/docs/concepts/two-ledgers) |
+| Plan | For a seat session, the plan you declared for that tool, such as `max_20x` |
+| Unpriced turns | How many turns used a model the CLI has no price for; their cost is left out, never guessed |
+| Repository | The name of the repository's root folder, never its path or remote URL, or `unknown` outside a repository |
+| Branch | The git branch the session ran on |
+| Git email | The repository's `git config user.email` |
+| Outcome | shipped, partial, abandoned, errored or unknown, decided from local git history |
+| Merged PR | The pull request number and merge time, when the work shipped |
+| Counts | The number of turns, and of distinct files touched |
+| Re-read files | Paths that appear in more than one turn, with how many turns each appears in. The server does not keep this list; it derives the same figures from the turns |
+| Workspace | The ID of the workspace the machine is connected to. The server files the session under the device token's workspace regardless |
+
+### Attribution
+
+The git email is what ties a session to a person. When a session arrives, the server compares it with the owner of the device token that sent it. Unless the git email is one of that person's own addresses (their account email or their git email), the server replaces it with the token owner's address. A device token can therefore never file sessions under a colleague's name.
+
+## Per-turn metadata
+
+A turn is one model call. For Claude Code, turns that ran in subagents are included, each with its own model.
+
+| Field | What it holds |
+| --- | --- |
+| Sequence and time | The turn's position in the session, and its timestamp |
+| Model | The model that served the turn |
+| Tokens | Input, output, cache-read and cache-write tokens |
+| Cost | The turn's price, computed on the machine |
+| Tool calls | Each tool's name and how many times it ran in the turn, such as `Read` or `Bash`. An MCP tool's name, such as `mcp__github__create_issue`, includes its server's name. Never the arguments or the output |
+| Files touched | Paths passed to file tools (in Claude Code: Read, Edit, Write and NotebookEdit), relative to the folder the session ran in, usually the repository root. A path outside that folder is reduced to its file name |
+
+When Claude Code records them, a turn also carries:
+
+- Tokens written to the 1-hour cache, and thinking tokens.
+- The effort level: low, medium, high, xhigh or max.
+- The subagent type, for a turn that ran in a subagent.
+- The cache-miss reason, an identifier such as `model_changed`, and how many tokens the miss affected.
+- The size of the turn's tool results, as characters divided by 4.
+- The speed: standard or fast.
+- On the first turn after a compaction, whether it was automatic or manual, and the context size before it.
+
+## Device facts
+
+Each sync also reports a few facts about the machine rather than about a session:
+
+- The CLI version.
+- Whether the [model routing](/docs/guides/model-routing) plugin is installed, sent only where Claude Code exists.
+- How Claude Code is billed on this machine: metered, seat or unknown; which route is configured, such as `env_api_key`, `bedrock` or `subscription`; and, only for a Claude Console login, the Anthropic organization ID. Never a key or a token value.
+- What the machine did with the workspace's [agent policy](/docs/guides/agent-policy): the policy version and mode, whether it is applied, whether you opted out, and which decision provider it uses.
+
+## Settings and local results a device can send
+
+The CLI also sends a few things you set up on the machine, and the results of its own local checks:
+
+- **Declared subscriptions and budgets.** Subscriptions you declared with `planck subscription add` (tool, plan, seat count, seat price, billing mode and currency) and budgets set with `planck budget set` (scope, name and monthly amount). The server acts on them only from an owner's, leader's or admin's machine, and only to create what the workspace does not have yet: seats for a tool with none declared, or a budget that does not exist. It never changes or deletes either.
+- **Results of the CLI's local checks.** The check's name and scope, a repository name, a developer email when the result is about one person, a short title and fix text built from fixed templates (which can name a file, a repository and figures), session IDs, numeric measurements and an estimated monthly amount. They are stored with the workspace, and the console's Findings page does not show them.
+- **Local anomalies.** The kind (a daily cost spike or a session outlier), a repository name or session ID, a severity, and the baseline and observed dollar amounts.
+
+## When you connect a machine
+
+| Command | What it sends |
+| --- | --- |
+| `planck init --join` | The join code, your email (`--email`, or `git config user.email`), your git user name, and a device label made of the operating system and CPU architecture, such as `darwin-arm64` |
+| `planck init --code`, `planck daemon fix --code` | The connect code and the device label |
+| `planck login` | The device token |
+
+The machine's hostname is never sent. See [Security overview](/docs/security/overview#authentication) for how each credential is checked.
+
+## From the editor extension
+
+The [editor extension](/docs/editor-extension) uses the same device token as the CLI. It sends:
+
+- When you mark a finding fixed or undo it, the finding's ID and its new status.
+- To suggest skills, the names of the open project's dependencies, read from `package.json`, `requirements.txt`, `go.mod` and `Cargo.toml`, and the kinds of files you have open, such as `typescript` or `python`. When a suggestion matches, the server keeps these lists with it.
+
+## What is never sent to PlanckSpace
+
+| Never sent | What happens instead |
+| --- | --- |
+| Prompt text, and anything else you type to an AI tool | The CLI reads the transcript locally and copies out only counts, names and timings |
+| Model responses, including thinking | Only token counts are sent |
+| Tool arguments and tool output, including shell commands | Tool names and call counts; a path for file tools; a size estimate for output |
+| Source code and file contents | Sizes are counted locally. The dependency names the editor extension sends are the one exception |
+| Diffs, commit messages and commit hashes | Git history is read locally; only the outcome, a PR number and a merge time are sent |
+| Your AI tools' API keys and sign-in tokens, and environment variable values | Only which billing route is configured |
+| The working directory, absolute paths and the hostname | Paths are made relative to the folder the session ran in; devices are labelled by operating system and architecture |
+
+A provider key leaves the machine only when you choose to connect billing with `planck connect`, which sends it to the PlanckSpace API. See [Connect billing](/docs/guides/connect-billing).
+
+<Callout type="warn" title="The one opt-in path for prompt text">
+When the workspace's [agent policy](/docs/guides/agent-policy) uses TypeSafe for task decisions and a developer has set their own `TYPESAFE_API_KEY`, the Claude Code routing plugin sends TypeSafe that developer's previous and current prompt, each cut to 2,000 characters, with the session's context size, straight from the machine. PlanckSpace never receives them. The decision provider is off by default. Without the key, the plugin decides on the machine instead (an idle gap of more than 30 minutes means a new task). The local provider sends the same request to a model server on the machine itself. `planck autopilot off` stops the plugin's policy hooks on a machine.
+</Callout>
+
+## How the API enforces the list
+
+The CLI builds every payload field by field and never forwards a log record as it is. The API then checks each upload against a fixed schema before storing anything. Only two parts refuse unknown fields outright; everywhere else an unknown field is silently dropped:
+
+| Part of an upload | A field the API does not know | A value of the wrong shape |
+| --- | --- | --- |
+| A session | The whole upload is rejected with a 400 | Rejected |
+| An agent configuration snapshot | Rejected, at every level of the snapshot | Rejected |
+| A turn, and each of its tool calls | Dropped before anything is stored | Rejected, except the optional per-turn fields above, which are dropped one at a time |
+| Declared subscriptions and budgets, local-check results and anomalies | Dropped before anything is stored | Rejected |
+| The upload envelope itself | Dropped before anything is stored | Rejected |
+| Billing route and agent-policy state | That fact is dropped; the sync goes through | That fact is dropped; the sync goes through |
+
+Identifiers such as subagent types and cache-miss reasons must match a strict character pattern, so they cannot carry a sentence. Free-form text fields are not pattern-checked: model, repository, branch, file paths, tool names, and the title and fix text of local-check results. The CLI fills them only from your AI tools' logs, git and its own templates. One part is checked only as an object, not field by field: the evidence attached to local-check results, where the CLI puts session IDs and numbers.
+
+## Agent configuration snapshots
+
+[Agent setup](/docs/concepts/agent-setup) is built from a snapshot of a machine's agent configuration that CLI 0.6.0 or later can include in its sync; the server treats earlier versions as unable to report one. The API accepts the snapshot only in this shape:
+
+| Part | Fields |
+| --- | --- |
+| Instruction files, such as `CLAUDE.md` | Path, scope (managed, user, project or local), tool, size in bytes, line count, token estimate (characters divided by 4), a keyed hash (HMAC-SHA256) of the file, whether that hash is keyed to the repository or to the device, modified time, last commit time and commits since |
+| Hooks | Event name, scope, the settings file it comes from, and how many hooks are set for that event |
+| Skills and commands | Name and scope |
+| MCP servers | Name, transport (stdio, http or sse), scope and the settings file it comes from |
+| Model setting | The model a settings file selects, its scope and the settings file |
+
+The snapshot has no field for a file's contents, a hook's command, an MCP server's URL or environment values, and a snapshot that includes any of them is rejected. Instruction-file paths must be relative to the repository or symbolic, such as `~/.claude/CLAUDE.md`: a path that starts with `/` or a drive letter, or contains `..`, is rejected. Names are limited to 100 characters of letters, digits and a few punctuation marks. The server stores entries only for repositories inside the workspace's repository scope. From the same CLI versions, the API also accepts the name of the skill that ran on a Skill tool call, under the same identifier rule as a subagent type.
+
+## Computed on your machine, sent as a number
+
+Several figures need more than metadata to work out. The CLI computes them locally and sends only the result.
+
+| Value | Computed locally from | Sent as |
+| --- | --- | --- |
+| Cost | Each turn's token counts and its model's list price, from the price card built into the CLI | A dollar amount per turn and per session |
+| How a session is billed | `CLAUDE_CODE_BILLING_MODE` if you set it, else Claude Code's local settings and environment, else the plan you declared for the tool | Metered or seat, and the machine's billing route |
+| Outcome | The repository's commit log: which commits followed the session, and whether they reached the default branch | One word, plus a PR number and merge time for shipped work |
+| Tool-result size | The characters in a turn's tool results, divided by 4 | Approximate tokens |
+| File size, for a local check | The file's bytes, divided by 4 | A token estimate inside the check's result |
+| Re-reads | Which turns each file path appears in | A count per path |
+
+To tell a working API key from one Claude Code has rejected, the CLI compares the key's last 20 characters with Claude Code's own list of rejected keys, on the machine. The key itself goes nowhere. [Sessions](/docs/concepts/sessions) explains how an outcome is decided.
+
+## Repository scope
+
+A workspace can track every repository its members work in, or only a selected list. With a selected list, PlanckSpace keeps other repositories, such as personal projects or other clients' code, out of the workspace in two places:
+
+1. **On the machine.** Before each sync, the CLI asks the server which repositories the workspace tracks. Sessions from any other repository stay on the machine and are marked done locally; if the workspace adds that repository later, they are sent then. Results of local checks and anomalies pinned to an untracked repository are withheld too. Results with no repository, such as one about your model choice, are still sent.
+2. **On the server.** A session from an untracked repository that arrives anyway is stored hidden: it appears in no session list, total or export, for any member, owners included. Results of local checks and repository anomalies for untracked repositories are dropped, and agent configuration for them is not stored. Changing the list re-applies it to sessions already stored, in both directions (in an education workspace, only towards hiding).
+
+Repositories are matched by the name of their root folder, ignoring case. See [Repository scope](/docs/guides/repo-scope) to set the list.
+
+<Callout type="warn" title="The filter on the machine fails open">
+If the CLI cannot read the workspace's list, because the server is unreachable or does not provide one, it syncs every session as before. The server's filter then applies instead: sessions from untracked repositories are stored hidden, rather than kept on the machine.
+</Callout>
+
+## Check it yourself
+
+`planck inspect` builds a session's payload with the same code the sync uses, and prints it: the session's header fields, its cost and token totals, then for every turn the model, tokens, cost, tool names with counts and file paths, and finally the re-read files.
+
+```bash
+planck inspect <session-id>
+```
+
+It prints the core fields only. The optional per-turn fields and the device facts are sent but not printed. In the console, **Controls › Security** shows the main fields of your most recent synced session as the server stored it, with one of its turns.
+
+## What stays on the machine
+
+The CLI keeps its own copy of this metadata in `~/.planckspace/local.db` (under `PLANCKSPACE_HOME` if you set it), including details it never syncs: each session's working directory, absolute file paths, and which files each turn read. Your AI tools' transcripts are only ever read, never changed.
+
+## Related
+
+<Cards>
+  <Card title="Security overview" href="/docs/security/overview" description="Trust boundaries, credentials, roles and the audit log." />
+  <Card title="Telemetry reference" href="/docs/reference/telemetry" description="The wire format of every field on this page." />
+  <Card title="Repository scope" href="/docs/guides/repo-scope" description="Keep untracked repositories out of the workspace." />
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="Who sees developers by name once the data arrives." />
+</Cards>

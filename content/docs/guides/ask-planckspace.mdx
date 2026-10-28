@@ -1,0 +1,145 @@
+---
+title: Ask PlanckSpace
+description: "Ask questions about your AI usage in plain English. Answers use only data your role can already see, and each one shows its lookups and its cost."
+icon: MessageSquare
+---
+
+Ask PlanckSpace is a chat page for questions about spend, sessions, findings, seats, budgets and teams. You type a question, PlanckSpace looks up the figures it needs and writes the answer, often with a table or a chart. Every lookup runs as you, through the same checks as the console pages it reads from, so an answer never contains more than you could open yourself. Chat is read-only and cannot change anything in your workspace.
+
+## Ask a question
+
+<Steps>
+<Step>
+
+### Open Chat
+
+Select **Chat** in the console's left rail. The page is titled Ask PlanckSpace.
+
+</Step>
+<Step>
+
+### Type or pick a question
+
+Type a question of up to 4,000 characters, or select one of the suggestions on the empty page. **Enter** sends it and **Shift+Enter** starts a new line.
+
+</Step>
+<Step>
+
+### Leave the model on Auto, or pin one
+
+The picker under the box offers **Auto**, **Haiku**, **Sonnet** and **Opus**. See [Choose a model](#choose-a-model).
+
+</Step>
+<Step>
+
+### Read the answer
+
+An answer opens with the direct result and the key figure, then the supporting detail. Expand **Used N tools** to see which lookups ran. **Breakdown** shows what the answer cost. Three follow-up questions appear underneath. To end an answer early, select **Stop generating**.
+
+</Step>
+</Steps>
+
+Answers are generated from your PlanckSpace data and can be wrong. Chat is instructed to quote only figures its lookups return, to say which window it used, and to say so when the data cannot answer. Check the figures that matter.
+
+## What an answer can see
+
+What the lookups return depends on who is asking.
+
+| Who asks | What the lookups return |
+| --- | --- |
+| Owner, leader or admin | The whole workspace |
+| Manager on a team | The team's sessions and findings, plus their own work |
+| Manager on no team | Their own work |
+| Developer | Their own sessions and findings, plus workspace-level findings |
+
+Chat follows the console's other rules as well. In a collaborative workspace, developers appear as "Developer A", "Developer B" or "anonymous", and Chat never tries to re-identify them. If a lookup needs a plan feature your workspace lacks, or a role you do not hold, Chat tells you so plainly and does not work around it. Lookups return [billed and usage value](/docs/concepts/two-ledgers) as separate figures, and Chat keeps them apart in every answer.
+
+The lookups cover:
+
+| Topic | What Chat can read |
+| --- | --- |
+| Overview and spend | Billed spend and usage value, spend by model, repository, project, tool, developer or team, cost per shipped unit |
+| Sessions | Lists, summaries, and a single session in detail |
+| Findings and savings | Open, claimed and captured amounts, and measured savings |
+| Seats, budgets and alerts | Subscriptions, idle seats, the total AI bill, budgets and anomalies |
+| Setup, teams and coverage | Models, MCP servers, skills, agents and routing, agent setup, per-team performance, and telemetry coverage |
+
+Per-team spend is for owners, leaders and admins, and so is telemetry coverage.
+
+To write an answer, PlanckSpace sends your question and the results of those lookups to the Anthropic API, using PlanckSpace's own account. Your workspace does not need an Anthropic key for Chat.
+
+## Choose a model
+
+On **Auto**, a small Haiku call reads your question and picks the cheapest model that can answer it well. When it is unsure between two, it picks the higher one. Each answer carries a chip with the model, and its tooltip, **Why this model**, gives the reason. You can pin a model instead, and the picker remembers your choice in your browser.
+
+| Choice | Used for | Model |
+| --- | --- | --- |
+| **Haiku** | One lookup, one number, a short list, a definition | Haiku 5.5 |
+| **Sonnet** | Comparisons, breakdowns, trends, a chart, explaining one finding or session | Sonnet 5.5 |
+| **Opus** | Open-ended diagnosis, trade-offs, forecasting, plans | Opus 5.5 |
+
+Haiku is the fastest and cheapest, and Opus gives the deepest reasoning at the highest cost.
+
+## Conversations
+
+Conversations are private to their author. No one else can open, rename or delete yours, owners included.
+
+- **New chat** starts a conversation. The rail lists your past ones, and the **Rename** and **Delete** actions are in each one's menu. Deleting removes its messages and cannot be undone.
+- A conversation holds up to 60 messages, which is 30 questions and 30 answers. After that, start a new chat.
+- Follow-up questions in the same conversation can build on earlier answers.
+
+## Limits
+
+| Limit | Value | What you see |
+| --- | --- | --- |
+| Question length | 4,000 characters | A counter from 3,200, and sending is blocked above 4,000 |
+| Conversation length | 60 messages | A request to start a new chat |
+| Answers at once | One per person | "Another answer is still streaming." |
+| Model calls per answer | 8, counting the final write-up | A request to narrow the question to one window and one breakdown |
+| Daily budget | One ceiling per workspace, shared by everyone, resetting at 00:00 UTC. The default is $5 | "Daily chat budget reached" until tomorrow (UTC) |
+| Request rate | 20 questions a minute per person | A rate-limit message. Retry shortly |
+
+## See what Chat costs
+
+The **Chat economics** panel sits beside the conversation on a wide screen. On a narrow one, select the wallet icon to open it. Choose 7d, 30d or 90d. Owners, leaders and admins also get a **Mine** and **Workspace** switch for the headline figures.
+
+| Figure | What it is |
+| --- | --- |
+| **You spent** (**Workspace spent**) | What answering the questions cost PlanckSpace over the period |
+| **Direct would cost** | The same tokens priced as if every question had gone to Opus 5.5 with no routing and no cache |
+| **Saved** | Direct minus actual, with the percentage |
+| **Cache hit** | The share of prompt tokens served from cache |
+| **Today's chat budget** | Today's cost against the workspace's daily ceiling |
+
+For example, $1.80 against $9.60 direct is a saving of $7.80, or 81%.
+
+These dollars are what PlanckSpace paid its own Anthropic account to answer your questions. They are not your workspace's spend or usage value, and they never appear in Spend, budgets, the invoice check or exports.
+
+## Good questions to ask
+
+The empty page suggests these. Owners, leaders, admins and managers see the first column, and developers see the second.
+
+| Workspace and team view | Your own work |
+| --- | --- |
+| What drove our billed spend this month? | Which of my sessions cost the most this week? |
+| Which repos have the worst cost per shipped PR? | How much of my work shipped this month? |
+| What are our open findings worth? | What are my open findings worth? |
+| Who has idle seats? | Which repos do I spend the most time in? |
+| Compare Opus vs Sonnet usage last 30 days | Compare Opus vs Sonnet usage in my sessions, last 30 days |
+| Which teams ship most per dollar? | Which of my sessions ended without shipping? |
+
+A few habits get better answers:
+
+- **Name the window.** Chat uses the last 30 days when you do not, and says which window it used.
+- **Ask for one breakdown at a time.** "By model" first, then "which repos drove that?"
+- **Ask why.** Open-ended diagnosis questions route to the strongest model on Auto.
+- **Follow up.** The conversation keeps its context, so "and last month?" works.
+
+## Related
+
+<Cards>
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="The two ledgers every answer keeps apart." />
+  <Card title="Findings" href="/docs/concepts/findings" description="What Chat means by open, claimed and captured amounts." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="What each role can see, and so what Chat can read for it." />
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="How the collaborative policy anonymizes developers in answers." />
+</Cards>

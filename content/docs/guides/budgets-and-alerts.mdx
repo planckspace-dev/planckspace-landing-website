@@ -1,0 +1,132 @@
+---
+title: Budgets and alerts
+description: "Set a monthly ceiling on billed spend for the workspace, a team or a repo, read the forecast, and understand exactly when an alert is sent, to whom, and why."
+icon: Bell
+---
+
+A budget is a monthly ceiling on metered spend for the whole workspace, one team or one repo. PlanckSpace forecasts the month from the pace so far and emails you when real spend crosses the thresholds you chose. It also flags repos and sessions that run far above their usual cost.
+
+## Before you start
+
+- **Role.** Owners, leaders and admins create, edit and delete budgets. Managers read them and the alert log. Developers do not get the page.
+- **Plan.** Budgets and anomaly alerts are a plan feature. If your workspace's plan does not include them, the console shows an upgrade prompt that names the plan that does.
+- **Where.** Controls → Budgets. The Alert log sits below the budgets.
+
+## How a budget works
+
+| Setting | What it does |
+| --- | --- |
+| What it covers | **Workspace** counts every session. **Team** counts sessions by the team's members. **Repo** counts sessions in one repository, named exactly as on Sessions. |
+| Monthly ceiling | The most you want billed this month, in dollars. |
+| Alert at | Up to 5 thresholds, each a whole percent from 1 to 500. The default is 50, 80 and 100. |
+| Notify | The email addresses that receive alerts. |
+
+A budget measures **billed** spend only, meaning metered charges for tokens, because a ceiling is on money that leaves the bank. Seat fees are a fixed line and never count toward it, and the usage value of work done on seats never burns it. See [billed and usage value](/docs/concepts/two-ledgers). Each target can have one budget.
+
+Months are UTC calendar months and reset on the 1st. A session counts in the month it started, and a budget created mid-month counts spend from the 1st.
+
+## Create a budget
+
+<Steps>
+<Step>
+
+### Open the form
+
+In Controls → Budgets, click **Create budget**.
+
+</Step>
+<Step>
+
+### Choose what it covers
+
+Pick Workspace, Team or Repo. For a team, pick one that already exists under Team. For a repo, type its name as it appears on Sessions. The form warns you if that target already has a budget.
+
+</Step>
+<Step>
+
+### Set the ceiling, thresholds and recipients
+
+Enter the monthly ceiling, choose the thresholds with the chips or the Custom field, and add the emails to notify. With none listed, the workspace owner is emailed.
+
+</Step>
+<Step>
+
+### Save
+
+Click **Create budget**. To change one later, open it from the All budgets list and choose Edit. The scope cannot change.
+
+</Step>
+</Steps>
+
+## Read the forecast
+
+The forecast is a straight line: billed spend so far, divided by the days elapsed (today counts), times the days in the month. The chart draws cumulative spend as a solid line with per-day bars, your ceiling and thresholds, a pin where each threshold was first crossed, and the forecast as a dashed line to month end.
+
+| Status | When |
+| --- | --- |
+| On track | The forecast is under 90% of the ceiling. |
+| At risk | The forecast is 90% to 100% of the ceiling. |
+| Breach in N days, or Crosses today | The forecast is over the ceiling, and spend has not passed it yet. |
+| Over budget | Spend has already passed the ceiling. |
+
+The forecast is not an alert. Alerts fire on spend that has actually crossed a threshold. For example, take a $500 workspace budget in a 30-day month with steady spend of $20 a day.
+
+| Day | Billed so far | Share of $500 | What you see |
+| --- | --- | --- | --- |
+| 10 | $200 | 40% | Forecast $600, or 120%, so "Breach in 15 days". No alert yet. |
+| 13 | $260 | 52% | The 50% threshold is crossed, and a warning is sent. |
+| 20 | $400 | 80% | The 80% threshold is crossed, and a warning is sent. |
+| 25 | $500 | 100% | The 100% threshold is crossed, a critical alert is sent, and the status is Over budget. |
+
+## How alerts are sent
+
+PlanckSpace checks every budget once an hour.
+
+- **Once per threshold per month.** Each threshold fires the first time spend crosses it, then stays quiet until the next month. Editing the ceiling does not re-arm one that already fired.
+- **Severity.** A threshold of 100% or more is critical. Anything lower is a warning.
+- **Only the highest is sent.** If one check finds several thresholds newly crossed, for example spend jumping from 40% to 105%, it sends one alert for 100%. The 50% and 80% crossings are recorded but never sent later.
+- **Who gets it.** The addresses on the budget, not anyone's personal notification settings. If none are listed, the workspace owner, or the first admin when there is no owner.
+- **Delivery.** An alert counts as delivered only when a channel confirms it. A failed send is retried at later hourly checks, with a wait of 5 minutes and then 10, for three attempts in total. After that it is marked Not sent, with the reason, and is not retried.
+
+The subject names the budget and quotes spend at the time of the check, so it can read a little above the threshold. For example:
+
+```text
+Budget alert: Workspace budget at 80% — $412 of $500 this month
+```
+
+A team budget reads "Team Platform budget", and a repo budget reads "Repo planckspace-backend budget". The email also lists the workspace, scope, baseline (the ceiling) and observed spend.
+
+The Alert log groups everything that fired by day, with a severity filter (All, Critical, Warning) and a status of Sent, Queued or Not sent. Open an alert for why it fired and what to do. The bell in the console header shows the latest few.
+
+## Spike alerts
+
+Two more kinds of alert come from the CLI on each developer's machine and arrive with the next sync. Detection runs on its own, and nothing needs switching on.
+
+| Alert | Fires when | Severity |
+| --- | --- | --- |
+| Repo spend spike | A repo's cost on its latest day is more than 3 times the median of its earlier days in the last 8 days, and above $20. | Warning, or critical at 5 times or more. |
+| Unusually expensive session | One session costs more than 5 times the developer's own 90th-percentile session over 30 days. The developer needs at least 5 sessions with a cost. | Critical. |
+
+<Callout type="warn" title="Spike alerts are not billed-only">
+The CLI prices every session at API rates, so these two checks do not separate billed spend from the usage value of seat work. Only budgets are billed-only. Spike alerts have no budget behind them, so they go to the workspace owner's email.
+</Callout>
+
+## From the CLI
+
+`planck budget set --scope repo --name <repo> --monthly <usd>` sets a budget on one machine, and the CLI warns there at 80%. A budget set on an owner's, leader's or admin's machine is also created in the workspace when none exists for that scope. A device never changes an existing budget. The console's budget always wins.
+
+## Edge cases
+
+- A team with no members, or a repo name that matches no sessions, counts $0. Check the spelling.
+- Deleting a budget removes it and its thresholds. Alerts it already fired stay in the log.
+- Saving a budget in the console replaces its alert channels with the email list shown, so a Slack webhook set through the API is dropped.
+- The weekly summary email is a separate feature. See the [weekly digest](/docs/guides/weekly-digest).
+
+## Related
+
+<Cards>
+  <Card title="Weekly digest" href="/docs/guides/weekly-digest" description="A weekly email summary instead of threshold alerts." />
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="Why a budget counts billed spend and never seat usage value." />
+  <Card title="Reconciliation" href="/docs/guides/reconciliation" description="Check tracked spend against the provider's bill." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="Create the teams a team budget needs." />
+</Cards>

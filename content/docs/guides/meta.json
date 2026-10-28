@@ -1,0 +1,17 @@
+{
+  "title": "Guides",
+  "pages": [
+    "fix-findings",
+    "connect-billing",
+    "subscriptions",
+    "budgets-and-alerts",
+    "model-routing",
+    "agent-policy",
+    "teams-and-roles",
+    "repo-scope",
+    "reconciliation",
+    "exports",
+    "ask-planckspace",
+    "weekly-digest"
+  ]
+}

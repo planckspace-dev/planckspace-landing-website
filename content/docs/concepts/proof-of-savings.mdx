@@ -1,0 +1,142 @@
+---
+title: Proof of savings
+description: "How PlanckSpace measures a saving after a fix: one booked row per session or seat-month, priced against what the same work would have cost before."
+icon: BadgeCheck
+---
+
+A saving in PlanckSpace is never a forecast. It is a booked row: one session, or one removed seat over one calendar month, priced against what the same work would have cost without the fix. Savings to date are the sum of those rows and nothing else, so every dollar can be traced to the session or seat it came from.
+
+## A saved dollar is a booked row
+
+| Each row records | Meaning |
+| --- | --- |
+| What it covers | One session, or one removed seat for one calendar month |
+| Would have cost | The same work, priced as it would have run without the fix |
+| Cost | The same work, priced as it ran |
+| Saved | The difference, never below $0 |
+| Method | How the row was priced: re-priced, rebased cache or seat removed |
+| Confidence | High for exact per-turn arithmetic; medium when an approximation or a declared seat change was needed |
+| Ledger | Where the saved money sits: [billed](/docs/concepts/two-ledgers) for every current finding type |
+
+A session fix books nothing on a day nobody worked; a seat saving accrues for each day the removed seat stays off. Each session is booked once per lever: when a workspace routing fix and a developer routing fix both cover a session, the workspace fix is measured first and keeps the sessions it books.
+
+## What gets measured
+
+Only fixes a person acted on are measured. An open finding whose metric drifts on its own books nothing.
+
+| Finding | The action that starts measurement |
+| --- | --- |
+| [Model routing](/docs/concepts/findings#model-routing), [cache efficiency](/docs/concepts/findings#cache-efficiency) | A person marks the finding fixed: an owner, leader or admin, or the member it is about, for example from the editor extension after a one-click fix. The measured window starts at that moment. |
+| [Dormant seat](/docs/concepts/findings#dormant-seats), [seat right-sizing](/docs/concepts/findings#seat-right-sizing) | An owner, leader or admin approves the finding, then lowers the seat count in PlanckSpace. |
+
+Measurement runs before every detection run: every 6 hours, shortly after each sync, and on demand.
+
+## The three methods
+
+### Re-priced
+
+Used for model routing. Each main-session turn that ran on a non-premium model since the fix is priced twice: at the premium model the sessions mostly ran before the fix, and as it ran. Subagent turns save nothing here, because the `"model"` setting changes only the main session's model, and turns still on a premium model save nothing either. Sessions synced without per-turn detail are priced from their totals, scaled to the main model's share of output, at medium confidence.
+
+### Rebased cache
+
+Used for cache efficiency. Each turn's input-side tokens (uncached input plus cache reads) are re-split at the cache-hit rate from before the fix: fewer cache reads, more uncached input. Cache writes and output stay as they were, so the "would have cost" side is, if anything, low. A turn at or below the old hit rate saves nothing. Sessions without per-turn detail are priced from totals, at medium confidence.
+
+### Seat removed
+
+Used for dormant seats and seat right-sizing. A seat removed after approval is credited for every part of a calendar month it stays off. See [seat savings](#seat-savings).
+
+## One price card for both sides
+
+Both sides of every row are priced on the same pinned price card, so a provider's price change can never show up as a saving or a loss. Models with no price are skipped, never guessed. When a session did not report how its cache writes split between 5-minute and 1-hour lifetimes, both sides price every write at the 5-minute rate, which can only understate the saving.
+
+## The gates
+
+A session fix is judged only when both of these hold:
+
+- At least **7 days** have passed since the fix.
+- At least **20 settled sessions** ran in the finding's scope since the fix.
+
+The scope is the finding's own: the whole workspace or one developer, and billed sessions only for metered findings. Until both gates pass, the fix shows as being measured and books nothing; the console shows what it has saved so far, marked "not yet counted". Every session since the fix is priced, settled or not; the gate counts [settled sessions](/docs/concepts/sessions#outcomes) because those are the ones whose outcome is known.
+
+After the first booking, each run re-prices the last 45 days. A session that kept growing after its first sync is booked at its final size, once.
+
+A session fix that never reaches 20 settled sessions stays being measured. Seat fixes have no gate: they are confirmed as soon as a credited seat removal exists.
+
+## Guardrails and outcomes
+
+| Status | When | What happens |
+| --- | --- | --- |
+| Being measured | A session fix short of the gate, or past it with nothing saved yet. A seat fix with no credited removal yet. | Nothing is booked. |
+| Confirmed | A session fix past the gate with savings booked, or a seat fix with a credited removal | The finding moves to Saved (measured), and its rows count in every total. |
+| At risk | The ship rate since the fix is more than 10 percentage points below the 30 days before it, with at least 10 settled sessions on each side | Nothing new is booked and the fix has no pace. Cheaper work that ships less is not a saving. |
+| Regressed | A session fix's metric over the last 14 days, with at least 5 sessions, is back near its starting level (below). A seat fix: every credited seat is back, or its subscription was deleted. | The finding goes back to Open. Rows already booked stay: that money was saved. |
+| No effect | A session fix past the gate, 30 days since the fix, with nothing booked | The finding goes back to Open. |
+
+"Back near its starting level" is judged on the finding's own metric. A model routing fix has regressed when the premium-model share over the last 14 days is above 85% of its share at detection. A cache fix has regressed when the hit rate has closed less than 15% of the gap between its level at detection and 100%.
+
+## Seat savings
+
+A seat saving needs an approval and a seat removal recorded after it. The rules:
+
+- **Who and when.** An owner, leader or admin lowers the seat count for the same tool and plan in PlanckSpace, after the finding was approved.
+- **Once per seat.** Each removed seat is credited once, across dormant-seat and right-sizing findings, in the order they were approved.
+- **The named holder stays away.** If a dormant seat was named after a person who kept using the tool on a seat after the removal, the removed seat was not theirs and is not credited to that finding.
+- **Right-sizing needs the move.** A Pro seat must also be added after approval, and the holder must have run at least one session on Pro since. The saving is the Max price minus the Pro price.
+- **Deletion is not removal.** Deleting a subscription ends any credit; it never reads as every seat reclaimed.
+- **Missing history.** When a subscription has no recorded seat count before the change, the count the finding saw at detection stands in for it.
+
+Rows are booked per seat for each calendar month (UTC), prorated for the part of the month the seat stays off. Credit ends when the seat count returns to its earlier level or the subscription is deleted. A dormant seat needs no sessions to be credited.
+
+Seat rows are always labelled **declared**, at medium confidence: they rest on a seat count a person recorded, not on an invoice. To check one, compare the month's seat invoice with the declared seats on [reconciliation](/docs/guides/reconciliation); that comparison does not change the label.
+
+## Realized, captured and receipts
+
+| Figure | Meaning |
+| --- | --- |
+| Realized to date | The sum of every booked row, including rows from fixes that later regressed |
+| Captured (the pace) | For a session fix, what its rows saved in the last 30 days. For a seat fix, the monthly saving of the seats still removed. Only confirmed fixes have a pace. |
+| Claimed | The estimated monthly amount of fixes still being measured. A forecast, shown beside the measured figures and never added to them. |
+
+Realized savings shows saved to date, the last 30 days, a chart of measured savings over time, and every fix with its metric before and after. Each fix opens its **receipts**: the rows behind it, newest first, with the date, what the work would have cost, what it cost and what it saved. A session row links to the session and shows its repository and model; a seat row reads "Seat removed". A note flags rows priced with an approximation or a declared seat count.
+
+## Worked example
+
+For example, a workspace model routing finding shows 70% of settled metered sessions on a premium model, mostly Opus 5.5. An admin commits `"model": "sonnet"` to the repository settings and marks the finding fixed on 2 March.
+
+| Date | What PlanckSpace shows |
+| --- | --- |
+| 5 March | Being measured: 11 of 20 settled sessions and 3 of 7 days since the fix. |
+| 9 March | 7 days and 24 settled sessions: past the gate. The ship rate was 61% in the 30 days before the fix and is 58% since, a 3-point drop, inside the guardrail. Confirmed. |
+
+One of those sessions, priced both ways:
+
+| Main-session tokens | Count | At Opus 5.5 (would have cost) | On Sonnet 5.5 (cost) |
+| --- | --- | --- | --- |
+| Input | 20,000 | $0.08 | $0.04 |
+| Output | 30,000 | $0.60 | $0.30 |
+| Cache reads | 2,000,000 | $0.40 | $0.40 |
+| Cache writes (5-minute) | 100,000 | $0.50 | $0.25 |
+| Total | | $1.58 | $0.99 |
+
+The row books $0.59. Cache reads cost the same on both models on the pinned card, so the saving comes from input, output and cache writes. By 9 March, 27 sessions since the fix had a saving, $16.84 in all: realized to date and the 30-day pace are both $16.84.
+
+Had a later run found 64% of the last 14 days' sessions back on a premium model, above 85% of the starting 70% (59.5%), the finding would go back to Open as regressed, and the $16.84 would stay booked.
+
+A seat, for example: a dormant Claude Code seat at $150 a month is approved on 3 March, and an admin lowers the plan from 8 seats to 7 at the start of 10 March (UTC). Measured at the start of 15 April, the finding has two rows: March, 22 of 31 days, $106.45; April so far, 14 of 30 days, $70.00. Realized to date is $176.45, the pace is $150 a month while the seat stays off, and both rows are labelled declared.
+
+## Why measured, not modeled
+
+An estimate scaled by how far a proxy metric moved credits noise: a team's model mix drifts from week to week, so a fix nobody made can appear to work. A monthly rate multiplied by the months since a fix keeps growing after the fix is undone. Booked rows avoid both. A session fix books nothing on a day nobody worked, a reverted behaviour stops booking, and cheaper work that ships less books nothing at all.
+
+<Callout title="A forecast is labelled as one">
+The monthly amount on a finding, and the claimed figure for fixes being measured, are estimates. Neither is ever added to realized savings or to the captured pace.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card title="Findings" href="/docs/concepts/findings" description="The finding types, their baselines and how each is fixed." />
+  <Card title="Fix findings" href="/docs/guides/fix-findings" description="Apply a fix, approve a seat change, and watch it being measured." />
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="Why every current saving is billed money." />
+  <Card title="Reconciliation" href="/docs/guides/reconciliation" description="Check a declared seat saving against the seat invoice." />
+</Cards>

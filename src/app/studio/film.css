@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Studio film only. The tour video (public/media/planckspace-tour.*) and the
+   social card (public/og.png) were drawn in the site's previous dark "Signal"
+   system: ink surfaces, paper type, signal lime, Science Gothic headlines,
+   Doto meters, chamfered frames. The dev-only /studio route still renders
+   them, so their classes live here.
+
+   Every rule is scoped to html[data-film], which the studio page sets before
+   hydration. Next keeps a global stylesheet loaded once any route imports it,
+   so the scope is what keeps all of this off the light site.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@property --wdth {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 112;
+}
+
+html[data-film] {
+  --fg: #f7f5f0;
+  --fg-2: #c9c7c0;
+  --fg-3: #9c9a94;
+  --fg-4: #7e7d78;
+  --lime: #c6ff3d;
+  --on-lime: #0b0b0c;
+  --on-lime-2: #3a3a33;
+  --ink-0: #0b0b0c;
+  --ink-1: #111113;
+  --ink-2: #17171b;
+  --ink-3: #1e1e23;
+  --sig-blue: #6e9bff;
+  --line: rgb(247 245 240 / 0.09);
+  --line-2: rgb(247 245 240 / 0.15);
+  --ch: 14px;
+  --gutter: clamp(1rem, 4.2vw, 3.5rem);
+  background: var(--ink-0);
+  color: var(--fg);
+  color-scheme: dark;
+}
+
+html[data-film] body {
+  background: var(--ink-0);
+  color: var(--fg);
+}
+
+/* ── type ──────────────────────────────────────────────────────────────── */
+
+html[data-film] .t-display {
+  font-family: var(--font-science), "Arial Black", ui-sans-serif, sans-serif;
+  font-weight: 800;
+  font-variation-settings: "wdth" var(--wdth, 112);
+  letter-spacing: -0.012em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+html[data-film] .t-h4 {
+  font-family: var(--font-science), "Arial Black", ui-sans-serif, sans-serif;
+  font-weight: 700;
+  font-variation-settings: "wdth" 104;
+  font-size: 1.3rem;
+  line-height: 1.1;
+}
+html[data-film] .t-lead {
+  font-size: 1.3125rem;
+  line-height: 1.55;
+  color: var(--fg-2);
+}
+html[data-film] .t-kicker {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+html[data-film] .t-meter {
+  font-family: var(--font-doto), var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+html[data-film] .t-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── geometry: the mark's 45° chamfer ──────────────────────────────────── */
+
+html[data-film] .ch-br {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%, 0 100%);
+}
+html[data-film] .frame {
+  --ch: 22px;
+  --edge: var(--line-2);
+  --fill: var(--ink-2);
+  position: relative;
+  padding: 1px;
+  background: var(--edge);
+  clip-path: polygon(var(--ch) 0, 100% 0, 100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%, 0 100%, 0 var(--ch));
+}
+html[data-film] .frame > .frame-in {
+  position: relative;
+  height: 100%;
+  background: var(--fill);
+  clip-path: polygon(
+    calc(var(--ch) - 0.4px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 0.4px),
+    calc(100% - var(--ch) + 0.4px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 0.4px)
+  );
+}
+html[data-film] .tag {
+  --ch: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: rgb(247 245 240 / 0.07);
+  color: var(--fg-2);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--ch)), calc(100% - var(--ch)) 100%, 0 100%);
+}
+html[data-film] .tag-lime {
+  background: rgb(198 255 61 / 0.12);
+  color: var(--lime);
+}
+
+html[data-film] .term {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+html[data-film] .term .p {
+  color: var(--lime);
+}
+html[data-film] .term .dim {
+  color: var(--fg-4);
+}
+html[data-film] .term .hi {
+  color: var(--fg);
+}
+
+/* ── the title scene: the token stream feeding the ledger ──────────────── */
+
+html[data-film] .hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: var(--ink-0);
+}
+html[data-film] .hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform-origin: 60% 40%;
+}
+html[data-film] [data-gl="off"] canvas {
+  visibility: hidden;
+}
+html[data-film] .hero-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 8% 100%, rgb(11 11 12 / 0.92) 0%, rgb(11 11 12 / 0.55) 38%, transparent 70%),
+    linear-gradient(180deg, rgb(11 11 12 / 0.55) 0%, transparent 18%, transparent 78%, rgb(11 11 12 / 0.9) 100%);
+}
+/* the film is 1920 wide: the desktop poster layout */
+html[data-film] .hero-mark {
+  position: absolute;
+  z-index: 2;
+  left: 51%;
+  top: 17%;
+  width: 140px;
+  aspect-ratio: 320 / 300;
+}
+html[data-film] .hero-ledger {
+  position: absolute;
+  z-index: 2;
+  left: 66.5%;
+  right: 4.5%;
+  top: 47%;
+  height: 27%;
+}

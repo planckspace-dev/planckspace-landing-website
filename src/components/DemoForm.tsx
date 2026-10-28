@@ -297,18 +297,18 @@ export default function DemoForm() {
 
   if (status === "sent") {
     return (
-      <div className="frame [--ch:24px]">
-        <div className="frame-in p-7 sm:p-10">
-          <span className="ch-br grid h-12 w-12 place-items-center bg-lime text-ink [--ch:9px]">
+      <div className="box">
+        <div className="p-7 sm:p-10">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-green-50 text-green-700">
             <Check className="h-5 w-5" strokeWidth={2.2} />
           </span>
-          <h2 className="t-display mt-6 text-[2rem] leading-none [--wdth:104]">Request received.</h2>
-          <p className="mt-4 max-w-md text-[1rem] leading-relaxed text-fg-2">
+          <h2 className="title-md mt-6">Request received.</h2>
+          <p className="mt-4 max-w-md text-[1rem] leading-relaxed text-body">
             Thanks, {form.name.trim().split(" ")[0]}. We have your details and we&apos;re already looking at how
             PlanckSpace would map onto {form.company.trim()}.
           </p>
 
-          <ol className="mt-8 space-y-5 border-t border-[var(--line)] pt-7">
+          <ol className="mt-8 space-y-5 border-t border-line pt-7">
             {[
               {
                 t: "A founder replies within one business day",
@@ -324,18 +324,18 @@ export default function DemoForm() {
               },
             ].map((s, i) => (
               <li key={s.t} className="flex gap-5">
-                <span className="t-meter w-6 pt-0.5 text-[1.2rem] text-lime">{i + 1}</span>
+                <span className="num mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-canvas text-[0.75rem] font-medium text-ink">{i + 1}</span>
                 <div>
-                  <h3 className="text-[1rem] font-semibold text-fg">{s.t}</h3>
-                  <p className="mt-1 text-[0.92rem] leading-relaxed text-fg-3">{s.b}</p>
+                  <h3 className="text-[1rem] font-semibold text-ink">{s.t}</h3>
+                  <p className="mt-1 text-[0.92rem] leading-relaxed text-muted">{s.b}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          <p className="mt-8 border-t border-[var(--line)] pt-6 text-[0.92rem] text-fg-3">
+          <p className="mt-8 border-t border-line pt-6 text-[0.92rem] text-muted">
             Something to add in the meantime? Reply straight to{" "}
-            <a href={`mailto:${CONTACT_EMAIL}`} className="link-lined text-fg">
+            <a href={`mailto:${CONTACT_EMAIL}`} className="link-under text-ink">
               {CONTACT_EMAIL}
             </a>
             .
@@ -348,19 +348,19 @@ export default function DemoForm() {
   /* ---------------------------------------------------------------- form -- */
 
   return (
-    <form onSubmit={onSubmit} className="frame [--ch:24px]" noValidate>
-      <div className="frame-in relative p-6 sm:p-9">
+    <form onSubmit={onSubmit} className="box" noValidate>
+      <div className="relative p-6 sm:p-9">
       {/* progress */}
       <div className="mb-8">
         <div className="flex items-baseline justify-between">
           <p
             ref={headingRef}
             tabIndex={-1}
-            className="t-display text-[1.45rem] leading-none [--wdth:104] focus:outline-none"
+            className="title-md focus:outline-none"
           >
             {STEPS[step].label}
           </p>
-          <p className="t-mono text-[11.5px] text-fg-3">
+          <p className="text-[0.8125rem] text-muted">
             Step {step + 1} of {STEPS.length}
           </p>
         </div>
@@ -369,8 +369,8 @@ export default function DemoForm() {
             <span
               key={s.id}
               className={cn(
-                "h-[3px] flex-1 transition-colors duration-500",
-                i <= step ? "bg-lime" : "bg-fg/10",
+                "h-[3px] flex-1 rounded-full transition-colors duration-500",
+                i <= step ? "bg-brand-600" : "bg-track",
               )}
             />
           ))}
@@ -611,7 +611,7 @@ export default function DemoForm() {
       </div>
 
       {status === "error" && (
-        <p role="alert" className="mt-6 bg-sig-coral/10 px-4 py-3 text-[0.9rem] text-sig-coral shadow-[inset_0_0_0_1px_rgb(255_138_92/0.35)]">
+        <p role="alert" className="mt-6 rounded-[10px] bg-coral-50 px-4 py-3 text-[0.9rem] text-coral-700 shadow-[inset_0_0_0_1px_rgb(244_96_47/0.25)]">
           {errorMsg}. You can also email us directly at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium underline">
             {CONTACT_EMAIL}
@@ -621,12 +621,12 @@ export default function DemoForm() {
       )}
 
       {/* nav */}
-      <div className="mt-8 flex items-center gap-3 border-t border-[var(--line)] pt-7">
+      <div className="mt-8 flex items-center gap-3 border-t border-line pt-7">
         {step > 0 && (
           <button
             type="button"
             onClick={() => setStep((s) => Math.max(s - 1, 0))}
-            className="flex items-center gap-1.5 px-2 py-2 text-[0.9rem] font-medium text-fg-3 transition-colors duration-300 hover:text-fg"
+            className="flex items-center gap-1.5 px-2 py-2 text-[0.9rem] font-medium text-muted transition-colors duration-300 hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             Back
@@ -642,7 +642,7 @@ export default function DemoForm() {
         )}
       </div>
 
-      <p className="mt-5 text-[0.8rem] leading-relaxed text-fg-3">
+      <p className="mt-5 text-[0.8rem] leading-relaxed text-muted">
         We use these answers to prepare the call and nothing else. No newsletter, no sequence, no reselling your
         details.
       </p>

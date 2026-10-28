@@ -1,0 +1,225 @@
+---
+title: Troubleshooting
+description: "Symptoms, causes and fixes for the daemon, missing sessions, joining a workspace, spend that does not match an invoice, the CLI install and the extension."
+icon: LifeBuoy
+---
+
+A stopped daemon or a lost connection is behind many of the problems below. `planck daemon fix` repairs both in one pass and is safe to run on a healthy machine, so start there. Every entry follows the same shape: the symptom, its cause, and the fix.
+
+## Start here
+
+| Command | Shows |
+| --- | --- |
+| `planck status` | Connection, workspace, sessions per tool, last scan, how many sessions are synced or pending, and whether the daemon is running. |
+| `planck daemon status --verbose` | Process ID, uptime, queue depth, last sync and last error, any update advice, and the last 50 log events. |
+| `planck daemon fix` | One repair pass: version, connection, restart and verification. |
+| `planck doctor` | The API URL, workspace, a masked token (its last four characters), session and sync counts, and a live health check. |
+| `planck diagnose` | The model IDs the CLI has seen, which it cannot price, and how many sessions it counted as billed or as seat usage. |
+| `planck sync` | One upload pass, with a summary and the reason for any failure. |
+| `planck scan` | Re-reads local session history. Add `--sync` to upload what it finds. |
+| `planck reconcile` | Re-queues sessions the backend is missing, after a backend reset or a workspace change. Then run `planck sync`. |
+| `planck inspect <session-id>` | Everything the CLI would send for one session. |
+
+The daemon's log is `~/.planckspace/daemon.log`, one JSON object per line.
+
+## Connection and syncing
+
+### The daemon indicator is amber or grey
+
+The indicator is the dot in the console's sidebar, and it describes your own daemon, not the team's.
+
+| Indicator | Meaning |
+| --- | --- |
+| Green, **synced** | Your daemon contacted PlanckSpace recently. |
+| Amber, **stale** | A device on your account has reported before, and has been silent too long. |
+| Grey, **not connected** | No device on your account has reported to this workspace. |
+
+The console calls a daemon stale after 20 minutes without a signal, when its CLI reports its version, which every current release does. The daemon pings every 5 minutes, so a running daemon stays well inside that limit. A device on a build that predates version reporting gets 90 minutes.
+
+**Cause.** The daemon stopped, because the machine restarted without auto-start, the process crashed or Node was removed. Or the token was revoked or regenerated, or the machine was asleep or offline. A grey dot means the machine never connected.
+
+**Fix.** Click the indicator and run the command in the dialog. It is titled **Connect this machine** for a grey dot and **Get your daemon syncing again** for an amber one. The command carries a one-time code, so it also repairs a machine with a missing or rejected token. The dialog turns green and closes by itself once the daemon is back.
+
+You can run the same repair from any terminal:
+
+```bash
+planck daemon fix
+```
+
+It checks four things in order.
+
+1. **Version.** It tells you if the CLI is behind the latest release.
+2. **Connection.** It checks that the token is valid, that the backend is reachable, and that the machine is bound to the workspace you came from. `--workspace <id>` names that workspace, and `--code <code>` reconnects a machine that has no token, a rejected token or a different workspace. `--api-url <url>` sets the backend that `--code` is redeemed against.
+3. **Restart.** It stops whatever is running, re-registers auto-start from a durable install and starts a fresh daemon.
+4. **Verification.** It waits up to 45 seconds for the backend to accept a heartbeat.
+
+### planck daemon fix reports a problem
+
+Each line starts with a check mark or a cross, and the remedy is printed under any cross.
+
+| Line | Cause | Fix |
+| --- | --- | --- |
+| `CLI 0.4.0 is behind 0.5.0` | An older build. | `npm i -g @planckspace/cli@latest`, or run `npx -y @planckspace/cli@latest daemon fix`. |
+| `This machine is not connected to a workspace` | No token is saved. | Use **Connect this machine** in the console and run the command it shows. |
+| `The saved token was rejected by <url>` | The token was revoked or regenerated, or it belongs to a different backend. | Use the daemon indicator's command, which carries a one-time code. |
+| `Cannot reach <url>` | A network, VPN or proxy problem. | Fix the network. The daemon keeps queueing sessions locally and uploads them once the backend is reachable. |
+| `This profile is pointed at a different backend` | The profile last synced with another backend. | Give that backend its own profile with `PLANCKSPACE_HOME`, or point this one back. The CLI refuses to sync rather than upload this profile's history to a backend it has never synced with. |
+| `The token now belongs to a different workspace` | You reconnected to another workspace. | Run `planck sync` once to confirm the switch. |
+| `The backend's database was reset since this machine last synced` | The backend was restored or reset. | Run `planck reconcile`, then `planck sync`. |
+| `Daemon running (PID …), but the backend has not accepted a heartbeat yet` | The daemon is up, but PlanckSpace did not accept its ping within 45 seconds. | Run `planck daemon status --verbose` and read the recent events. |
+| `The daemon did not stay up` | It started and exited. | Run `planck daemon status --verbose` for the recent events. |
+| `Could not register auto-start` | The operating system refused the registration. | The lines under it say why. See [The daemon will not register on Linux](#the-daemon-will-not-register-on-linux). |
+
+### This machine reports to a different workspace
+
+**Cause.** The daemon is healthy, but its token belongs to another workspace, such as a second workspace or a different backend. It syncs happily, and the console you are watching sees nothing from it, so it looks stale.
+
+**Fix.** `planck status` names the workspace the machine syncs to. To move it, open the console for the workspace you want, click the daemon indicator and run the command. It carries `--workspace` and a one-time code. If you run `planck daemon fix --workspace <id>` yourself, it names the mismatch with the line `This machine syncs to a different workspace than the dashboard you came from`. Reconnecting to another workspace re-queues every local session for upload to the new one.
+
+### The CLI says the token was rejected or the backend is unreachable
+
+**Cause.** A token is valid only on the backend that issued it. It stops working when it is revoked, and **Regenerate token** in Settings revokes the current one. A leftover `apiUrl` in `config.json`, such as a localhost address, or an exported `PLANCKSPACE_API_URL` points the CLI at the wrong backend. It produces both messages.
+
+**Fix.** Copy a fresh token from **Settings → CLI / daemon connection**, or use the daemon indicator's command. Run `planck config show` to see the saved `apiUrl`. The error message names where the URL came from, which is `--api-url`, `PLANCKSPACE_API_URL` or your saved config, and prints the exact command that points the CLI back at the hosted backend. On a terminal, `planck login` also offers to retry against the hosted backend.
+
+### Sessions stay pending
+
+`planck status` shows `Sync : 190 synced / 24 pending`.
+
+**Cause.** Uploads are failing or paused.
+
+**Fix.** Run `planck sync`. It makes one pass and prints what happened.
+
+| Message | Meaning |
+| --- | --- |
+| `auth failure on: sessions` | The token is invalid. Reconnect with the daemon indicator's command, or run `planck login`. The daemon pauses after an authentication failure and retries every 15 minutes, and `planck daemon status` shows it under `last error`. |
+| `couldn't reach backend` | A network problem. Nothing is lost: sessions wait in `local.db`, and the daemon tries again about every 30 seconds. |
+| `failed: N sessions` | The backend refused them. The usual cause is a build that no longer matches the backend's payload format, which the backend answers with HTTP 400 for the whole batch. Update the CLI. |
+
+If a pass keeps failing, `planck daemon status --verbose` lists the recent events, including how many sessions each sync pass uploaded and how many failed.
+
+Sessions from repositories your workspace does not track are not pending. They stay on the machine by design.
+
+### The CLI asks for an update
+
+**Cause.** `planck daemon status` prints `Update available: 0.5.0 -> 0.6.0`, or `THIS CLI REPORTS INCORRECT SPEND`, and the console shows **Update available** or **Update required**. The second means the build cannot price a model now in use, so it leaves those turns out of its dollar figures and the totals it reports are understated.
+
+**Fix.** Run `npm install -g @planckspace/cli@latest`, then `planck daemon fix` to restart the daemon on the new build. The daemon never updates itself. If the console says **CLI version unconfirmed**, the daemon has not reported lately, and the verdict dates from its last contact. Running `planck daemon fix` refreshes it.
+
+## Missing or unexpected data
+
+### Sessions are missing in the console
+
+| Cause | How to tell | Fix |
+| --- | --- | --- |
+| The repository is not tracked. | `planck sync` prints `kept local: N sessions from repos this workspace doesn't track (never uploaded)`. | An owner, leader or admin adds the repository. See [Repo scope](/docs/guides/repo-scope). The daemon notices within about 5 minutes and re-sends, and so does `planck sync`. When a workspace tracks selected repositories, sessions that ran outside any git repository have the repository `unknown` and stay local too. |
+| The first sync is still running. | `planck status` shows sessions pending. | Wait, or run `planck scan --sync`. A long history takes a few minutes. |
+| The CLI is not reading where the tool writes. | `planck status` lists no sessions for the tool. | Claude Code's logs are read from the `.claude` folder of the account that runs `planck`, or from `CLAUDE_CONFIG_DIR`. In WSL, run `planck` where Claude Code runs. |
+| The tool records no usage. | Cursor sessions carry no tokens or dollar amount. | See [Supported tools](/docs/reference/supported-tools#cursor). |
+| The console hides the tool. | The sessions are from Windsurf, JetBrains or Antigravity. | See [Supported tools](/docs/reference/supported-tools). |
+| Your role limits the view. | Developers see their own sessions, and managers see their team's. | See [Teams and roles](/docs/guides/teams-and-roles). |
+| The workspace hides identity. | Sessions appear as `Developer A`. | See [Workspace policies](/docs/security/workspace-policies). |
+
+A repository with a different `user.email` does not hide sessions. A device token belongs to one person. PlanckSpace keeps the repository's email only when it is one of that person's addresses, and otherwise attributes the session to the token's owner.
+
+### You joined as the wrong person
+
+**Cause.** `planck init --join` takes your identity from the `--email` flag, then your global `git config user.email`, then the repository's. If that is a personal or alias address, PlanckSpace joined, or reused, a member for that address.
+
+**Fix.** Run the join command again with your work address: `npx @planckspace/cli@latest init --join pk_join_… --email you@company.com`. Then ask an owner, leader or admin to remove the stray member.
+
+Other messages from a join:
+
+| Message | Fix |
+| --- | --- |
+| `This join code is invalid or has expired` | Ask for the current command. Generating a new code revokes the old one, and codes last 30 days. |
+| `… only accepts @yourdomain.com addresses` | Re-run with `--email` and an address on that domain. |
+| `… is a leader of …. Join codes only issue developer access` | You already have a higher role. Use your own token from **Settings → CLI / daemon connection** with `planck login`, or a connect code. |
+| `… already has a PlanckSpace account` | Ask an admin to invite that address, accept the invite, then connect with `planck login` or a connect code. |
+| A message about the plan's seat limit | Ask the workspace owner to add seats. |
+
+### init prints not measurable yet
+
+**Cause.** The workspace has no findings yet, and it has under about a week of history or fewer than 20 sessions.
+
+**Fix.** Leave the daemon running. The figure appears in the console as soon as there is enough data. See [Your first number](/docs/quickstart#your-first-number).
+
+### The coverage meter says incomplete
+
+**Cause.** Some people have not connected, some daemons have been silent for over 26 hours, or paid seats have no member yet. A silent daemon is usually a stopped one, a laptop closed for a day, or a token that was regenerated without the daemon being updated. A revoked token counts as never connected.
+
+**Fix.** Open the meter's menu in the Overview header to see who went silent and who never connected. A silent person clicks the daemon indicator, or runs `planck daemon fix`. A person who never connected runs the team command. See [Onboard your team](/docs/team-onboarding#coverage).
+
+### Tracked spend does not match the invoice
+
+Tracked spend is what developer machines reported, priced from their token counts. It differs from a provider's invoice when:
+
+- some machines are not reporting, which makes every total a floor
+- turns on models the CLI cannot price were left out of the total. `planck diagnose` lists them, and updating the CLI may price them
+- repositories your workspace does not track stayed on the machine
+- the usage came from a tool the CLI does not read, or from a tool that records no tokens, such as Cursor
+- the usage never ran on a machine with the CLI, for example a service calling the API directly
+
+A flat seat invoice is checked against your declared seats, not against token spend. [Reconciliation](/docs/guides/reconciliation) shows the difference per provider.
+
+### Agent setup asks you to update the daemon
+
+**Cause.** The device's last-seen CLI version is older than the first build that sends agent configuration snapshots, which is 0.6.0. CLI 0.5.0 is not enough. A device that never reported a version shows as unknown.
+
+**Fix.** Run `npm install -g @planckspace/cli@latest`, then `planck daemon fix`. Agent setup shows the minimum version and how many devices are below it. See [Agent setup](/docs/concepts/agent-setup).
+
+## Installation
+
+### Node is missing or too old
+
+**Cause.** The CLI needs Node.js 20 or newer. The install script stops and prints the command if it finds an older version.
+
+**Fix.** Install Node 20 or newer. With nvm, that is `nvm install 20`.
+
+### planck is not found after installing
+
+**Cause.** npm's global `bin` folder is not on your PATH.
+
+**Fix.** Run `npm prefix -g`. On macOS and Linux, add its `bin` folder to your shell profile, for example `export PATH="/usr/local/bin:$PATH"`. On Windows, the prefix folder itself holds `planck.cmd`. When the install script finds `planck` outside your PATH, it prints the exact line to add.
+
+### npm cannot write to its global folder
+
+**Cause.** The global prefix is owned by root, and npm fails with a permission error.
+
+**Fix.** Give npm a folder you own:
+
+```bash
+mkdir -p "$HOME/.npm-global"
+npm config set prefix "$HOME/.npm-global"
+export PATH="$HOME/.npm-global/bin:$PATH"
+npm install -g @planckspace/cli
+```
+
+Or use nvm, which keeps Node in your home folder. Avoid `sudo` on macOS.
+
+### init warns that it could not install globally
+
+**Cause.** `init` runs from the npx cache, so it installs the CLI globally before it registers the daemon. The global install failed, usually on permissions, so it skipped the registration. A daemon registered against the npx cache would stop when npm pruned it.
+
+**Fix.** Resolve the permission problem as above, then run `npm install -g @planckspace/cli && planck daemon install`.
+
+### The daemon will not register on Linux
+
+**Cause.** On Linux the daemon is a systemd user service, so `planck daemon install` needs `systemctl --user`. Some containers and WSL setups do not have it.
+
+**Fix.** Run `planck daemon run` in a terminal or under your own supervisor. It syncs while it runs.
+
+## Editor extension
+
+The extension has its own table of symptoms, covering no data, a missing connection, the native SQLite module, activation in Cursor and Windsurf, and a missing **Fix now** button. See [Troubleshooting on the editor extension page](/docs/editor-extension#troubleshooting).
+
+Two points matter most. The extension and the CLI share `~/.planckspace/config.json`, so connecting or disconnecting in one does the same in the other. And the extension always reads `~/.planckspace`, even when `PLANCKSPACE_HOME` moves the CLI's state.
+
+## Related
+
+<Cards>
+  <Card title="Install the CLI" href="/docs/installation" description="Requirements, the daemon and where the CLI keeps its files." />
+  <Card title="Onboard your team" href="/docs/team-onboarding" description="Join codes, invites and the coverage meter." />
+  <Card title="Supported tools" href="/docs/reference/supported-tools" description="What the CLI can and cannot read from each tool." />
+  <Card title="FAQ" href="/docs/faq" description="Short answers on data, money, setup and access." />
+</Cards>

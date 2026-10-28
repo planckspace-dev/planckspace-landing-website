@@ -1,0 +1,154 @@
+---
+title: Editor extension
+description: "Install the PlanckSpace extension for VS Code, Cursor and Windsurf, see your own numbers in the sidebar, and apply one-click fixes with backups and Undo."
+icon: Puzzle
+---
+
+The PlanckSpace extension shows your own AI coding numbers in the editor sidebar and applies the mechanical fixes in one click, with a backup and an Undo. It works from the local database the CLI keeps, so it needs no account to start, and it connects to your workspace when you give it a token.
+
+## Install
+
+<Tabs items={["VS Code", "Cursor, Windsurf, VSCodium", "VSIX file"]}>
+<Tab value="VS Code">
+
+Search for **Planckspace** in the Extensions view, or run:
+
+```bash
+code --install-extension planckspace.planckspace-extension
+```
+
+The extension needs VS Code 1.85 or newer. The [install script](/docs/installation) runs the same command for you when `code` is on your PATH.
+
+</Tab>
+<Tab value="Cursor, Windsurf, VSCodium">
+
+These editors ship without the Microsoft Marketplace. Install from [Open VSX](https://open-vsx.org/extension/planckspace/planckspace-extension) in the editor's Extensions view. If the extension does not activate, check that you did not install it from the Microsoft Marketplace.
+
+</Tab>
+<Tab value="VSIX file">
+
+```bash
+code --install-extension <file>.vsix
+```
+
+The extension bundles a native SQLite module, so it is published as one build per platform. Choose the file built for your operating system and CPU, for example `win32-x64` or `darwin-arm64`.
+
+</Tab>
+</Tabs>
+
+Install the [CLI](/docs/installation) and run `planck init` for continuous capture across tools, plus session outcomes. The extension reads what the CLI writes.
+
+## First open
+
+The extension works before you connect, and even before you install the CLI. Until the CLI has data, it reads Claude Code's own session logs, read-only and in memory, so your first open already shows this month. That fallback covers Claude Code only, and outcomes stay unknown. Once the CLI has scanned, the extension reads `~/.planckspace/local.db` instead, which also holds Cursor and Windsurf sessions and their outcomes. It refreshes every 5 minutes.
+
+## Connect
+
+Connecting is optional. It adds your workspace's [findings](/docs/concepts/findings) and lets a fix's effect be measured from telemetry.
+
+1. Click the status bar item, or run **Planckspace: Connect**, to open the sidebar.
+2. Click **Connect**. **Get a token** opens the console. Paste the token into the field and click **Save token**. If you have a team join code, click **Have a join code?** instead.
+
+The extension verifies the token, then writes it to the same `~/.planckspace/config.json` the CLI uses. The two share one connection: a token saved in the extension is the one the daemon syncs with, and **Disconnect** clears the token for both. Local data is kept.
+
+<Callout type="warn" title="Pause sync does not stop uploads">
+
+The sidebar's **Pause sync** button records a pause for the workspace in `~/.planckspace/config.json`, and the sidebar and status bar then read "paused". The CLI daemon does not read that setting in CLI 0.5.0, so it keeps uploading. To stop uploads, run `planck logout`, or use **Planckspace: Disconnect**, which clears the shared token the same way.
+
+</Callout>
+
+## What you see
+
+| Where | What it shows |
+| --- | --- |
+| Status bar | Today in the ledger your money is in, for example `$3.42 billed today` or `$3.42 usage value today`. The tooltip adds this month in both ledgers side by side. They are never added together. See [Billed and usage value](/docs/concepts/two-ledgers). Click it to open the sidebar. |
+| **This month** strip | Heads every tab: **Spent** (or **Usage value** on a seat), **Wasted** (what abandoned or errored sessions used) and **Removable** (the monthly amount your ready fixes would remove). **Wasted** needs the CLI to have worked out outcomes from git. |
+| **Activity** | Your best ready fixes, **Your fix results**, today and the last 7 days, and recent sessions with repository, dollar amount, model, tool and outcome. |
+| **Skills** | A catalog of open-source skills. It is curated offline and matched to your stack when connected. Command-based skills run their installer in a visible terminal named **Planckspace · install**, so you see what executes. File-based skills are written into the workspace, for example under `.claude/skills/`. |
+| **Optimize** | All four fixes with their evidence, your prompt-cache hit rate over 30 days, recommended commands when connected (installed as `.claude/commands/<name>.md`), and whether hooks and MCP servers are configured in the open project. |
+| **Insights** | Your own findings, each with its monthly amount and **Fix now**, **Fix with Claude Code**, **See fix** and **Mark fixed**. When you are not connected, or your workspace is unreachable, it shows the CLI's local analysis instead. |
+
+## One-click fixes
+
+The four fixes below are judged against your own last 30 days. Each card states its evidence and how its estimate was reached. Fixes that move the same dollars are counted once in **Removable**.
+
+| Fix | What it changes | Offered when |
+| --- | --- | --- |
+| Start new Claude Code sessions on Sonnet | Sets `"model": "sonnet"` in Claude Code's user settings, `~/.claude/settings.json`, or the folder `CLAUDE_CONFIG_DIR` names. | At least 3 of your sessions in the last 30 days ran on a premium model such as Opus, and your default is not already Sonnet or Haiku. |
+| Default this repository to Sonnet | Sets `"model": "sonnet"` in the repository's `.claude/settings.json`, and fixes a premium pin in `.claude/settings.local.json` if there is one. Commit the file and the team inherits it. Opus stays one `/model` command away. | At least 3 of your sessions in that repository ran on a premium model. |
+| Split CLAUDE.md into on-demand files | Moves each `##` section into `.claude/docs/` and leaves a short context index in `CLAUDE.md`. The index uses plain pointers, not `@import`, because imports load in full at the start of every conversation. **Preview** shows the result first. | `CLAUDE.md` is at least 2,000 characters, has at least two `##` sections and is not already split. |
+| Add session-discipline rules | Appends a short "Session discipline (cost)" block to `CLAUDE.md`. | At least 5 of your sessions in that repository have a known outcome, and 20% or more were abandoned or errored. |
+
+A fix that edits a repository needs that folder open in the editor, or checked out next to the open folder. Every fix follows the same loop:
+
+1. It copies each file it will touch into `~/.planckspace/fix-backups/`.
+2. It writes the change.
+3. It adds the fix's estimate to the extension's own tally, which is labeled as an estimate. For a finding from your workspace, it also marks the finding fixed.
+4. A notification offers **Undo**.
+
+**Undo** restores each file from its copy, deletes any file the fix created, and reopens the finding in your workspace. **Planckspace: Undo Last Fix** does the same from the command palette. Only the newest fix can be undone, because fixes to the same file stack, and the extension keeps the last 20. A fix that cannot apply says why, for example that `CLAUDE.md` is too small to split, and offers **Fix with Claude Code** instead where it can.
+
+Seat findings are never applied from the editor. They show **Needs admin approval**, because removing or downgrading someone's seat is approved in the console.
+
+## Fix with Claude Code
+
+Fixes that need judgement go to your own Claude Code. The extension writes the fix prompt to `.claude/commands/planckspace-fix.md` in the target repository, opens a terminal named **Planckspace · fix** and runs `claude "/planckspace-fix"`. The prompt tells the agent to show you its plan and the diff before it writes anything.
+
+For a finding from your workspace, the prompt comes from PlanckSpace with your measured data filled in: the repository, the measured cache ratio and the estimated amount. Otherwise it is built from the finding's own fix text. The extension looks for `claude` on your PATH, in `~/.local/bin`, in npm's global folder on Windows, and in the copy bundled with the Claude Code extension. If it finds none, it copies the prompt to your clipboard, and you run `/planckspace-fix` in your Claude Code panel. Click **Done — mark fixed** when you are finished. The prompt file stays in `.claude/commands/` until you delete it.
+
+## Measuring a fix
+
+The extension measures two different things.
+
+- **Your fix results** is local. For each fix you applied, it compares the metric the fix targets over the 30 days before with every session since: the share of sessions on a premium model, the context read per turn, or the share abandoned or errored. It reads **Measuring** until at least 3 sessions have run since the fix. It then reads **Improved** if the metric fell by at least 10%, and by at least 3 points for a rate, and **No change yet** otherwise. It is not a booked saving.
+- **Booked savings** come from your workspace. After **Mark fixed**, PlanckSpace measures the effect over your next sessions, at least 7 days and 20 sessions, before it counts any saving. See [Proof of savings](/docs/concepts/proof-of-savings).
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| **Planckspace: Connect** | Opens and focuses the sidebar, where you enter a token. |
+| **Planckspace: Refresh** | Reloads data from the local database. |
+| **Planckspace: Disconnect** | Clears the stored token from `~/.planckspace/config.json`. Local data is kept. |
+| **Planckspace: Undo Last Fix** | Reverts the most recent one-click fix from its backup. |
+| **Planckspace: Join your team** | Asks for a team join code and runs the join command in a terminal. |
+
+## Settings
+
+Both settings are for testing against a non-production backend. Most people never set them.
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| `planckspace.apiUrlOverride` | Empty | Points this editor's extension at a different API, for example `http://localhost:4000`. The CLI, the daemon and `config.json` are unaffected. Empty uses the CLI's configured API. |
+| `planckspace.apiTokenOverride` | Empty | The workspace token to use with the URL override. Empty uses the CLI's token. |
+
+While an override is active, the sidebar shows an **API override** banner with the URL, and the status bar tooltip lists it.
+
+## Privacy
+
+- The extension opens `~/.planckspace/local.db` read-only and reads `~/.planckspace/config.json`. Before the CLI has data, it reads Claude Code's own logs, read-only and in memory.
+- It does not intercept, proxy or modify any request that Claude Code, Cursor or another tool makes.
+- Your personal numbers, fixes and before-and-after results are computed in the extension and never sent.
+- Its only network requests go to the PlanckSpace API, and only once a token is present. It verifies the token, lists your own findings, fetches the fix prompt for a finding, marks a finding fixed or open again, and asks for skill and command recommendations. Those last requests carry names taken from your project's manifest files (`package.json`, `requirements.txt`, `go.mod` and `Cargo.toml`) and the file types you have open, such as `typescript`. They never carry file contents.
+- The extension has no analytics of its own.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| The sidebar shows no data | Run `planck scan`, or use Claude Code once so there is a session to read. The extension reads `~/.planckspace/local.db`, and it always reads `~/.planckspace`, even when `PLANCKSPACE_HOME` moves the CLI's state. |
+| It says **Local only · not connected** | Save a token in the sidebar, or run `planck login`. The extension picks up changes to `config.json`. |
+| A warning says the native SQLite module failed to load | The extension falls back to a helper that needs `node` on your PATH. Reinstall the build for your platform. |
+| It does not activate in Cursor or Windsurf | Install it from Open VSX, not the Microsoft Marketplace. |
+| **Fix now** is missing from a card | The finding must be open, have a one-click fix, and have its repository open in the editor. Otherwise use **Fix with Claude Code**. |
+
+More cases are in [Troubleshooting](/docs/troubleshooting).
+
+## Related
+
+<Cards>
+  <Card title="Fix findings" href="/docs/guides/fix-findings" description="How fixes are chosen, applied and handed to Claude Code." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a saving is measured and booked after you mark a finding fixed." />
+  <Card title="Install the CLI" href="/docs/installation" description="The CLI writes the local database the extension reads." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="Extension and daemon problems, with fixes." />
+</Cards>

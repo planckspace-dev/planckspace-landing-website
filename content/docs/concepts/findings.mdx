@@ -1,0 +1,185 @@
+---
+title: Findings
+description: "What PlanckSpace calls waste: the three finding types, the evidence behind each, and how a monthly amount is set."
+icon: Radar
+---
+
+A finding is a detected item of waste with a monthly dollar amount, the evidence behind it, and a fix. PlanckSpace raises three types: dormant seats, seat right-sizing and metered waste, which comes in two kinds, model routing and cache efficiency. Each was chosen because it closes to money that leaves an invoice, so every finding's amount is [billed](/docs/concepts/two-ledgers). Usage value never becomes a finding.
+
+## How findings are raised
+
+Detection runs every 6 hours, about 30 seconds after new sessions sync, and on demand. Each run reads the last 30 days.
+
+| Finding | Console pattern | Detects | Monthly amount |
+| --- | --- | --- | --- |
+| [Dormant seat](#dormant-seats) | Dormant seats | A paid seat with no sessions in 30 days | The seat price |
+| [Seat right-sizing](#seat-right-sizing) | Max seats used at Pro level | A Max seat whose work fits Pro | Max price − Pro price |
+| Metered waste: [model routing](#model-routing) | Opus running routine work | Premium-model metered sessions that did not need it | Their cost − the same tokens on Sonnet |
+| Metered waste: [cache efficiency](#cache-efficiency) | Repeated context at full price | Metered input paid in full that could be cached | Half the uncached input × (input rate − cache-read rate) |
+
+A finding worth less than $1 a month is dropped. Metered findings need at least 5 metered sessions in the window; seat findings need no sessions at all, since a workspace whose seats sit idle is exactly one with few sessions. Until a workspace has its first finding, the Findings page waits for 7 days of session data and 20 sessions.
+
+## Dormant seats
+
+A dormant seat is a paid seat on a declared subscription that nobody used in the last 30 days.
+
+**When it fires.** For each subscription with a seat price and at least one seat:
+
+1. The subscription must have existed for the whole window, so a seat bought last week is never called idle (see [how a seat's age is decided](/docs/concepts/coverage#how-a-seats-age-is-decided)).
+2. **Active seats** are the people with a seat session on it in the window. Sessions with no known author count as one active seat, never zero. Metered sessions hold no seat.
+3. Idle seats = paid seats − active seats − [unmeasured members and possible holders](#unmeasured-members-and-possible-holders). At zero or below, there is no finding.
+
+**Naming the seat.** Where it can, PlanckSpace names an idle seat after a person who used it in the last 90 days but not in the last 30, longest idle first: "No Claude Code sessions in 47 days on a paid Pro seat — $20/mo". Seats nobody can be tied to become one workspace finding: "3 of 22 paid Claude Code Pro seats had no sessions in 30 days — $60/mo". Once a person's seat removal is confirmed, they are not named again for the same plan.
+
+**Amount and evidence.** The seat price for each idle seat, at high confidence. The evidence shows paid, active and idle seats, unmeasured members, possible holders and the seat price; a named seat adds the holder's last session date.
+
+**Baseline.** The paid seat count at detection. A saving is booked when an owner, leader or admin lowers that count in PlanckSpace after approving the finding; no sessions are needed. See [seat savings](/docs/concepts/proof-of-savings#seat-savings).
+
+**Fix.** Remove the seat in the tool's admin console, then lower the plan's seat count on Spend, under Subscriptions. That record verifies the saving. [Approval](#approval-for-seat-findings) comes first.
+
+## Seat right-sizing
+
+A right-sizing finding is a Max seat whose holder's work fits the Pro plan.
+
+**When it fires.** For each person holding a seat on a Max plan of any tier, all of these hold:
+
+- They held the seat for the whole window: their first session on it is from before the window started.
+- They ran at least 3 sessions on it in the window.
+- Their usage value over the 30 days is under $100, and no single day reached $10.
+
+Usage also counts the person's sessions on that tool that might be on this seat but carry no plan saying so. That can only raise usage, so it can stop a finding but never cause one.
+
+**Amount and evidence.** The Max seat price minus the Pro seat price, at high confidence. The Pro price is your declared Pro subscription on the same tool; for Claude Code with none declared, PlanckSpace uses $20. There is no finding when no Pro price is known or the difference is under $1. The evidence shows both prices, the person's usage value and busiest day, the two ceilings, and up to 20 of their sessions.
+
+**Baseline.** The share of the person's sessions still on Max: 100% at detection.
+
+**Fix.** Check with the holder that no heavy month is coming, move the seat to Pro in the tool's admin console, then in PlanckSpace lower the Max seat count by one and add the Pro seat. The saving counts once the holder runs a session on Pro. Approval comes first.
+
+## Metered waste
+
+Metered waste is measured on billed sessions only: pay-per-token API keys, Amazon Bedrock and similar. Tokens on a flat-rate seat are usage value, and cutting them lowers no invoice.
+
+### Model routing
+
+Premium-model work that did not need a premium model. Premium means any Opus, Fable or Mythos model.
+
+**When it fires.** Over [settled](/docs/concepts/sessions#outcomes) metered sessions only, since work is not waste before it has had a chance to ship. Each session counts once:
+
+- **Non-shipping:** when the premium model's share of sessions is higher than its share of shipped sessions, every premium session that did not ship counts.
+- **Light work:** a premium session averaging under 800 output tokens a turn counts: quick edits, short answers, simple completions. Without it, a team running everything on Opus would never get a finding, since both shares would be 100%.
+
+**Amount.** For each counted session, its cost on its own model minus the same tokens priced on Sonnet 5.5, the model `"model": "sonnet"` selects. The work still runs on a cheaper model, so the finding never claims a session's whole cost. Unpriced models are left out.
+
+**Scope, confidence and evidence.** One workspace finding, plus one per developer with at least 5 metered sessions. Confidence is high above $50 a month, medium above $10 and low below that; a finding built only on light work is capped at medium, because output size is a rough proxy for difficulty. The evidence shows the premium share of sessions and of shipped sessions, the premium model mostly used, the two amounts, and up to 20 sessions, highest cost first.
+
+**Baseline.** The premium share of settled metered sessions at detection. Savings are priced against the premium model those sessions mostly ran.
+
+**Fix.** Set `"model": "sonnet"` in the repository's `.claude/settings.json`, committed so the team inherits it. The model is a setting, not an instruction: in PlanckSpace's own test, a CLAUDE.md note left 3 of 3 sessions on Opus while the setting moved 3 of 3 to Sonnet. Anyone can still switch with `/model opus`, and the editor extension applies the fix in one click. This is separate from the workspace's [model routing](/docs/guides/model-routing) plugin policy.
+
+### Cache efficiency
+
+Metered input paid at the full rate for context that could have been read from the prompt cache.
+
+**When it fires.** Metered token volume (input plus cache reads) reaches 1 million tokens in 30 days, and the cache-hit rate (cache reads ÷ that volume) is under 30%.
+
+**Amount.** For each session, half of its uncached input tokens at the difference between its model's input and cache-read rates. The half is an assumption about how much input is cacheable. Tiered models are priced at their base rate, which can only understate the amount.
+
+**Scope, confidence and evidence.** Workspace only. High confidence when the volume is over 5 million tokens and the hit rate under 15%, medium otherwise. The evidence shows the hit rate, input and cache-read tokens, and up to 20 sessions under a 30% hit rate.
+
+**Baseline.** The cache-hit rate at detection.
+
+**Fix.** Keep the stable part of every prompt (CLAUDE.md, project context, instructions) first and identical, so it is read from cache. This takes judgement, so the fix is guided: it is handed to the developer's own Claude Code with the measured numbers attached, and reviewed like any change. See [fix findings](/docs/guides/fix-findings).
+
+## Approval for seat findings
+
+Seat findings remove or downgrade a person's access. PlanckSpace surfaces them and never actions them on its own.
+
+- An owner, leader or admin approves the finding in the console. Only an open or snoozed finding can be approved.
+- A seat finding cannot be marked fixed before it is approved, and only by a person signed in to the console. A device token, which the CLI and the editor extension use, can never approve or action one.
+- Outside a personal workspace, seat findings do not appear in the editor extension.
+
+## Scopes and de-duplicated totals
+
+Every finding has a scope: workspace, repository or developer. A detector can report the same dollars at more than one scope: model routing's developer findings are slices of its workspace finding. Totals therefore de-duplicate per kind of finding, with model routing and cache efficiency counted separately. When a kind has a workspace finding, its amount is used; otherwise its narrower findings are added. Seat findings each cover different seats, so they always add.
+
+For example, a workspace model routing finding of $240 a month with developer findings of $90, $70 and $50 contributes $240, not $450. Add an unnamed dormant-seat finding of $60 and two named ones of $20, and the total is $240 + $100 = $340.
+
+## Unmeasured members and possible holders
+
+Two groups are subtracted from a seat's idle count and are never named.
+
+**Unmeasured members** could be using a seat PlanckSpace cannot see: developers and managers whose devices are not reporting, and anyone who connected a device that has been silent for more than 26 hours. Owners, leaders and admins who never connected a device are assumed not to code. See [coverage](/docs/concepts/coverage).
+
+**Possible holders** were active in the window on a session that could be on this seat but cannot be tied to it: a session with no plan on a tool with two or more subscriptions, or a session whose plan fits two declared tiers.
+
+A gap in coverage therefore never becomes recoverable money: a team of 22 with 4 people not reporting does not read as 4 dormant seats.
+
+## Plan names
+
+The console declares seats by tier, such as `max_5x`, `max_20x` or `team_premium`. Older CLIs stamped sessions with the family only, such as `max` or `team`. PlanckSpace matches a session's plan to a declared subscription like this:
+
+| Session's plan | Declared subscriptions on the tool | Result |
+| --- | --- | --- |
+| `max_20x` | Max 20× | Match |
+| `max` | Max 20× (the only Max tier) | Match, by family |
+| `max_5x` | Max, declared without a tier | Match, by family |
+| `max` | Max 5× and Max 20× | Ambiguous: a possible holder of both |
+| `max_5x` | Max 20× | No match: two tiers never match |
+| None | One subscription | Match |
+| None | Two or more | Ambiguous: a possible holder of each |
+
+Names are normalised first, so "Max 20x", "max20x" and "max-20x" all read as Max 20×. Team plans work the same way with their standard and premium seats.
+
+## Recurrence after a fix
+
+Detection never rewrites a finding that is being measured or confirmed: it is a record, not a live estimate. When a seat problem returns after a confirmed fix, the closed finding is archived and a new one opens. A dormant seat describes today's inventory, so it can recur at once; right-sizing reads 30 days of sessions, so it recurs only once that whole window falls after the fix. A confirmed metered fix keeps being measured instead, and reopens if the behaviour comes back (see [proof of savings](/docs/concepts/proof-of-savings)).
+
+Archived findings never count toward live dollars. An open finding nobody acted on, which a run no longer produces, is removed.
+
+## Statuses
+
+| Status | Console tab | Meaning |
+| --- | --- | --- |
+| Open | Open | Detected and not acted on. |
+| Snoozed | Open | Set aside until a date: listed under Open, but left out of the Open figure until the date passes. |
+| Dismissed | Dismissed | You will not act on it. Excluded from every total. |
+| Fixed | Being measured | A person marked it fixed, which starts the measured window. |
+| Confirmed | Saved (measured) | Measurement has booked savings for it. |
+
+Owners, leaders and admins can change any finding's status. Other members can mark their own developer findings fixed, which is what the editor extension does after a one-click fix; undoing the fix sets the finding back to open. While being measured, a fix can also be at risk, have no effect, or regress. See [guardrails and outcomes](/docs/concepts/proof-of-savings#guardrails-and-outcomes).
+
+## The Findings headline
+
+| Figure | Console label | What it is |
+| --- | --- | --- |
+| Open | On the table (estimated) | The monthly amount of open findings, plus snoozed ones whose date has passed, de-duplicated and split into seats and metered. Nobody has acted on it. |
+| Captured | Saved, last 30 days (measured) | The measured pace of confirmed fixes: for a metered fix, what it saved in the last 30 days; for a seat fix, the monthly saving of the seats still removed. |
+| Claimed | Being measured (forecast) | The estimated monthly amount of fixes still being measured, de-duplicated. A forecast, never a saving. |
+| Realized to date | Saved to date | The sum of every saving booked. |
+
+Each dollar is reported once: a finding marked fixed leaves Open and its estimate becomes Claimed; once confirmed, Captured shows what it actually saves. Captured adds across scopes, because each session is booked by one fix only. The headline is computed once and quoted everywhere: Findings, the recoverable figure on Spend, Realized savings and the Overview. `planck init` prints the same Open figure, except on a developer's machine, where it totals the findings about that developer.
+
+## Who sees which findings
+
+| Who | Findings shown |
+| --- | --- |
+| Owners, leaders and admins | All findings |
+| Managers | The developer findings of the people on their team, with a headline computed from those rows |
+| Developers | Their own developer findings, plus workspace and repository findings |
+| Anyone, on My work | Developer findings about you, and findings you marked fixed |
+
+In a collaborative workspace, identities are hidden for every role, including names inside a finding's fix text. See [workspace policies](/docs/security/workspace-policies).
+
+## What is not a finding
+
+- **Agent setup problems**, such as an oversized or missing CLAUDE.md, are tracked separately and never appear on Findings or in its headline. See [agent setup](/docs/concepts/agent-setup).
+- **Other detectors**, such as abandonment and error rates, are switched off. Rows they wrote earlier stay stored but hidden.
+
+## Related
+
+<Cards>
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a fix is measured and a saving booked." />
+  <Card title="Fix findings" href="/docs/guides/fix-findings" description="Apply, approve and track fixes from the console and the editor." />
+  <Card title="Coverage" href="/docs/concepts/coverage" description="Why a member who is not reporting is never counted as an idle seat." />
+  <Card title="Subscriptions" href="/docs/guides/subscriptions" description="Declare seats and prices so seat findings can be measured." />
+</Cards>

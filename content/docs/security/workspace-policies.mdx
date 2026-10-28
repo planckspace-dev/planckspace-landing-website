@@ -1,0 +1,93 @@
+---
+title: Workspace policies
+description: "The privacy policy a workspace runs under, what each one changes, and the settings that decide what managers can see and do."
+icon: Lock
+---
+
+Every workspace runs under one privacy policy, which decides whether PlanckSpace shows who did the work. Roles decide how much each person can see; the policy decides whether the people in that data are named. Names are removed when data is read, not when it is stored, so switching between a policy that shows names and one that hides them takes effect at once, for past sessions as well as new ones.
+
+## The five policies
+
+| Policy | In the console | What changes |
+| --- | --- | --- |
+| Personal | Just me | Nothing is hidden. Registering an account creates a personal workspace for it |
+| Collaborative | My team, with developer names private | Developer identity is removed from sessions, spend, findings and exports, for every role, owners included |
+| Organization | My team, with developer names shown to managers and admins | Nothing is hidden. Role scopes alone decide who sees whom |
+| Enterprise | Not offered in setup | Behaves exactly like Organization |
+| Education | Classroom | New sessions are stored hidden from workspace views, and admins cannot open an individual session |
+
+Role scopes apply under every policy: owners, leaders and admins see the whole workspace, managers see their own team's people, and developers see their own work. See [Teams and roles](/docs/guides/teams-and-roles).
+
+## Choosing and changing the policy
+
+When you create a workspace, setup asks whether it is for you, a team or a class. For a team it asks one more question, whether to show developer names to managers and admins: yes gives Organization, no gives Collaborative.
+
+Only the owner can change the policy afterwards, under **Controls › Security**. The console asks for a one-time confirmation, records the change in the [audit log](/docs/security/overview#the-audit-log) and emails every owner, leader and admin. Names appear or disappear at once, past sessions included. Cached exports are keyed by policy, so an export made before the change is never served after it.
+
+Education works differently: it hides sessions as they arrive. Switching to Education does not hide sessions already stored, and switching away does not, by itself, reveal the sessions it hid.
+
+## What Collaborative hides
+
+In a collaborative workspace the API removes developer identity from the views below, for every role. Leadership gets no exemption: owners, leaders and admins see the same anonymous labels as everyone else.
+
+| Where | What you see instead |
+| --- | --- |
+| Session list and session detail | No developer name or email on any session. The developer filter is empty, except on your own My work view |
+| Findings, in the list and in each finding | Developer fields removed at every level of the finding, and email addresses in titles and fix text replaced with "a developer" |
+| Overview's breakdown by developer | People appear as "Developer A", "Developer B" and so on |
+| Spend chart grouped by developer | Series labelled "Developer A", "Developer B" and so on, ranked by spend in the current view |
+| Team performance | Members appear as "Developer A" and so on, without email, user ID or role; recent sessions carry no developer; email addresses in finding titles are replaced. The Members section says names are hidden by the privacy policy |
+| Suggestions to move a person between a seat and metered billing | "Developer A" style labels instead of names and addresses |
+| Savings ledger | Who fixed a finding, and whom it was about, are left out |
+| Model routing devices | "Device 1", "Device 2" and so on, with no holder named |
+| Exports | Chargeback CSV and PDF, and the sessions JSONL, without the developer email column. The team column stays |
+
+The letter labels are assigned per view, in the order of that view's ranking, so they are not stable pseudonyms: the same person can carry a different letter on another page or in another time range.
+
+[Ask PlanckSpace](/docs/guides/ask-planckspace) looks figures up through the same API routes the console uses, called as the person asking, so its lookups receive the same anonymised answers. It is also told that developer identities are anonymised in the workspace. Conversations are private to their author; nobody else can open them, owners included.
+
+<Callout type="warn" title="Collaborative hides identity; it does not delete it">
+Each session is still stored with its developer's email, because attribution depends on it. If the owner switches to a policy that shows names, they reappear on every page, export and finding, past sessions included.
+</Callout>
+
+### What Collaborative does not hide
+
+- **Membership and connection status.** The member list still shows who belongs to the workspace, with roles and teams, and owners, leaders and admins still see whose machines are not reporting.
+- **Teams.** Team names and per-team totals stay visible; a team is not a person.
+- **Your own work.** My work still shows your own sessions and findings.
+
+## Education
+
+Education is for a class of students. Two things change:
+
+- Every new session is stored hidden from workspace views as it arrives, so it is left out of the session list and the totals built from it.
+- An admin cannot open an individual session.
+
+Changing the [repository scope](/docs/guides/repo-scope) never un-hides sessions in an education workspace; it can only hide more.
+
+## Settings for managers
+
+Two workspace settings decide how far a manager's reach goes. Both are off by default, and the console has no switch for either.
+
+### Managers and individual sessions
+
+With the setting off, a manager sees their team's sessions in lists and totals but cannot open a teammate's session detail: its turns, tool calls and file paths. Their own sessions always open, and Team performance links a session only when it would open. With the setting on, managers open their team's sessions the way owners, leaders and admins do.
+
+### Managers adding people to their team
+
+A manager can ask to add an existing member to their own team. The member must have the developer role, and the team must be the manager's own. With the setting off, the request goes to owners, leaders and admins to approve. With it on, the person joins the team at once. Either way the step is recorded in the audit log.
+
+## Claimed email domain
+
+A workspace can carry one claimed email domain, set when the workspace is created. The console's setup does not ask for one, and it cannot be changed afterwards.
+
+When a domain is set, a [join code](/docs/security/overview#join-codes) accepts only addresses at exactly that domain: `dev@example.com` matches `example.com`, while `dev@eu.example.com` does not. The claimed domain does not restrict invitations, and it does not change the privacy policy.
+
+## Related
+
+<Cards>
+  <Card title="Security overview" href="/docs/security/overview" description="Credentials, role checks, confirmations and the audit log." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="Every field sent to PlanckSpace from a developer's machine, and every one that never is." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="Roles, teams and grants, and what each lets a person do." />
+  <Card title="Exports" href="/docs/guides/exports" description="Chargeback and session exports, and what each contains." />
+</Cards>

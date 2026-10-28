@@ -1,0 +1,107 @@
+---
+title: Seats and subscriptions
+description: "Declare the flat-rate seats you pay for, name their plans, and see how seat history drives the dormant-seat and Max to Pro findings and their measured savings."
+icon: CreditCard
+---
+
+A subscription is a flat-rate plan you pay for per seat, such as Claude Code Max or Cursor Teams. The seats you declare are the seat side of your [billed spend](/docs/concepts/two-ledgers), and they are what the dormant-seat and Max to Pro [findings](/docs/concepts/findings) are judged against. Every change to them is recorded, because a seat saving is credited from that history.
+
+## Who can do it
+
+Owners, leaders and admins declare and change seats. Managers can read them. A CLI can also declare a plan, but only to bootstrap an empty tool, as described below.
+
+## Declare a subscription
+
+<Steps>
+<Step>
+
+### Open the seat list
+
+In Spend, the Subscriptions card lists every plan you declared. Click **Add or change seats**. A workspace with nothing declared shows "Add what you pay for" instead, with an **Add your tools** button. Both open the "Your AI tools" sheet.
+
+</Step>
+<Step>
+
+### Fill in the form
+
+Choose **Add your first tool** or **Add another tool**, then fill in:
+
+- **Tool.** Cursor, GitHub Copilot, Claude (Claude Code) or Other.
+- **Billing.** "Subscription (per-seat)" for a flat plan, or "Metered / API" for pay-per-token. A metered tool needs no cost entry, because its spend is measured from telemetry.
+- **Seats** and **Cost per seat / mo.** The form shows the total as you type, for example 5 × $25.00 = $125.00/mo.
+- **Start date** (optional). When you started paying. It defaults to today.
+- **Renewal date** (optional).
+
+</Step>
+<Step>
+
+### Save
+
+Click **Add tool**. The plan appears on the card with its monthly total.
+
+</Step>
+</Steps>
+
+To change a count later, click Edit seats on the row, enter the new number and confirm. The trash icon deletes a subscription after a Confirm or Keep prompt. The sheet changes seat counts, not prices. A price correction goes through the [API](/docs/reference/api).
+
+A tool and plan can be declared once. Declaring it again is refused with a message to edit the existing row. Seat counts are whole numbers of 1 or more.
+
+## Plan names
+
+The plan is the name of the tier, and it matters because seat findings compare it with the plan each session was stamped with. The Spend form saves a tool without a plan name, shown as "Plan not named". Named plans come from the workspace setup step "Your plan and the seats you pay for", which offers a plan list per tool, or from the CLI with `planck init --plan` and `planck subscription add --plan`.
+
+PlanckSpace stores plan keys and shows labels.
+
+| Key | Label |
+| --- | --- |
+| `pro` | Pro |
+| `max_5x` | Max 5× |
+| `max_20x` | Max 20× |
+| `team_standard` | Team (standard seat) |
+| `team_premium` | Team (premium seat) |
+| `enterprise` | Enterprise |
+| `api` | API |
+
+Cursor's `business` plan is labeled Teams. Typed names are normalized, so "Max 20x", "max20x" and "max-20x" all become `max_20x`. Older CLIs stamp a family such as `max` or `team`. An exact tier match wins, and otherwise a family stamp fits any tier of that family. When a workspace declares two Max tiers, a `max` stamp is ambiguous, so its author counts as a possible holder of both and is never named in a finding.
+
+## What a device can declare
+
+A CLI declaration is one person's plan, so it can only bootstrap the workspace's inventory:
+
+- It is accepted only from a device whose owner is an owner, leader or admin.
+- It is accepted only for a tool that has no seats declared yet.
+- A metered plan (`api`, `usage`, `metered`, `payg`) or a plan with no seat price never becomes a seat.
+- It never updates or deletes anything afterwards.
+
+This stops a leader's own "Pro, 1 seat" from overwriting the organization's seat count, which would have read as seats reclaimed. A price that came from a device is a placeholder. The card shows "From your CLI · confirm" under the per-seat price until a person changes the subscription.
+
+## Seat history
+
+Every create, update and delete is recorded with who made it and when, and also written to the audit log. That history drives three things:
+
+- **Paid so far.** The card adds up what each period cost at its own seat count and price, since the start date.
+- **Seat findings.** A finding records the seat count it saw at detection. A seat count lowered afterwards by an owner, leader or admin, after the finding was approved, is what [proof of savings](/docs/concepts/proof-of-savings) credits.
+- **Regression.** Raising the count back reopens the finding. Deleting a subscription is not a removal and ends any credit, so lower a count instead of deleting and re-declaring.
+
+Any seat change re-runs the detectors about 30 seconds later, instead of waiting for the next six-hour run, so seat findings follow the declared seats.
+
+## Read the Subscriptions card
+
+| Column | What it shows |
+| --- | --- |
+| Seats in use | How many seats had activity in the last 30 days, such as "7 of 10 active", with an idle estimate. Metered API sessions hold no seat. |
+| Per seat and Monthly | The declared price, and seats times price. |
+| Renews | The renewal date and the days left, in amber at 14 days or fewer. |
+| Paid so far | The cumulative total since the start date. |
+| Per shipped session | The tool's seat fees divided by its shipped seat sessions in the last 30 days. |
+
+The idle figure is a live estimate from session activity, not a proven saving. Only a finding counts as removable money. A seat that may belong to a member who is not reporting is shown as not measured rather than idle, so a [coverage](/docs/concepts/coverage) gap cannot pass for waste. The Tool tab repeats this per plan, with one square per seat: active, not measured or idle.
+
+## Related
+
+<Cards>
+  <Card title="Fix a finding" href="/docs/guides/fix-findings" description="Approve a seat finding and record the change." />
+  <Card title="Connect billing" href="/docs/guides/connect-billing" description="Check a seat invoice against your declared seats." />
+  <Card title="Findings" href="/docs/concepts/findings" description="How dormant seats and Max to Pro right-sizing are detected." />
+  <Card title="Coverage" href="/docs/concepts/coverage" description="Why seats of members who are not reporting are not called idle." />
+</Cards>

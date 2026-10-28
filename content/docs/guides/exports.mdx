@@ -1,0 +1,137 @@
+---
+title: Chargeback and exports
+description: "Download a month of spend as a chargeback CSV or PDF, or every session as JSONL. Each file follows your role, your team scope and the workspace privacy policy."
+icon: FileDown
+---
+
+Exports turn one month of PlanckSpace data into files you can hand to finance or load into your own tools. There are two: a chargeback report that allocates the month by team, repository, developer, tool and model, and a sessions export with one record per session. Both carry metadata only, never prompts, responses or code. Both keep the [two ledgers](/docs/concepts/two-ledgers) apart: billed money and usage value sit in separate columns and separate totals, and no file contains a single blended figure.
+
+## What you can export
+
+| Export | Formats | Contains |
+| --- | --- | --- |
+| Chargeback | CSV, PDF | The month's sessions grouped by repository, developer, tool, model and cost type, with the developer's team |
+| Sessions | JSONL | One JSON record per session |
+
+A month runs from the first at 00:00 UTC to the first of the next month, and a session belongs to the month it started in. Files are named for the export and the month, for example `planckspace-chargeback-2026-10.csv`.
+
+## Who can export
+
+- **Owners, leaders and admins** export the whole workspace. **Managers** export their team's sessions. **Developers** export their own sessions, through the sessions export only.
+- **Chargeback needs the manager role or above.** A developer cannot generate it, even with a cost view.
+- **A cost view** widens the sessions export to the scope of the grant. See [Teams and roles](/docs/guides/teams-and-roles#give-someone-a-cost-view).
+- **Your plan must include chargeback-ready exports.** Both exports need it. Without it the console shows an upgrade prompt.
+- **Every export is logged.** The audit log records the type, the month and the format.
+
+## Download an export
+
+In the console, exports live on the **Reports** page under Spend.
+
+<Steps>
+<Step>
+
+### Choose the month
+
+Open **Reports** and set **Report month**. The last 12 months are offered.
+
+</Step>
+<Step>
+
+### Choose the file
+
+Select a card. **Chargeback** offers **CSV** and **PDF**. **Sessions audit** and **My sessions** both download the sessions export, which follows your scope. For an owner, leader or admin that is every session in the workspace, whichever card you use.
+
+</Step>
+<Step>
+
+### Save it
+
+The file downloads, and a message confirms how many rows it holds.
+
+</Step>
+</Steps>
+
+<Callout title="If Reports is not in your navigation">
+Not every console shows **Reports** in its navigation. If yours does not, request the same files from the exports API. The request format is in the [API reference](/docs/reference/api#exports).
+</Callout>
+
+## The chargeback CSV
+
+One row per repository, developer, tool, model and cost type, sorted by `costUsd`, highest first.
+
+| Column | What it holds |
+| --- | --- |
+| `month` | The month, as `YYYY-MM` |
+| `costCenter` | The workspace name |
+| `team` | The developer's team name, matched by account or git email. Empty when they are on no team |
+| `repo` | The repository |
+| `developerEmail` | The session's git author email. Left out in collaborative workspaces |
+| `tool` | The coding tool, for example `claude_code` |
+| `model` | The model id |
+| `costType` | `billed` for metered sessions, `imputed` for seat sessions |
+| `costUsd` | The API-rate amount for the group's sessions. On a `billed` row it is the charge. On an `imputed` row it is the usage-value estimate of seat work, not a charge |
+| `consumptionValueUsd` | The group's usage value. `0` on billed rows |
+| `shippedPrCount` | Distinct merged pull requests among the group's sessions |
+| `sessions` | Sessions in the group |
+
+Both dollar columns carry four decimals. For example, a workspace named Acme Engineering exports these two rows:
+
+```text title="planckspace-chargeback-2026-10.csv"
+month,costCenter,team,repo,developerEmail,tool,model,costType,costUsd,consumptionValueUsd,shippedPrCount,sessions
+2026-10,Acme Engineering,Platform,api-gateway,ana@acme.example,claude_code,claude-opus-5-5,billed,184.2000,0.0000,9,41
+2026-10,Acme Engineering,Platform,api-gateway,sam@acme.example,claude_code,claude-sonnet-5-5,imputed,97.3500,97.3500,6,58
+```
+
+<Callout type="warn" title="Filter before you total">
+To total what was billed, sum `costUsd` on rows where `costType` is `billed`. To total usage value, sum `consumptionValueUsd`. Summing `costUsd` across both types adds an estimate to real money, a total that PlanckSpace itself never produces.
+</Callout>
+
+The chargeback covers sessions. A flat seat fee is not allocated to teams or repositories in this file, and seat work appears only as usage value. The seat invoice is checked on Spend. See [Reconcile your invoice](/docs/guides/reconciliation).
+
+## The chargeback PDF
+
+The PDF is an A4 summary of the same rows. Its header names the workspace, the month and the date it was generated. Below it, a summary card shows five figures:
+
+| Figure | What it adds up |
+| --- | --- |
+| Billed (metered) | Billed money from metered sessions |
+| Usage value (seats) | Usage value from seat sessions |
+| Sessions | All sessions in the month |
+| Shipped PRs | Merged pull requests |
+| Active developers | Distinct developers |
+
+The totals are always "Billed (metered)" and "Usage value (seats)", never one total cost. For the two example rows above, the card reads $184.20 billed, $97.35 usage value, 99 sessions, 15 shipped PRs and 2 active developers.
+
+Three tables follow, each with up to ten rows, highest billed first: **Top repositories**, **By developer** and **By model**. Their **Billed** column holds billed money only. **By developer** is left out in collaborative workspaces.
+
+## The sessions export
+
+One JSON object per line, oldest session first. Each record carries the session id, tool, model, start and end times, duration in minutes, input, output, cache read and cache write tokens, `costType`, `costUsd`, `consumptionValueUsd`, repository, branch, outcome, turn and file counts, merged pull request number and subscription plan, plus the author's git email unless the workspace is collaborative. There is no prompt text.
+
+The money fields follow the CSV rule. On a seat session `costUsd` is the usage-value estimate, and `costType` tells you which ledger a record belongs to.
+
+## Privacy policy, scope and caching
+
+- **Collaborative workspaces.** Identity stays private for every role. The `developerEmail` column, the **By developer** table and the author email in the sessions export are all left out. Team names are not identity, so they stay.
+- **Scope.** A manager's file holds the team's sessions only, and a developer's holds their own. Sessions from untracked repositories are hidden and never exported. See [Tracked repositories](/docs/guides/repo-scope).
+- **Caching.** Files are built on request and cached briefly, for an hour by default. A new session in the month rebuilds them. A download right after you move someone to another team can still show the old team.
+
+## Export from the CLI
+
+The CLI writes a chargeback CSV and a sessions JSONL from the sessions on one machine:
+
+```bash
+planck export chargeback --month 2026-10 --out ./chargeback-2026-10.csv
+planck export sessions --month 2026-10 --out ./sessions-2026-10.jsonl
+```
+
+These read only that machine's local database, and the `team` column comes from team mappings in the CLI's own config. They are not the workspace's chargeback. See the [CLI reference](/docs/reference/cli).
+
+## Related
+
+<Cards>
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="Why no file contains a single blended total." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="Who can export, and how a cost view widens an export." />
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="How the collaborative policy removes developer identity from files." />
+  <Card title="API reference" href="/docs/reference/api" description="The export endpoints, parameters and response formats." />
+</Cards>

@@ -1,0 +1,706 @@
+---
+title: CLI reference
+description: "Every planck command, subcommand and flag, the environment variables the CLI reads, and what each command writes or sends."
+icon: SquareTerminal
+---
+
+`planck` is the command-line client for PlanckSpace. It reads the session records your AI coding tools already write on the machine, keeps them in a local database, and sends usage metadata to your workspace, either when you run a command or continuously from a background daemon. This page lists every command, subcommand and flag in `@planckspace/cli` 0.5.0, the environment variables it reads, and what each command writes or sends.
+
+To install the CLI, see [Installation](/docs/installation). For a first run that ends in a dollar figure, see the [Quickstart](/docs/quickstart). The payload that `planck sync` sends is specified in the [telemetry schema](/docs/reference/telemetry).
+
+## Conventions
+
+In usage lines, `<value>` is required and `[value]` is optional. A flag listed with a default uses that default when you leave it out.
+
+### Global options
+
+| Option | Description |
+| --- | --- |
+| `-V, --version` | Print the installed version and exit. |
+| `-h, --help` | Print help for `planck`, or for any command or subcommand. |
+
+### Exit codes
+
+A command exits `0` on success. A command that fails prints the reason to standard error and exits `1`. The CLI defines no other exit codes.
+
+### Where the CLI keeps state
+
+All state lives in one directory, `~/.planckspace/` by default. Set `PLANCKSPACE_HOME` to use a different directory, which gives you a second, fully isolated profile.
+
+| File | Contents |
+| --- | --- |
+| `config.json` | Backend URL, device token, workspace, declared subscriptions, budgets and your routing choice. Written with mode `0600` in a directory created with mode `0700`. |
+| `local.db` | The local session database and the record of which sessions were already synced. |
+| `daemon.json`, `daemon.pid`, `daemon.log` | Daemon state, process id, and an event log that rotates at 10 MB and keeps three older files. |
+| `agent-policy.json`, `agent-policy-applied.json`, `backups/` | The last agent policy received, what `planck autopilot` applied to Claude Code (with each key's previous value, for an exact undo), and a copy of Claude Code's `settings.json` taken before the first write. |
+| `claude-plugin/` | The routing plugin's files, once [model routing](/docs/guides/model-routing) is installed. |
+
+### Which backend the CLI talks to
+
+The base URL is chosen in this order, and the first match wins: the `--api-url` flag, on the commands that have one; the `PLANCKSPACE_API_URL` environment variable; `apiUrl` in `config.json`; then the default, `https://api.planckspace.dev`. A device token is valid only on the backend that issued it. If you point the CLI at a different backend later, it refuses to sync rather than upload this profile's history there, and tells you to give each backend its own profile with `PLANCKSPACE_HOME`.
+
+The CLI never loads a `.env` file. A variable takes effect only when you export it, so a stray file in the directory you happen to be in cannot redirect where your token is sent.
+
+## Environment variables
+
+| Variable | Read by | What it does |
+| --- | --- | --- |
+| `PLANCKSPACE_API_URL` | Every command that contacts the backend | Backend base URL. Overrides `apiUrl` in `config.json`; a `--api-url` flag overrides it. |
+| `PLANCKSPACE_HOME` | Every command | Directory for all CLI state. Default `~/.planckspace`. The `planck://` link handler is registered only by the default profile. |
+| `PLANCKSPACE_TOKEN` | `planck login`, `planck init` | Device token. Used when neither `--token-stdin` nor `--token` is given, and read before the hidden prompt. |
+| `PLANCKSPACE_ALLOW_INSECURE` | `planck login`, `planck init`, `planck daemon fix` | Set to `1` to allow sending a token, join code or connect code to an `http://` backend that is not on this machine. `https://` and loopback hosts (`localhost`, `127.0.0.1`, `::1`) never need it. |
+| `PLANCKSPACE_CLAUDE_BIN` | `planck routing`, `planck init`, the daemon | Path to the `claude` binary used to register the routing plugin, or `none` to skip it and edit Claude Code's `settings.json` instead. |
+| `CLAUDE_CONFIG_DIR` | `planck scan`, the daemon, `planck init`, `planck routing`, `planck autopilot` | Claude Code's config directory. Default `~/.claude`. Session logs are read from its `projects` folder, and settings are read and written in its `settings.json`. |
+| `CLAUDE_CODE_BILLING_MODE` | `planck scan`, the daemon | Forces how Claude Code sessions are filed. `token`, `api` or `billed` files them as metered; `seat`, `subscription` or `imputed` files them as seat usage. It takes priority over detection and over your declared plan. |
+| `TYPESAFE_API_KEY` | `planck sync`, the daemon | Checked for presence only, and only when the workspace's agent policy names `typesafe` as its task-decision provider. Without it the device reports `heuristic` instead. The value is never sent. |
+
+## Setup
+
+### `planck init`
+
+Connects this machine, scans and syncs your history, starts the daemon, and prints what is recoverable. It is the one command a new developer needs.
+
+```bash
+planck init
+planck init --code 7KQ4-M2XD
+planck init --join pk_join_xxxxxxxxxxxxxxxx
+planck init --token-stdin < token.txt
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--code <code>` | none | One-time connect code from the console, valid for 10 minutes and usable once. |
+| `--join <code>` | none | Team join code (`pk_join_…`) from an owner, leader or admin. It joins you to the workspace as a developer and gives you your own device token. |
+| `--email <email>` | `git config user.email` | Identity to join as with `--join`. The global git setting is tried first, then the repository's. On a terminal, `init` asks if neither exists. |
+| `--token <token>` | none | Device token. It is written to your shell history in plain text; prefer the prompt or `--token-stdin`. |
+| `--token-stdin` | off | Read the device token from standard input. |
+| `--api-url <url>` | see above | Backend base URL for this run. |
+| `--no-daemon` | daemon installed | Skip installing the daemon. Run `planck daemon install` later. |
+| `--plan <plan>` | asked on a terminal | Your own Claude Code plan: `pro`, `max`, `max_5x`, `max_20x`, `team`, `team_standard`, `team_premium`, `enterprise`, `api` or `none`. Spellings such as `Max 20x` or `max5x` are normalized. |
+| `--routing` | asked | Install model routing for Claude Code without asking. |
+| `--no-routing` | asked | Do not install model routing. |
+
+`init` runs five steps and prints each one.
+
+1. **Local setup.** Creates `~/.planckspace/` and the local database.
+2. **Connect.** The first match wins: `--code`, then `--join`, then `--token`, `--token-stdin` or `PLANCKSPACE_TOKEN`, then a token already saved on this machine, then a hidden prompt on a terminal. Pressing Enter at the prompt skips connecting, and the CLI measures locally only. After connecting, `init` asks which Claude Code plan you are on, because the plan decides whether your sessions count as metered spend or as seat usage. It then offers model routing if Claude Code is present.
+3. **First scan and sync.** Scans every local session it can find and sends them, as `planck scan --sync` does.
+4. **Background sync.** Installs the daemon. When you ran `init` through `npx`, it first installs the same version globally, so the auto-start entry does not point at a cache that npm can prune.
+5. **Your first number.** Asks the workspace for the recoverable dollars per month over the last 30 days and for how many developers are reporting. With too little history it says what is missing, about a week of data and 20 or more sessions, rather than printing `$0`. When part of the team has not reported, the figure is marked incomplete: a floor, not a total.
+
+A failed daemon install or routing setup prints a warning and does not stop `init`. A rejected token or an invalid `--plan` value exits `1`.
+
+### `planck login`
+
+Connects this machine to a workspace with a device token. Unlike `init`, it does not install the daemon.
+
+```bash
+planck login
+planck login --token-stdin < token.txt
+PLANCKSPACE_TOKEN=pk_live_xxxxxxxx planck login
+planck login --api-url https://api.planckspace.dev
+```
+
+| Argument or flag | Default | Description |
+| --- | --- | --- |
+| `[token]` | none | Device token as a positional argument. Same caveat as `--token`. |
+| `-t, --token <token>` | none | Device token. It leaks into shell history. |
+| `--token-stdin` | off | Read the token from standard input. Does not touch shell history. |
+| `--api-url <url>` | see above | Backend to authenticate against. |
+
+The token is taken from the first source that has one: `--token-stdin`, then `--token` or the positional argument, then `PLANCKSPACE_TOKEN`, then a hidden prompt on a terminal. With none of them and no terminal, `login` exits `1`.
+
+A token must start with `pk_live_` and continue with at least 20 URL-safe characters. The backend URL must be `https://`, or `http://` to a loopback host, unless `PLANCKSPACE_ALLOW_INSECURE=1`. Before sending the token, `login` prints which backend it is about to use and where that URL came from.
+
+On success `login` saves the backend URL, token and workspace to `config.json`, then runs a scan and sync. If the token belongs to a different workspace than before, it queues every local session for re-sync. On a terminal with no declared subscriptions, it then offers the same prompt as [`planck subscription add`](#planck-subscription-add) once.
+
+A rejected token usually means the token is fine but belongs to a different backend, so the message says which backend you are pointed at and how to change it. When the URL is not the hosted default and you did not name it with `--api-url`, `login` can offer, on a terminal and after asking, to retry against the hosted backend. Nothing is saved on failure.
+
+### `planck logout`
+
+Disconnects this machine. It clears the token and workspace from `config.json` and keeps all local session data.
+
+```bash
+planck logout
+```
+
+No flags.
+
+## Sync
+
+### `planck scan`
+
+Reads the session logs of your AI coding tools into the local database.
+
+```bash
+planck scan
+planck scan --sync
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--sync` | off | After scanning, send unsynced sessions to the workspace. Prints a notice and skips the sync when you are not connected. |
+
+A scan runs these steps in order:
+
+1. Reads Claude Code, Cursor, Windsurf and JetBrains logs. A tool that is not installed contributes nothing.
+2. Stamps your declared plan name onto seat sessions, so the console can say which plan covered them.
+3. Re-reads git history for every stored session to decide its outcome and attach the author email. Outcomes change as branches merge, so this runs every time, even with no new sessions.
+4. Runs the local detectors and stores their results. `planck sync` sends them.
+5. Checks for spend jumps and prints a warning for each. A repository's latest day is flagged when it is more than 3 times the median of the days before it and above $20. A single session is flagged when it is more than 5 times the developer's 90th-percentile session over 30 days, once the developer has at least 5 sessions.
+6. Prints a warning for each local budget at or above 80%.
+
+**How a Claude Code session is filed.** Each session is filed as metered (billed) or as seat usage, using the first rule that applies:
+
+1. `CLAUDE_CODE_BILLING_MODE`, when it is set.
+2. Claude Code's own local configuration, when it shows that Claude Code is billed per token: an API key, a key helper, a gateway token, Bedrock, Vertex, Foundry, or a Console login. The CLI records only which route is configured, never a key or token value.
+3. The plan you declared for `claude_code`, when it is a metered plan.
+4. Seat usage, the safe default, which never claims a metered charge.
+
+Detection only ever adds metered: a detected seat never overrides a declared metered plan. Cursor and Windsurf sessions are metered only if you declared a billed subscription for that tool. See [two ledgers](/docs/concepts/two-ledgers) for why the split matters.
+
+### `planck sync`
+
+Sends sessions that have not been synced yet to your workspace.
+
+```bash
+planck sync
+planck sync --watch
+planck sync --watch --interval 300
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-w, --watch` | off | Keep running and sync again after each interval. Stop with Ctrl+C. |
+| `-i, --interval <seconds>` | `60` | Seconds between passes with `--watch`. A value that is not a positive number falls back to 60. |
+
+Each pass first checks your token and the backend. If the backend's database was reset, or your token now belongs to a different workspace, the CLI reconciles its local sync state and carries on. If the profile is bound to a different backend than the one you are pointed at, it stops and exits `1`.
+
+Sessions go out in batches of 100. A network error, a 5xx response or a 429 is retried up to three times, waiting 0.5, 1 and 2 seconds. A 401 or 403 stops the remaining batches and suggests `planck login`. The same request carries your declared subscriptions, local budgets, local detector results, spend-jump warnings and a few device facts, all described in the [telemetry schema](/docs/reference/telemetry).
+
+Sessions from repositories your workspace does not track are marked resolved on your machine and never uploaded. The summary line says how many were kept local. If a leader later tracks one of those repositories, the next sync re-sends its sessions. See [tracked repositories](/docs/guides/repo-scope).
+
+`sync` exits `1` when you are not connected, the token is no longer valid, or the backend cannot be reached.
+
+### `planck reconcile`
+
+Aligns local sync state with what the backend actually holds.
+
+```bash
+planck reconcile
+```
+
+No flags. It fetches the workspace's list of session ids for the last 90 days and resets any session this machine marked as synced that the backend does not have, so the next `planck sync` sends it again. Sessions from untracked repositories are not reset, because their absence is expected. The command refuses to run when the profile is bound to a different backend, since resetting there would re-upload this profile's whole history to a backend it has never synced with. It prints the backend instance, the workspace and how many sessions it reset.
+
+This command is unrelated to [invoice reconciliation](/docs/guides/reconciliation), which compares tracked spend with provider invoices.
+
+## Daemon
+
+The daemon keeps syncing without you running anything. While it runs it:
+
+- watches Claude Code's log folder and picks up new activity as it is written;
+- scans every tool's logs once a minute, which is how Cursor and Windsurf sessions are found;
+- re-reads git history right after a `git push`, so an outcome can change from `unknown` to `shipped` at once;
+- drains the sync queue every 30 seconds while healthy, backs off from 1 second up to an hour after failures, and retries every 15 minutes after a token is rejected, so a temporary 401 during a backend redeploy heals itself;
+- pings the backend every 5 minutes, which is what lets the console show it as alive during quiet stretches, and checks every hour that the backend still holds what it synced;
+- runs the local detectors every 30 minutes.
+
+Auto-start is registered per operating system, with no administrator rights:
+
+| System | What `planck daemon install` registers |
+| --- | --- |
+| macOS | A LaunchAgent, `dev.planckspace.sync`, in `~/Library/LaunchAgents`. It runs at login and is restarted if it exits. |
+| Linux | A systemd user unit, `planckspace-sync.service`, in `~/.config/systemd/user`, restarted on failure. |
+| Windows | A Task Scheduler task, `PlanckSpaceSync`, that runs at logon and restarts every minute after a failure. If Group Policy blocks Task Scheduler, it falls back to a `HKCU` Run key that starts a crash supervisor. |
+
+Registering also installs a `planck://` link handler on Windows and Linux, so a button in the console can restart the daemon on your machine. macOS has no handler; use [`planck daemon fix`](#planck-daemon-fix) there.
+
+### `planck daemon install`
+
+Registers the daemon to start at login and starts it now. Safe to run again.
+
+```bash
+planck daemon install
+```
+
+No flags.
+
+### `planck daemon uninstall`
+
+Removes the auto-start registration and the `planck://` link handler.
+
+```bash
+planck daemon uninstall
+```
+
+No flags.
+
+### `planck daemon status`
+
+Shows whether the daemon is running, its process id, uptime, the last event, how many sessions are queued, the last sync and the last error.
+
+```bash
+planck daemon status
+planck daemon status --verbose
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--verbose` | off | Also print the last 50 entries of the event log. |
+
+When the server's last response says this CLI is behind, status prints the update command `npm i -g @planckspace/cli@latest`. When the server says the CLI cannot price every model in use, status warns that the spend it reported is understated, because turns on an unknown model are left out of cost rather than counted as zero.
+
+### `planck daemon restart`
+
+Stops the running daemon, if there is one, and starts a fresh instance.
+
+```bash
+planck daemon restart
+```
+
+No flags.
+
+### `planck daemon stop`
+
+Stops the running daemon. Auto-start launches it again at your next login.
+
+```bash
+planck daemon stop
+```
+
+No flags.
+
+### `planck daemon fix`
+
+Diagnoses and repairs the daemon in one pass. It is the command the console's Fix daemon button hands out, and it is safe to run repeatedly.
+
+```bash
+planck daemon fix
+planck daemon fix --workspace <id> --code 7KQ4-M2XD
+npx -y @planckspace/cli@latest daemon fix
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--workspace <id>` | none | The workspace the console was showing. Flags a machine that is healthy but syncing to a different workspace. |
+| `--code <code>` | none | One-time connect code. If this machine has no token, a rejected token, or is bound to a different workspace than `--workspace`, the code reconnects it. |
+| `--api-url <url>` | this profile's | Backend to redeem `--code` against. |
+
+The pass has four steps:
+
+1. **Version.** Compares your CLI with the latest published version and prints the update commands when it is behind.
+2. **Connection.** Checks that the token is valid, the backend is reachable, and the profile is bound to the workspace you named. Each failure prints a one-line remedy.
+3. **Restart.** Stops whatever is running, registers auto-start again from a durable install, and starts the daemon. With no token there is nothing to restart into, so the command stops here and exits `1`.
+4. **Verify.** Waits up to 45 seconds for the new daemon to send a heartbeat the backend accepts, which is the signal the console's chip reads.
+
+Every line is marked with a check or a cross. The command exits `1` if any step is marked with a cross.
+
+## Inspect and report
+
+These commands read the local database. `planck status` and `planck doctor` also make a live check against the backend.
+
+### `planck status`
+
+Shows the state of this machine in one screen.
+
+```bash
+planck status
+```
+
+No flags. It prints the backend URL, the connection state, the workspace, session counts per tool and per ledger type, the last scan time, how many sessions are synced and how many are waiting, this month's local budgets, and whether the daemon is running. The connection line names what is wrong when something is: not connected, token no longer valid, backend unreachable, workspace changed or backend database reset (both point to `planck reconcile`), or a profile bound to a different backend, which blocks sync.
+
+### `planck doctor`
+
+Prints connection diagnostics.
+
+```bash
+planck doctor
+```
+
+No flags. It prints the backend URL, workspace id and name, your token masked to its last four characters, the backend instance and workspace this profile last saw, the time of the last health check, local session counts (total, synced, unsynced), and a live health check. If the token is rejected or the backend is unreachable and the URL is not the hosted default, it explains the likely cause and prints the command that points the CLI back.
+
+### `planck diagnose`
+
+Lists every model id seen in your sessions, so you can find turns the CLI could not price.
+
+```bash
+planck diagnose
+```
+
+No flags. It prints session counts by cost type, the number of turns per model id with unmatched ids marked, and the total of unpriced turns. A turn on a model the CLI cannot price is excluded from cost, not counted as zero. When that happens, update the CLI.
+
+### `planck inspect`
+
+Prints exactly what would be sent for one session. Use it to check the privacy promise yourself.
+
+```bash
+planck inspect <sessionId>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<sessionId>` | The session's local id, for example the UUID of a Claude Code session file. |
+
+It builds the same payload that `planck sync` would send, then prints the session header (tool, model, times, repository, branch, author, outcome, merged pull request), the ledger fields (`costType`, `subscriptionPlan`, `costUsd`, `consumptionValueUsd`, `unmatchedTurns`), token totals, every turn with its model, tokens, tool names and files touched, and the files touched in more than one turn. Exits `1` if the session is not found.
+
+### `planck insights`
+
+Runs the CLI's local detectors over your stored sessions and prints what they found.
+
+```bash
+planck insights
+```
+
+No flags. Each result shows the detector, its scope, an estimated monthly amount and a confidence. Detectors that lack data are listed with the reason they were skipped. Results are saved locally and, when you are connected, sent to the workspace straight away. This is local detector output: the findings in the console come from the server's own detectors. See [findings](/docs/concepts/findings).
+
+### `planck metrics`
+
+Shows productivity figures computed from your local sessions.
+
+```bash
+planck metrics
+planck metrics --by-repo
+planck metrics --by-developer
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--by-repo` | off | Pivot the figures by repository. |
+| `--by-developer` | off | Pivot by developer. Shows individual git emails, from this machine's data only. |
+
+With no flag it prints cost per shipped pull request and per merged line (billed), usage value per shipped pull request and per merged line, median time to merge over the last 30 days, and the AI adoption rate, which is the share of merged branches that had at least one session. Billed and usage value are always printed as separate lines. A dash means nothing shipped in that ledger, so the ratio cannot be measured.
+
+### `planck value`
+
+Compares each declared subscription's seat price with the usage value of the work done on it over the last 30 days.
+
+```bash
+planck value
+planck value --tool claude_code
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--tool <tool>` | all declared tools | Report on one tool only. |
+
+For each subscription it prints the seat cost for the period, the usage value (the CLI labels it consumption value, at API-equivalent rates and not a charge), the leverage ratio, the session count, and the top and bottom consumers by person. The leverage ratio is usage value divided by seat cost: above 1 means the seats return more than they cost, below 1 means they are underused. A tool with no declared subscription is skipped with a hint to declare one.
+
+## Workspace data
+
+These commands edit `config.json` or read the local database. Declarations you make here reach your workspace through `planck sync`, under strict rules described in each section.
+
+### `planck subscription add`
+
+Declares a seat subscription on this machine, or updates one.
+
+```bash
+planck subscription add
+planck subscription add --tool claude_code --plan max_20x --seats 1 --seat-cost 200
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--tool <tool>` | prompted | Tool name, such as `claude_code`, `cursor`, `windsurf`, `copilot` or `jetbrains`. |
+| `--plan <plan>` | prompted | Plan name. `Max 20x`, `max5x` and similar spellings are normalized; generic `max` and `team` are still accepted. |
+| `--seats <n>` | prompted | Number of licensed seats. Must be a positive integer. |
+| `--seat-cost <usd>` | prompted | Monthly price per seat in US dollars. Must be zero or more. |
+
+With all four flags the subscription is saved without prompts. With any missing, `add` asks for each value on a terminal; pressing Enter skips a field.
+
+The billing mode is inferred: a subscription is metered when the tool is `anthropic-api`, `bedrock` or `openai-direct`, or the plan is `api`, `pay-as-you-go`, or starts or ends with `api-` or `-api`; otherwise it is a flat seat. An existing entry for the same tool and plan is replaced.
+
+The workspace's seat inventory is set in the console, not here. When the daemon syncs, a device sends its declarations as a bootstrap only, and the backend accepts them from owner, leader and admin devices alone. It creates a seat record only for a tool that has none yet, and never for a metered plan or a plan with no seat price. It never edits or deletes an existing one. See [subscriptions](/docs/guides/subscriptions).
+
+### `planck subscription list`
+
+Lists the subscriptions declared on this machine, with seats, price per seat, monthly total and billing mode.
+
+```bash
+planck subscription list
+```
+
+No flags.
+
+### `planck subscription remove`
+
+Removes a declared subscription from this machine.
+
+```bash
+planck subscription remove --tool cursor --plan business
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--tool <tool>` | required | Tool name. |
+| `--plan <plan>` | required | Plan name, normalized the same way as in `add`. |
+
+### `planck budget set`
+
+Creates or updates a monthly budget on this machine.
+
+```bash
+planck budget set --scope repo --name planckspace-backend --monthly 500
+planck budget set --scope workspace --name all --monthly 2000
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--scope <scope>` | required | `repo` or `workspace`. |
+| `--name <name>` | required | The repository name for `repo`, or a label for `workspace`. |
+| `--monthly <usd>` | required | Monthly cap in US dollars. Must be greater than zero. |
+
+<Callout type="warn" title="Local budgets are not the console's budgets">
+
+The CLI checks a local budget against every session stored on this machine for the month, metered and seat sessions alike, and warns at 80%. Budgets set in the console measure billed money only, because a budget is a ceiling on money that leaves the bank, and they alert by email or Slack. Use the console for budgets you rely on. See [budgets and alerts](/docs/guides/budgets-and-alerts).
+
+</Callout>
+
+When the daemon syncs, an owner's, leader's or admin's device sends its budgets to the workspace as a bootstrap: a budget is created only where none exists yet for that scope and name, and an existing budget is never changed. The backend ignores budgets from devices of any other role.
+
+### `planck budget list`
+
+Lists the budgets configured on this machine.
+
+```bash
+planck budget list
+```
+
+No flags.
+
+### `planck budget remove`
+
+Removes a local budget.
+
+```bash
+planck budget remove --scope repo --name planckspace-backend
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--scope <scope>` | required | `repo` or `workspace`. |
+| `--name <name>` | required | The repository name or label to remove. |
+
+### `planck export chargeback`
+
+Writes a month of local session data, grouped for chargeback, to a CSV file.
+
+```bash
+planck export chargeback --month 2026-10 --out ./chargeback-2026-10.csv
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--month <month>` | required | The month to export, as `YYYY-MM`, with UTC month boundaries. |
+| `--out <file>` | required | Output path. Missing directories are created. |
+
+The columns are `month`, `costCenter`, `team`, `repo`, `developerEmail`, `tool`, `model`, `costType`, `costUsd`, `consumptionValueUsd`, `shippedPrCount` and `sessions`. Each row is one ledger: on a `billed` row only `costUsd` is filled, and on an `imputed` row only `consumptionValueUsd` is, so the two columns can each be summed without mixing them. `costCenter` is your workspace name. `team` comes from the `teamMappings` list in `config.json`, which you edit by hand as entries of the form `{ "team": "Platform", "repos": ["platform-*"] }`, matching repository names with `*` and `?`; a repository that matches none is `(unassigned)`. With `privacyMode` set to `collaborative`, the `developerEmail` column is left out.
+
+This command reads only this machine's database, so it covers only what this machine has scanned. For a workspace-wide export, use the console or the [exports API](/docs/reference/api#exports). See [exports](/docs/guides/exports).
+
+### `planck export sessions`
+
+Writes a month of local sessions to a JSON Lines file, one session per line, with no prompt text.
+
+```bash
+planck export sessions --month 2026-10 --out ./sessions-2026-10.jsonl
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--month <month>` | required | The month to export, as `YYYY-MM`, with UTC month boundaries. |
+| `--out <file>` | required | Output path. Missing directories are created. |
+
+Each line holds `id`, `tool`, `model`, `startedAt`, `endedAt`, `inputTokens`, `outputTokens`, `cacheReadTokens`, `cacheWriteTokens`, `costUsd`, `costType`, `subscriptionPlan`, `repoName`, `gitBranch`, `gitAuthorEmail`, `workingDir`, `turnCount`, `filesTouchedCount`, `outcome`, `mergedPrNumber`, `mergedAt` and `timeToMergeMs`. The file stays on your machine. It includes the local working directory, which the sync payload does not send.
+
+### `planck config show`
+
+Prints the configuration: the file path, `apiUrl`, `workspaceId`, `workspaceName`, the token masked to its last four characters, `privacyMode`, and how many budgets and subscriptions are stored.
+
+```bash
+planck config show
+```
+
+No flags.
+
+### `planck config get`
+
+Prints one configuration value, or `(not set)`.
+
+```bash
+planck config get apiUrl
+```
+
+| Argument | Description |
+| --- | --- |
+| `<key>` | A top-level key of `config.json`, such as `apiUrl`, `workspaceId`, `workspaceName` or `privacyMode`. An unknown key exits `1`. |
+
+`config show` masks the token. `config get token` prints the stored value, so avoid running it where the output is logged.
+
+### `planck config set`
+
+Saves a configuration value.
+
+```bash
+planck config set apiUrl https://api.planckspace.dev
+planck config set privacyMode collaborative
+```
+
+| Argument | Description |
+| --- | --- |
+| `<key>` | `apiUrl` or `privacyMode`. Any other key exits `1`; budgets and subscriptions have their own commands. |
+| `<value>` | The new value. `privacyMode` is `individual` (the default) or `collaborative`, which omits developer emails from `planck export chargeback`. The CLI does not validate the value. |
+
+## Billing connections
+
+These commands send a provider credential to your PlanckSpace backend, which validates it against the provider before storing anything. The credential is never written on this machine.
+
+<Callout type="warn" title="These commands need a device token created by a workspace admin">
+
+`planck connect` and `planck integrations list` call the integrations API with your device token. The backend accepts a device token on those routes only when the member who created it has the `admin` role, and answers `403` otherwise. Owners and leaders can connect billing sources from the console. See [connect billing](/docs/guides/connect-billing).
+
+</Callout>
+
+### `planck connect anthropic`
+
+Connects an Anthropic organization.
+
+```bash
+planck connect anthropic --admin-key sk-ant-admin-xxxxxxxx
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--admin-key <key>` | required | An Anthropic admin key (`sk-ant-admin…`), which lets PlanckSpace read the usage report, or a regular API key (`sk-ant-api…`), which only verifies the organization. The prefix decides. |
+
+An admin key is stored encrypted on the server. A regular key is checked and then discarded, and spend is measured from developer machines instead. Neither is saved on this machine.
+
+### `planck connect openai`
+
+Connects an OpenAI organization.
+
+```bash
+planck connect openai --api-key sk-xxxxxxxx
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--api-key <key>` | required | An OpenAI organization API key (`sk-…`). PlanckSpace reads only the organization cost endpoint. |
+
+### `planck connect bedrock`
+
+Connects AWS Bedrock through a read-only IAM role.
+
+```bash
+planck connect bedrock --role-arn arn:aws:iam::123456789012:role/planckspace-readonly
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--role-arn <arn>` | required | The role's ARN, in the form `arn:aws:iam::<12-digit account>:role/<name>`. A malformed ARN is rejected before anything is sent. |
+
+Before connecting, the command prints what the role must allow: the single permission `ce:GetCostAndUsage`, and a trust policy that lets PlanckSpace assume the role with your workspace id as the `sts:ExternalId` condition. A `422` response means AWS rejected the role, and nothing was connected.
+
+### `planck integrations list`
+
+Lists the billing connections of your workspace.
+
+```bash
+planck integrations list
+```
+
+No flags. For each connection it prints the kind, status, when it was last validated and last synced, and any last error, with key fragments redacted.
+
+## Routing and policy
+
+### `planck routing`
+
+Installs, removes and inspects [model routing](/docs/guides/model-routing) for Claude Code on this machine.
+
+```bash
+planck routing on
+planck routing off
+planck routing status
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `on` | Installs routing here, whatever the workspace policy says. Exits `1` if Claude Code has not run on this machine yet. |
+| `off` | Removes routing and keeps it off here, even if the workspace policy later turns it on. |
+| `status` | Prints whether routing is installed, this machine's own choice (`on`, `off`, or follows the workspace), the workspace policy, whether Claude Code and its binary were found, and where the plugin files are. |
+
+Routing is a Claude Code plugin, `planckspace-routing`, installed at user scope. It adds three agents, each pinned to a model: `explorer` on Haiku for read-only lookups, `builder` on Sonnet for routine edits, and `investigator` on Opus for hard problems. A session-start rule tells the main session which to use. It never changes your default model, and a model you name always wins.
+
+The CLI registers the plugin through Claude Code's own `claude plugin` commands, using a `claude` binary found on `PATH`, in the native installer's location, or bundled in the VS Code, Cursor or Windsurf extension. If it finds none, it adds two keys to `~/.claude/settings.json` after saving `settings.json.planckspace-backup`, and you restart Claude Code to load it. `PLANCKSPACE_CLAUDE_BIN` overrides the search.
+
+The workspace policy decides what `planck init` and the daemon do:
+
+| Workspace policy | `planck init` | The daemon |
+| --- | --- | --- |
+| `ask`, the default | Asks, default yes. `--routing` or `--no-routing` skips the question. | Does nothing. |
+| `on` | Installs without asking. | Installs on the next sync on machines already connected. |
+| `off` | Never offers it. | Does nothing. |
+
+A flag overrides the policy. Your own `planck routing off` overrides the workspace policy on your machine until you run `planck routing on`. Turning the policy off later stops pushing routing; it does not remove it from machines that have it.
+
+### `planck autopilot`
+
+Controls this machine's side of the workspace's [agent policy](/docs/guides/agent-policy): the Claude Code settings your admins want, such as when to compact, effort level and the subagent model.
+
+```bash
+planck autopilot status
+planck autopilot off
+planck autopilot on
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `status` | Prints the workspace policy (mode and version), the settings and guards it sets, what has been applied here, the path of Claude Code's settings file, and whether this machine follows the workspace or has opted out. |
+| `off` | Undoes what autopilot applied here, restoring each key to its previous value, and keeps it off even if the workspace turns it on. A key you changed since is left alone. |
+| `on` | Clears your opt-out. The workspace policy applies again on the next sync. |
+
+The policy mode is `off`, `suggest` or `apply`. Only `apply` writes anything. In that mode the daemon merges the settings the policy sets into your Claude Code user settings: `autoCompactWindow`, `idleCompaction`, `effortLevel`, `promptCacheTtl` and `env.CLAUDE_CODE_SUBAGENT_MODEL`. It first copies `settings.json` to `~/.planckspace/backups/`. A setting the policy leaves empty keeps Claude Code's default. In `suggest` mode a device changes nothing.
+
+## Internal commands
+
+These exist so the operating system and the console can call back into the CLI. You do not need to run them.
+
+### `planck daemon run`
+
+Runs the daemon in the foreground. Auto-start calls this. To run a second daemon against another backend, export `PLANCKSPACE_HOME` and `PLANCKSPACE_API_URL` and run `planck daemon run` yourself, because the operating system's auto-start entry does not inherit those variables.
+
+```bash
+planck daemon run
+```
+
+No flags.
+
+### `planck daemon supervise`
+
+Keeps `daemon run` alive across crashes. It is used by the Windows auto-start fallback and is not for manual use. It restarts a crashed daemon after 2 seconds, and waits 60 seconds once it detects a crash loop.
+
+```bash
+planck daemon supervise
+```
+
+No flags.
+
+### `planck url`
+
+Handles a `planck://` link, which the operating system's link handler passes in when you click a button in the console.
+
+```bash
+planck url planck://daemon/restart
+```
+
+| Argument | Description |
+| --- | --- |
+| `<url>` | A `planck://` link. `planck://daemon/restart`, `planck://daemon/start` and `planck://daemon/sync` all restart the daemon. Any other action exits `1`. |
+
+## Related
+
+<Cards>
+  <Card title="Installation" href="/docs/installation" description="Install the CLI and connect a machine." />
+  <Card title="Team onboarding" href="/docs/team-onboarding" description="Join codes and connect codes for a whole team." />
+  <Card title="Telemetry schema" href="/docs/reference/telemetry" description="Exactly what planck sync sends." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="Fix a daemon that is not syncing." />
+</Cards>

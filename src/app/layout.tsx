@@ -1,38 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Science_Gothic, Doto, Geist, Geist_Mono } from "next/font/google";
-import SmoothScroll from "@/components/site/SmoothScroll";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-/* ── the voices ───────────────────────────────────────────────────────────
-   Science Gothic is the display face. Its counters are squared off the way
-   the Aperture mark is, and it carries a width axis from 50 to 200, which is
-   what the headlines animate along: type that stretches into place instead
-   of fading in. Only the width axis is requested; weight comes with it.
-
-   Doto is a dot-matrix face kept for one job, numbers being counted. A total
-   drawn in discrete dots reads as metered.
-
-   Geist and Geist Mono carry everything you actually read. The product and
-   the wordmark are set in Geist, so the page and the app share a voice.
-   ────────────────────────────────────────────────────────────────────── */
-
-const display = Science_Gothic({
-  subsets: ["latin"],
-  variable: "--font-science",
-  axes: ["wdth"],
-  display: "swap",
-  // next/font has no metric overrides for this face, so name the fallback
-  // instead of letting it guess (and warn on every compile).
-  adjustFontFallback: false,
-  fallback: ["Arial Black", "Arial", "sans-serif"],
-});
-
-const meter = Doto({
-  subsets: ["latin"],
-  variable: "--font-doto",
-  display: "swap",
-  preload: false,
-});
+/* One family, the app's: Geist for everything read, Geist Mono for commands,
+   ids, repo names and model strings. The wordmark is drawn in Geist too, so
+   the page, the console and the logo share a voice. */
 
 const sans = Geist({
   subsets: ["latin"],
@@ -44,7 +16,6 @@ const mono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
   display: "swap",
-  preload: false,
 });
 
 const OG_IMAGE = "/og.png";
@@ -100,25 +71,29 @@ export const metadata: Metadata = {
 };
 
 /* viewportFit "cover" lets the page paint under a notch, which is what makes
-   env(safe-area-inset-*) non-zero; .wrap reads those insets. maximumScale is
-   deliberately absent so pinch zoom keeps working. */
+   env(safe-area-inset-*) non-zero; .wrap and the nav read those insets.
+   maximumScale is deliberately absent so pinch zoom keeps working. */
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: "#0b0b0c",
-  colorScheme: "dark",
+  themeColor: "#fafaf8",
+  colorScheme: "light",
 };
+
+/* Entrances are an enhancement: content is hidden for its reveal only once
+   this has run, so without script (or before it) everything is on the page.
+   An attribute, not a class, so React never reconciles it away. */
+const JS_FLAG = "document.documentElement.setAttribute('data-js','')";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${meter.variable} ${sans.variable} ${mono.variable}`}
-    >
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
+      </head>
       <body>
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <SmoothScroll />
         {children}
       </body>
     </html>

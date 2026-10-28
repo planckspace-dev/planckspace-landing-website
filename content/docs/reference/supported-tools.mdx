@@ -1,0 +1,182 @@
+---
+title: Supported tools
+description: "Which AI coding tools the CLI reads, what it captures from each, how Claude Code is classified as metered or seat, and every limitation."
+icon: LayoutGrid
+---
+
+PlanckSpace reads the usage records your AI coding tools already keep on disk, and what it can learn depends on what each tool records. This page states, tool by tool, what the CLI reads, what it gets and what it cannot get. It never fills a field the tool did not record: a missing value is `0` or empty, not a guess.
+
+## At a glance
+
+| Tool | Level | What you get | In the console |
+| --- | --- | --- | --- |
+| Claude Code | Full | Exact tokens for every turn with a dollar amount computed from them, tool calls, files touched, subagent turns, repository, branch and outcome. | Yes |
+| Cursor | Stable | Sessions with timing, turns, tool calls, files touched, repository and outcome. No tokens and no dollar amount, because Cursor does not store tokens locally. | Yes |
+| Windsurf | Beta, unverified | Timing and message counts if the CLI recognizes Windsurf's local data. Model, tokens and a dollar amount only if present. | No |
+| JetBrains AI Assistant | Detected | At best a timing-only record per conversation. No model, tokens, dollar amount or files. | No |
+| Anything else | Not read | Nothing. | No |
+
+`planck status` and `planck scan` print the level as a label after the tool name: `[stable]`, `[beta]` or `[detected]`. Claude Code has no label.
+
+<Callout type="info" title="What the console shows">
+
+The console shows sessions from Claude Code and Cursor. It filters Windsurf, JetBrains and Antigravity out of every page, because their token accounting has not been verified end to end. The CLI uploads Windsurf and JetBrains sessions like any other, and it has no reader for Antigravity at all.
+
+</Callout>
+
+## What the CLI captures
+
+A session's dollar amount is cost when the session is metered, and usage value when it is on a seat.
+
+| Field | Claude Code | Cursor | Windsurf | JetBrains AI Assistant |
+| --- | --- | --- | --- | --- |
+| Session start and end | Event timestamps | Message timestamps | Message timestamps, if the format is recognized | Timestamps found in the config files |
+| Model | Per turn | Usually `default` when Cursor's Auto picker chooses. The pinned model when you pin one. | Only if present | `unknown` |
+| Input and output tokens | Exact, per turn | Always 0 | Only if present | 0 |
+| Cache read and write tokens | Exact | 0 | 0 | 0 |
+| Dollar amount | Computed from tokens | $0 | $0 unless tokens and a priced model are present | $0 |
+| Turns | One per assistant API call | One per user prompt | One per user message | A rough count |
+| Tool calls | Names and counts per turn | Names and counts per turn | None | None |
+| Files touched | Unique paths from the Read, Edit, Write and NotebookEdit tools | Files the agent modified, by Cursor's own count, plus paths from tool calls | 0 | 0 |
+| Repository and branch | From the working directory's git repository | From the workspace path's git repository | From the workspace path, if present | None |
+| Outcome | From git | From git | From git, when a repository is found | None |
+
+The repository name is the folder name of the git repository's root. File paths are sent relative to the repository, and a path outside the working directory is reduced to its file name. The same rules apply to every tool.
+
+## Claude Code
+
+The CLI reads the session logs under `~/.claude/projects`, or under `projects` inside the folder `CLAUDE_CONFIG_DIR` names. The daemon watches them as they change, and `planck scan` reads them on demand.
+
+- **One turn per API call.** Claude Code logs a call once per content block, and the CLI counts it once. Placeholder turns with no tokens, such as compaction markers, are ignored.
+- **The dollar amount is computed on your machine** from exact per-turn tokens and the price of that turn's own model. See [Prices and unpriced turns](#prices-and-unpriced-turns).
+- **Subagents count.** Claude Code writes each subagent's turns to `<session>/subagents/*.jsonl`. From CLI 0.4.0 they are merged into the parent session, ordered by time and priced on their own models. The session's model stays the main session's model. Before 0.4.0, delegated work was missing from the totals.
+- **Outcome comes from git.** The CLI compares each session with its repository's git history to decide whether the work shipped, was abandoned, or is still unknown. See [Sessions](/docs/concepts/sessions).
+
+## Cursor
+
+The CLI opens Cursor's local state database, `state.vscdb`, read-only. It lives under `~/Library/Application Support/Cursor` on macOS, `%APPDATA%\Cursor` on Windows and `~/.config/Cursor` on Linux, in `User/globalStorage`.
+
+A session is one chat or agent conversation with at least one user prompt. Empty drafts are skipped. A turn is one prompt plus the assistant messages that follow it.
+
+Cursor meters usage on its servers and does not store token counts locally, so tokens are always 0 and the dollar amount is $0. The CLI still reads the token fields, so a Cursor build that stores them would be picked up. A Cursor session is therefore counted and attributed, but it carries no dollars.
+
+## Windsurf
+
+The CLI looks in `state.vscdb` for Windsurf and for Windsurf - Next, using the same layout as Cursor. It reads only values under keys that look like Cascade conversations, and it accepts only values shaped like a conversation with timestamps.
+
+Windsurf's local format has not been verified against a real installation, which is why support is beta. If the CLI finds matching keys but cannot recognize the format, it prints a one-line warning and reads nothing. It never invents sessions, tokens or models. Windsurf sessions carry no files and no tool calls.
+
+## JetBrains AI Assistant
+
+The CLI looks for AI Assistant files in the config folder of each JetBrains IDE, such as IntelliJ IDEA, PyCharm, WebStorm, GoLand, CLion and Rider. That folder is `~/Library/Application Support/JetBrains` on macOS, `~/.config/JetBrains` on Linux and `%APPDATA%\JetBrains` on Windows.
+
+The format is unverified, so the CLI extracts only timestamps. Each match becomes a timing-only record: model `unknown`, 0 tokens, $0, no files and no repository. If it finds an installation but no recognizable data, it prints a one-line notice and reads nothing.
+
+## Tools the CLI does not read
+
+The CLI has no reader for any other tool, so its usage does not appear in PlanckSpace. That includes GitHub Copilot and Antigravity. Antigravity exists as a tool name in the data model, but no sessions are read from it.
+
+## Metered or seat
+
+Every session is filed in one of two ledgers: **billed** for metered, pay-per-token work, and **usage value** for work done on a flat-rate seat. See [Billed and usage value](/docs/concepts/two-ledgers).
+
+### Claude Code
+
+From version 0.5.0, the CLI works this out from Claude Code's own configuration. It reads Claude Code's managed settings file, the `settings.json` in your Claude config folder, and `.claude.json`. Each variable below is looked for in the process environment and in the `env` blocks of those settings. The first match wins.
+
+| Order | Signal | Result |
+| --- | --- | --- |
+| 1 | `CLAUDE_CODE_USE_BEDROCK` is set | Metered, through Bedrock |
+| 2 | `CLAUDE_CODE_USE_VERTEX` is set | Metered, through Vertex |
+| 3 | `CLAUDE_CODE_USE_FOUNDRY` is set | Metered, through Foundry |
+| 4 | `ANTHROPIC_AUTH_TOKEN` is set | Metered, through an auth token |
+| 5 | `ANTHROPIC_API_KEY` is set, and Claude Code has not rejected the key | Metered, with an API key |
+| 6 | An `apiKeyHelper` is configured | Metered, through a key helper |
+| 7 | You are signed in with an Anthropic Console account rather than a subscription | Metered, through a Console login |
+| 8 | You are signed in with a Claude subscription | Seat |
+| 9 | None of the above | Unknown |
+
+Only the result leaves the machine: `mode` (`metered`, `seat` or `unknown`), the signal that decided it as `via`, and, for a Console login, the Anthropic organization ID. No key, token or helper command is sent. The result goes with each sync from a machine where Claude Code has run.
+
+Metered sessions are filed as billed. Detection only ever adds billed: a detected seat or unknown never overrides an API plan you declared with `planck init --plan api`, and an unknown result is treated as seat usage. The CLI classifies with Claude Code's current configuration, so one machine has one answer for every Claude Code session it scans. When you declare a different plan, sessions from before the change keep the classification they had.
+
+### Cursor and Windsurf
+
+A session is filed as billed only when you declared an `api` plan for that tool with `planck subscription add`. Otherwise it is usage value on a seat.
+
+### Plan stamps
+
+A seat session carries the plan you declared for its tool. For Claude Code that is `pro`, `max_5x`, `max_20x`, `team_standard`, `team_premium` or `enterprise`, and the older generic `max` and `team` are still accepted. Declare it with `planck init --plan` or `planck subscription add`. A stamp is filled in only where the session has none, and metered sessions are never stamped.
+
+PlanckSpace uses the stamp to say that a session is included in a plan, and to measure dormant seats and Max to Pro right-sizing against the right plan. See [Findings](/docs/concepts/findings).
+
+## Claude Code capabilities by CLI version
+
+| Capability | CLI version |
+| --- | --- |
+| Subagent turns merged into the parent session | 0.4.0 |
+| Metered or seat detection, and the per-turn detail below | 0.5.0 |
+| Agent configuration snapshots and skill names | 0.6.0 |
+
+### Per-turn detail (0.5.0)
+
+Each field is sent only when Claude Code recorded it, and each is a number or a short identifier, never text.
+
+| Field | Meaning |
+| --- | --- |
+| `thinkingTokens` | Tokens used for extended thinking. |
+| `effort` | The effort level: `low`, `medium`, `high`, `xhigh` or `max`. |
+| `cacheWrite1hTokens` | The part of the cache writes that used the 1-hour cache. |
+| `cacheMissReason`, `cacheMissedTokens` | Why a prompt cache missed, and how many tokens it missed. |
+| `toolResultTokens` | An estimate, in characters divided by 4, of what the turn's tool calls returned. |
+| `speed` | `standard` or `fast`. |
+| `compactionTrigger`, `preCompactTokens` | Whether context was compacted automatically or manually before the turn, and its size before compaction. |
+| `agentType` | The subagent type, on subagent turns. |
+
+These fields feed the levers on the Optimize page. See [Telemetry](/docs/reference/telemetry) for the full payload.
+
+### Agent configuration snapshots (0.6.0)
+
+[Agent setup](/docs/concepts/agent-setup) reads a metadata-only snapshot of how each repository is set up for agents. CLI 0.6.0 is the first build that sends it, and earlier builds, including 0.5.0, do not. A snapshot describes each instruction file, such as `CLAUDE.md`, by size, line count, an estimated token count, a keyed hash and its last commit time. It lists the number of hooks per event and the names of skills, commands and MCP servers, with the MCP transport and the `model` setting. It never carries file contents, hook commands, server URLs or environment values, and the backend rejects a payload that does. Repositories your workspace does not track are dropped.
+
+On devices below 0.6.0, Agent setup shows how many need a daemon update.
+
+## Prices and unpriced turns
+
+The dollar amount is computed on your machine, per turn, from exact token counts and the price of that turn's own model. A model the CLI cannot price is counted as unpriced. Its turns are left out of the amount, and they are never filled with a guess or a zero.
+
+`planck diagnose` lists the model IDs the CLI has seen, which of them it cannot price, and how many of your sessions it counted as billed or as seat usage. The console's coverage menu reports unpriced turns too, and a build the backend knows cannot price a model now in use is flagged **Update required**.
+
+## Model endpoints
+
+The Assets page names the path each session's model calls took, read from the model ID and never guessed from dollar amounts.
+
+| What the session shows | Endpoint |
+| --- | --- |
+| A metered Claude Code session with a `claude` model ID | Anthropic API |
+| A Bedrock model ID: `arn:aws:bedrock…`, `anthropic.…`, or a region prefix such as `us.anthropic.…` | AWS Bedrock |
+| A Claude model ID with an `@` date suffix, such as `…@20250514` | Google Vertex |
+| `gpt…`, `o` followed by a digit, `chatgpt`, `codex` or `openai` | OpenAI API |
+| `gemini…` | Google AI API |
+| `grok…` | xAI API |
+| `deepseek…` | DeepSeek API |
+| `mistral…` or `codestral…` | Mistral API |
+| An Ollama or LM Studio tag, or an open-weights family such as Llama, Qwen, Gemma, Phi or StarCoder | Local model |
+| Any other ID on a metered session | Other API |
+
+Only metered Claude Code sessions are placed on a provider API. A seat session shows as the tool's own plan, such as **Claude plan** or **Cursor plan**, and metered usage through another tool shows as that tool's usage. A model served locally shows as **Local model** whatever the billing.
+
+Recognizing an endpoint does not pull its invoice. Billing connections exist for Anthropic, OpenAI and AWS Bedrock. See [Connect billing](/docs/guides/connect-billing).
+
+## Editors that host the extension
+
+The [editor extension](/docs/editor-extension) runs in VS Code 1.85 or newer, Cursor, Windsurf and VSCodium. It reads the same local data the CLI writes.
+
+## Related
+
+<Cards>
+  <Card title="Sessions" href="/docs/concepts/sessions" description="What a session is, and how its outcome and ledger are set." />
+  <Card title="Telemetry" href="/docs/reference/telemetry" description="Every field the CLI sends, per session and per turn." />
+  <Card title="Connect billing" href="/docs/guides/connect-billing" description="Pull Anthropic, OpenAI and Bedrock invoices to check tracked spend." />
+  <Card title="Install the CLI" href="/docs/installation" description="Requirements, the daemon and where the CLI keeps its files." />
+</Cards>

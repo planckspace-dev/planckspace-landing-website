@@ -22,11 +22,11 @@ export default function OgCard() {
       <TokenStream className="absolute inset-0 h-full w-full" cols={26} />
       <div className="absolute inset-0 bg-[radial-gradient(90%_80%_at_0%_100%,rgb(11_11_12/0.95),rgb(11_11_12/0.4)_45%,transparent_70%)]" />
       <div data-stream-ap className="absolute left-[640px] top-[92px] aspect-[320/300] w-[92px]">
-        <PlanckMark className="h-full w-full" />
+        <PlanckMark className="h-full w-full" tone="dark" />
       </div>
       <div data-stream-ledger className="absolute left-[800px] right-[56px] top-[300px] h-[150px]" />
       <div className="absolute left-[64px] top-[56px]">
-        <Logo height={30} />
+        <Logo height={30} tone="dark" />
       </div>
       <div data-stream-calm className="absolute bottom-[58px] left-[64px]">
         <p className="t-display text-[86px] leading-[0.92] [--wdth:112]">
@@ -34,7 +34,7 @@ export default function OgCard() {
           <br />
           accounted for.
         </p>
-        <p className="t-mono mt-6 text-[22px] text-lime">planckspace.dev</p>
+        <p className="t-mono mt-6 text-[22px] text-[var(--lime)]">planckspace.dev</p>
       </div>
     </section>
   );

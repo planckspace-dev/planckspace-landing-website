@@ -1,0 +1,140 @@
+---
+title: Agent policy
+description: "Set how your developers' Claude Code is configured from one place: compaction, effort, subagent model, prompt-cache lifetime and guards, with backup and a local opt-out."
+icon: SlidersHorizontal
+---
+
+An agent policy is a workspace-wide set of Claude Code settings and guard behaviors that an owner, leader or admin edits once and every connected machine picks up. Settings such as when a long session compacts, or how long its prompt cache lives, are per-machine, so without a policy each developer sets them, or does not, by hand. The console calls it Autopilot, on the Optimize page, and the CLI command is `planck autopilot`.
+
+## Modes
+
+| Mode | What devices do |
+| --- | --- |
+| Off | Nothing is pushed. Anything autopilot applied earlier is undone, and the guards stay silent. A new workspace starts here. |
+| Suggest | Nothing is written to Claude Code's settings. The guards and task decisions below still run. The console recommends this for pilots. |
+| Apply | The CLI writes the settings below into each developer's own Claude Code user settings, backed up and undoable. The guards and task decisions run too. |
+
+Devices report their policy state from CLI 0.5.0, so older devices do not appear in the counts below.
+
+## What the policy sets
+
+A field left on "Claude Code default" is not touched. These are Claude Code's own settings, written only in Apply mode.
+
+| Console field | Claude Code setting | Values |
+| --- | --- | --- |
+| Auto-compact window (tokens) | `autoCompactWindow` | 100,000 to 1,000,000 |
+| Idle compaction | `idleCompaction` | On or Off. Compacts a big idle session before it resumes. |
+| Effort level | `effortLevel` | Low, Medium, High or Extra high. `max` is not offered, because Claude Code treats it as session-only. |
+| Subagent model | `CLAUDE_CODE_SUBAGENT_MODEL`, in the settings file's `env` block | Haiku, Sonnet, Opus or Inherit from main. Applies to subagents that set no model of their own. |
+| Prompt cache lifetime | `promptCacheTtl` | 5 minutes or 1 hour, for the main conversation. |
+
+For example, a policy that sets all five writes this into a developer's Claude Code settings, alongside whatever the file already holds.
+
+```json title="~/.claude/settings.json"
+{
+  "autoCompactWindow": 400000,
+  "idleCompaction": true,
+  "effortLevel": "medium",
+  "promptCacheTtl": "1h",
+  "env": { "CLAUDE_CODE_SUBAGENT_MODEL": "haiku" }
+}
+```
+
+## Guards and task decisions
+
+Guards are hooks in the [routing plugin](/docs/guides/model-routing), so they run only on machines where it is installed, and only while the mode is Suggest or Apply and the developer has not opted out. A hook never fails a session. On any error it prints nothing.
+
+| Guard | Fires when | The developer sees |
+| --- | --- | --- |
+| Warn before resuming a big session whose cache expired | A session resumes with more than 150,000 tokens of context and its prompt cache has likely expired. | The cost of re-writing the cache, when known, and a suggestion to run `/compact` first. |
+| Ask before switching models mid-session on a big context | A model switch on more than 100,000 tokens of context. | A permission prompt quoting the estimated re-write cost at the new model's 1-hour cache-write rate, and a suggestion to hand the task to a subagent. |
+| Stop the agent repeating a failing command | The same Bash command fails 3 times in a row. | A note to Claude, sent once, to re-read the error or ask the user. A success resets the count. |
+
+All three start on. Task decisions let the plugin judge whether a new prompt starts an unrelated task. When it does, on a session over 120,000 tokens, the developer is nudged to `/clear` or `/compact` first, because every call re-reads that context. Each decision is logged on the machine to `~/.planckspace/decisions.jsonl` as a time, provider and labels, never the prompt.
+
+| Provider | Where the question goes |
+| --- | --- |
+| Off | Nowhere. No decisions are made. |
+| TypeSafe Jev | TypeSafe's API, called from the developer's machine with their own `TYPESAFE_API_KEY`. Without the key, or if it is slow, the hook falls back to a rule: an idle gap over 30 minutes means a new task. |
+| Local (Ollaya) | A runtime on the developer's own machine, at `localhost:11435`. |
+
+<Callout type="warn" title="With TypeSafe Jev, prompt text leaves the machine">
+The hook sends the previous prompt and the new one, each cut to 2,000 characters, from the developer's machine to TypeSafe. PlanckSpace never receives them, and only the provider label is synced. Choose Local or Off if prompts must not leave the machine.
+</Callout>
+
+## Edit the policy
+
+<Steps>
+<Step>
+
+### Open Autopilot
+
+Open Optimize and scroll to the Autopilot card. The levers above it each name a Claude Code setting, and **Use this** pre-fills the matching field without saving.
+
+</Step>
+<Step>
+
+### Choose a mode and settings
+
+Pick Off, Suggest or Apply. Set only the fields you want pushed, and leave the rest on Claude Code default. Set the guards and task decisions.
+
+</Step>
+<Step>
+
+### Save
+
+Click **Save policy**. The card says "Saved — version bumped". Owners, leaders and admins can edit. Everyone else sees the policy and a note that only those roles can change it.
+
+</Step>
+</Steps>
+
+Each lever is computed from your own per-turn data, as described in [cost anatomy](/docs/concepts/cost-anatomy).
+
+| Lever | Pre-fills |
+| --- | --- |
+| Compact at N tokens, and before resuming an idle session | Auto-compact window, and Idle compaction |
+| Stop re-writing the prompt cache mid-session | The model-switch guard |
+| Default effort to a level | Effort level |
+| Use the 1-hour or 5-minute prompt-cache TTL | Prompt cache lifetime |
+| Run read-only subagents on Haiku | Nothing. The plugin's `explorer` agent runs on Haiku, while Claude Code's built-in Explore runs on the main model. |
+
+The effort, subagent and cache-miss levers need CLI 0.5.0 on every device, because they read per-turn detail.
+
+## How a device applies it
+
+The daemon applies the policy after a sync that returns a new version. In Apply mode it does this:
+
+1. Copies the developer's Claude Code settings once to `~/.planckspace/backups/`, before the first write.
+2. Records each key's previous value, then writes the policy's values.
+3. Leaves the file alone until the policy version changes. A developer's own edit stands until then.
+
+A field you set back to Claude Code default restores the developer's previous value on the next version, when the key still holds what PlanckSpace wrote. A settings file that is not valid JSON is left untouched.
+
+Every save bumps the version by one, even when nothing changed. Devices report the version they last acted on, and the Autopilot card counts them.
+
+| Figure | Meaning |
+| --- | --- |
+| Applied | Devices that wrote the latest version's settings (Apply mode). |
+| On the latest version | Devices that have received the latest version. |
+| Opted out | Devices whose developer ran `planck autopilot off`. |
+| Reporting | Devices on CLI 0.5.0 or later that report policy state. |
+| Active | Devices seen in the last 30 days. |
+
+## Opt out on one machine
+
+`planck autopilot status` shows the policy, what is applied here and your opt-out. `planck autopilot off` undoes what was applied and keeps autopilot off, even if the workspace turns it on. Each key is restored only if it still holds the value PlanckSpace wrote, so a value you changed since is left alone. `planck autopilot on` clears the opt-out, and the policy applies again at the next sync.
+
+## Edge cases
+
+- Moving from Apply to Suggest stops writing but does not undo earlier values. Move to Off, or have the developer run `planck autopilot off`, to restore them.
+- Every change to the policy is recorded in the workspace audit log.
+- A device with nothing new to sync keeps its current state until its next sync.
+
+## Related
+
+<Cards>
+  <Card title="Model routing" href="/docs/guides/model-routing" description="The plugin that carries the guards, and the policy that installs it." />
+  <Card title="Cost anatomy" href="/docs/concepts/cost-anatomy" description="Where agent spend goes, and why context size and cache behavior dominate it." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every planck command and flag, including autopilot." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="What leaves a developer's machine, and what never does." />
+</Cards>

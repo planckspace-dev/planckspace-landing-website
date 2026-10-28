@@ -1,0 +1,123 @@
+---
+title: Onboard your team
+description: "Connect developers with a team join code, email invites and one-time connect codes, and use the coverage meter to see who is still missing."
+icon: Users
+---
+
+A workspace is only as complete as the share of your team reporting to it. Every total built from usage is a floor until the people behind the usage are connected. PlanckSpace has three ways to connect people, each for a different job: a team join code for developers, email invites for anyone who needs the console or a higher role, and one-time connect codes for adding your own machine.
+
+## Choose a method
+
+| | Team join code | Email invite | Connect code |
+| --- | --- | --- | --- |
+| Use it to | Roll out to developers with one command | Add leads, managers and anyone who needs a console login | Connect or repair your own machine |
+| Created by | An owner, leader or admin | An owner, leader or admin | Any member, for themselves |
+| Access it grants | Developer only | Admin, manager or developer, on a team if you choose | Your own role |
+| Lasts | 30 days. One live code per workspace | 48 hours | 10 minutes, one use |
+| Created in | **Team → Invites → Connect your team** | **Team → Invites → Invite people** | The daemon indicator in the sidebar |
+
+[Teams and roles](/docs/guides/teams-and-roles) describes what each role can see and change.
+
+## Team join code
+
+The join code is the fast path. You post one command in your team channel, and each developer who runs it joins as themselves and gets their own device token.
+
+<Steps>
+<Step>
+
+### Generate the command
+
+An owner, leader or admin opens **Team → Invites**, finds the **Connect your team** card and clicks **Generate team command**. The command is shown once, with the code in it:
+
+```bash
+npx @planckspace/cli@latest init --join pk_join_…
+```
+
+PlanckSpace stores only a hash of the code. If you lose the command, **Rotate and show new command** issues a fresh one and revokes the old.
+
+</Step>
+<Step>
+
+### Share it
+
+Paste it in your team channel and ask people to run it in a terminal on the machine where they use their AI tools. They need Node.js 20 or newer.
+
+The card also gives you an editor link, `vscode://planckspace.planckspace-extension/join?code=…`. It needs the [editor extension](/docs/editor-extension) installed. Opening it asks for confirmation, shows the exact command, and runs it in a terminal only after the developer clicks **Join**. With the extension installed, a developer can also run **Planckspace: Join your team** from the command palette and paste the code.
+
+</Step>
+<Step>
+
+### Watch coverage
+
+As people run the command, the coverage meter in the console's Overview header fills in. Open its menu to see who went silent and who has never connected. [Coverage](#coverage) explains how it counts.
+
+</Step>
+</Steps>
+
+### What happens when a developer runs it
+
+1. The CLI picks an identity: the `--email` flag, then the developer's global `git config user.email`, then the repository-level value. If it finds none, it asks on a terminal.
+2. It sends the code, that email, the git name and a device label such as `darwin-arm64` to PlanckSpace. It sends no hostname and no paths.
+3. If the email is not a member yet, PlanckSpace creates the membership as a developer. Either way it issues a token for that person on that machine, and `init` carries on as in the [Quickstart](/docs/quickstart).
+
+### What a join code can and cannot do
+
+| Rule | Behavior |
+| --- | --- |
+| Access level | Developer only. A code never issues a token above developer. If the email belongs to an owner, leader, admin or manager, the CLI says so and tells them to use their own token. |
+| Claimed email domain | When the workspace has claimed a domain, only addresses on it can join. Anyone else is refused with a message to re-run with `--email you@yourdomain.com`. |
+| Plan seat limit | A new member counts against the plan's seat limit. At the limit the join is refused with the plan's message. |
+| Existing accounts | An address that already has a PlanckSpace account but is not a member is not adopted. The developer is asked to request an invite. |
+| More machines | Running the command on a second machine adds a token for the same person. It does not revoke the first machine's token. |
+| Expiry | 30 days after you generate it. An expired, revoked or unknown code gets one message: invalid or expired. |
+| Revoking | **Revoke** stops new joins. Machines that already joined keep reporting, because their tokens belong to people, not to the code. |
+
+The card shows how many times the code has been used and when it was last used. If someone joins under the wrong email, see [Troubleshooting](/docs/troubleshooting#you-joined-as-the-wrong-person).
+
+## Email invites
+
+Use an invite for leads, managers and anyone who needs a console login. A join code can never grant more than developer access.
+
+An owner, leader or admin opens **Team → Invites → Invite people**, adds one or more email addresses, picks a role and, optionally, a team. The role can be admin, manager or developer, and developer is the default. PlanckSpace emails each person a link that expires after 48 hours.
+
+**Pending invites** lists what is outstanding. **Resend** issues a fresh link and expires the old one. **Revoke** cancels the invite.
+
+An invite is tied to its email address. The invited person signs in with that address to accept it, or creates an account on the invite page. The plan's seat limit is checked when you send the invite and again when it is accepted. After accepting, the person connects their machine with a connect code or their token.
+
+## One-time connect codes
+
+Any member can connect their own machine without copying a token. In the console, click the daemon indicator in the sidebar. It reads **Connect this machine** when no device on your account has reported to the workspace, and **Fix daemon** when one has gone quiet. Either opens a dialog with a ready-to-run command that carries a code:
+
+```bash
+npx -y @planckspace/cli@latest init --code 7KQ4-M2XD
+```
+
+The code is for you. It works once, expires after 10 minutes, and gives the machine a token for your own account and role. Because it is single-use and short-lived, it is safe to leave in your shell history, which a token is not. A member can hold up to 10 active device tokens, and connecting through the console retires the oldest beyond that.
+
+`planck daemon fix --code <code>` uses the same kind of code to reconnect a machine that has no token, a rejected token, or a token for a different workspace.
+
+## Who should install
+
+- **Everyone who uses a tool PlanckSpace reads**, including managers and leaders who write code. Install it on every machine they use: sessions on a machine without the CLI are not measured.
+- **One person per operating-system account.** The daemon attributes sessions to the person whose token it holds, so on a shared machine each person needs their own account and their own `init`.
+- **Coverage counts developers and anyone who connects.** An owner, leader, admin or manager who never connects a device does not make coverage incomplete. One who connects once and then goes quiet does.
+
+## Coverage
+
+The coverage meter reads like "18 of 22 developers reporting". It sits in the Overview header, beside the date picker, and it says whose work every figure on the page covers.
+
+- **Reporting** means one of the member's active tokens contacted PlanckSpace in the last 26 hours. The daemon pings every 5 minutes, so a running daemon always counts.
+- **The population** is the developer-role members plus anyone who has connected a device. A token that was generated but never used does not count as a connection, and a revoked token counts as never connected.
+- **Team size** is the larger of that population and the largest seat count declared for a coding tool. Paid seats nobody has joined yet keep the meter honest, and the menu counts them.
+- **Status** is none, incomplete or complete. While it is incomplete, usage-built figures are floors. Dormant-seat detection subtracts members it cannot measure and never names them, so a coverage gap cannot pass as money you could recover.
+
+`planck init` prints the same counts, without names, at the end of its run. See [Coverage](/docs/concepts/coverage) for the full rules.
+
+## Related
+
+<Cards>
+  <Card title="Coverage" href="/docs/concepts/coverage" description="How reporting is counted, and why figures are floors until the team is connected." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="What each role can see and change." />
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="How identity and visibility are set for the whole workspace." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="A developer who is not reporting, or joined as the wrong person." />
+</Cards>

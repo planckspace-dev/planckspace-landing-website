@@ -1,0 +1,120 @@
+---
+title: Reconcile your invoice
+description: "Hold a provider's real invoice against the metered spend PlanckSpace tracked, and a seat invoice against the seats you declared. The two checks never mix."
+icon: Receipt
+---
+
+Reconciliation answers one question: does the money on your invoices match what PlanckSpace tracked? It runs two checks, because you pay in two ways. Pay-per-token charges from a provider are checked against the metered sessions your developers' machines reported. Flat seat fees are checked against the seats you declared. Both sides of each check are [billed](/docs/concepts/two-ledgers) money. Usage value, the API-rate value of work done on seats, never enters either one.
+
+## What you need
+
+- **Role.** Owners, leaders and admins run the check. A cost-view grant opens it to someone else. With a team grant, the tracked side counts only that team's sessions while the invoice covers the whole account.
+- **Plan.** Invoice reconciliation is a plan feature. The console shows an upgrade prompt when your plan does not include it.
+- **For the metered check,** an admin key for each provider you pay per token, or an IAM role for Amazon Bedrock. See [Connect billing](/docs/guides/connect-billing).
+- **For the seat check,** your seats declared with their price. See [Subscriptions](/docs/guides/subscriptions).
+
+## The metered check
+
+PlanckSpace compares a provider's own cost report for a calendar month (UTC) with what developer machines tracked in the same month.
+
+| Figure | What it is |
+| --- | --- |
+| Invoiced | The provider's cost report for the month, pulled with your admin key or IAM role. The console labels it **billed**. |
+| Tracked | Metered sessions that started in the month, matched to the provider by model name and priced from their token counts. |
+| Gap | Invoiced minus tracked, never below $0. |
+| Coverage | Tracked divided by invoiced. |
+| Machines without the daemon | An estimate: the gap divided by the median tracked spend per developer. |
+
+A session is matched to a provider by its model name. Claude models count toward Anthropic, GPT models toward OpenAI, and model ids that name Bedrock toward Bedrock. A session whose model matches none of these counts toward no provider. The Bedrock figure is the sum of every AWS Cost Explorer service whose name matches Bedrock, including Marketplace lines for Claude.
+
+For example, a team of seven developers pays per token to Anthropic. The cost report for the month reads $400.00. Tracked sessions come to $310.00, split across the seven as $20, $30, $40, $45, $50, $60 and $65.
+
+| Figure | Value |
+| --- | --- |
+| Invoiced | $400.00 |
+| Tracked | $310.00 |
+| Gap | $90.00 |
+| Coverage | 77.5% |
+| Median per developer | $45.00 |
+| Machines without the daemon | about 2 ($90 ÷ $45) |
+
+The console flags a provider when the gap is $1 or more and coverage is under 95%. Otherwise it reads "N% of the bill is explained by tracked sessions".
+
+## Why usage value never enters
+
+An earlier version of reconciliation added usage value to the tracked figure, on the reasoning that it was still real usage. It was real usage, but not of the quantity being reconciled. A seat session's usage value is what the work would have cost at API rates, and no provider billed it.
+
+Take the team above and add $600.00 of usage value from Claude Max seats. Added to the tracked figure, the total reads $910.00. That is 227.5% coverage and a $0 gap on an invoice that has $90.00 nobody can explain. A workspace on Max seats once showed more than 100% coverage and a $0 gap against a real Anthropic invoice, while its metered spend went unexplained. Now only billed metered sessions count.
+
+## The seat check
+
+A seat is invoiced whether or not anyone uses it, so a seat invoice is checked against seat price times seats, not against sessions. There is no coverage percentage here, because seat price and usage value are not two measurements of the same money.
+
+| Figure | What it is |
+| --- | --- |
+| Declared | Seat price times seat count, summed over every subscription you declared. For example, 4 seats at $100 and 8 seats at $20 come to $560 a month. |
+| Invoiced | The seat invoice total you entered for the month. |
+| Gap | Invoiced minus declared. A difference under $1 counts as a match, to allow for tax and rounding. |
+
+A hand-entered invoice is a seat invoice. PlanckSpace never compares it with metered spend, so entering one cannot create a metered gap.
+
+## Run the check
+
+<Steps>
+<Step>
+
+### Refresh the provider reports
+
+Provider reports are read when you connect a key and whenever you sync. They do not refresh on their own. Open **Settings → API keys** and select **Sync now** on a provider, or **Sync all reports**. Each sync pulls the previous month and the month so far.
+
+</Step>
+<Step>
+
+### Open the invoice check
+
+Go to **Spend**, stay on the **Overview** tab and scroll to **Invoice check**. **Seat invoices** and **Metered invoices** sit side by side. Metered shows the current month so far.
+
+</Step>
+<Step>
+
+### Enter your seat invoice
+
+Under **Seat invoices**, choose the **Month**, type the **Invoice total (USD)** and select **Save invoice**. The month defaults to last month, because this month's invoice usually has not arrived. Saving a month again replaces the earlier figure.
+
+</Step>
+</Steps>
+
+## Read the result
+
+| What you see | What it means | What to do |
+| --- | --- | --- |
+| A coverage bar with **billed** and **tracked** amounts | The provider is connected and its report is in. | Read the coverage and the gap. |
+| **connected**, with no report for the month yet | A key is connected, but no report has been pulled for this month. | Sync the provider. |
+| **Connect** | No admin key or role for this provider. | Connect one. |
+| **tracked**, with a note that the API key is verified | Only a regular Anthropic API key is on file. | Add an admin key to check the figure. |
+| A check mark: the invoice matches the seats you declared | The seat invoice is within $1 of seat price times seats. | Nothing. |
+| A warning: more or less than you declared | The invoice and your declared seats differ. | Select **Fix the seats**, or check the invoice. |
+
+A regular Anthropic API key (`sk-ant-api…`) cannot read the cost report. PlanckSpace verifies the key and discards it. Anthropic stays not connected for reconciliation, and the tracked figure shows what developer machines measured against Anthropic's own API, with no invoice to compare it with.
+
+When the seat invoice is higher than declared, a seat or plan is probably missing from your subscriptions, so every seat figure is low. When it is lower, you may be listing seats you no longer pay for.
+
+## Common causes of a gap
+
+- **Machines without the daemon.** A developer who has not connected, or whose daemon went quiet, has no tracked sessions. Check [coverage](/docs/concepts/coverage).
+- **Excluded repositories.** Sessions from untracked repositories are hidden and not counted, but the provider still bills for them. See [Tracked repositories](/docs/guides/repo-scope).
+- **Usage with no session behind it.** Anything billed to the provider account that did not run through a tracked coding tool has nothing to explain it.
+- **Models PlanckSpace cannot price.** Turns on a model with no price are left out of tracked spend. The coverage card on the Overview's **AI posture** tab shows the count of unpriced turns.
+- **A stale report.** If the last sync was early in the month, the invoiced figure trails your tracked sessions. When tracked is higher than invoiced, the console shows 100% and no gap, and a sync usually fixes it.
+- **A model that matches no provider.** Its sessions are tracked in your totals but counted toward no provider's row.
+
+Tracked spend is priced from token counts, and the invoice is what the provider charged, so small differences are normal. Disconnecting a provider deletes the months pulled for it, and its row returns to **Connect**.
+
+## Related
+
+<Cards>
+  <Card title="Connect billing" href="/docs/guides/connect-billing" description="Connect an admin key or IAM role so PlanckSpace can read your invoices." />
+  <Card title="Subscriptions" href="/docs/guides/subscriptions" description="Declare the seats and prices the seat check compares against." />
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="Why the two ledgers are never added together." />
+  <Card title="Tracked repositories" href="/docs/guides/repo-scope" description="How excluded repositories affect what PlanckSpace counts." />
+</Cards>

@@ -1,0 +1,110 @@
+---
+title: Weekly digest
+description: "The weekly email on what changed: who receives which version, what it contains, where its figures come from and how to turn it off."
+icon: Mail
+---
+
+The weekly digest is an email about what changed in the last seven days, not a report on the state of the workspace. It opens with one sentence, then shows only the movements that matter: spend, usage value, savings, a new finding and, in the workspace version, the posture score. Each person gets the version their role can see, and a digest is skipped when nothing moved.
+
+## Who gets which digest
+
+| Your role | You receive | It covers | The button opens |
+| --- | --- | --- | --- |
+| Owner, leader or admin | The workspace digest | Every visible session and finding | The dashboard |
+| Manager on a team | A team digest | That team's sessions, spend and developer findings | Your team |
+| Developer, or a manager on no team | A personal digest | Your own sessions and findings | My work |
+
+Everyone in a workspace that had at least one visible session in the last 30 days receives a digest unless they turned it off. A person who belongs to more than one workspace gets one digest for each. Sessions from untracked repositories are hidden and never counted. See [Tracked repositories](/docs/guides/repo-scope).
+
+## What a digest contains
+
+| Part | What it shows | Who sees it |
+| --- | --- | --- |
+| Opening sentence | The week's headline, in the reader's own scope | Everyone |
+| **Posture score** | The score a week ago and now, with the change. Shown only when it changed | Workspace digest only |
+| **Spend this week** | Billed spend from metered sessions, with the change against the week before | When there is billed spend |
+| **Usage value on seats** | The usage value of seat work, with last week's figure. Shown at $1 or more | When there is usage value |
+| **Saved this week** | Savings measured in the last seven days. Shown at $1 or more | When something was saved |
+| **New this week** | The largest new open finding, with its monthly amount and a link to the fix | When one exists |
+| **Worth your attention** | A repository whose cost per shipped unit is at least double the workspace's | Workspace digest only |
+
+The opening sentence follows the audience.
+
+- **Workspace.** A one-line verdict over the last 30 days: cost per shipped unit against the last period, an outlier repository, the amount to recover and budget status.
+- **Team.** For example: "Platform ran 42 sessions this week — 31 shipped · $120/mo to recover in the team's findings".
+- **Personal.** The same shape, starting with "You ran…".
+
+A workspace digest looks like this:
+
+```text
+Your week on Acme Engineering
+
+Steady at $4.20/shipped unit · $412/mo to recover · On budget (62% burned)
+
+Posture score         71 → 74 ▲3
+Spend this week       $1,240 ▲12%
+Usage value on seats  $860 (last week $790)
+Saved this week       $96 measured
+
+New this week
+No Claude Code sessions in 30 days on a paid Max seat — $100/mo
+~$100/mo estimated · see the fix →
+
+Worth your attention: api-gateway runs 3x your other repos — review →
+```
+
+## Where the figures come from
+
+- **The week.** "This week" is the last seven days up to the moment the digest is built, and "last week" is the seven days before. They are not calendar weeks.
+- **Spend** is billed spend from metered sessions. Flat seat fees are not in it. Usage value has its own line and is never added to spend. See [Billed and usage value](/docs/concepts/two-ledgers).
+- **Saved this week** is measured, not forecast. It adds the savings booked in the last seven days for the findings in the reader's view. See [Proof of savings](/docs/concepts/proof-of-savings).
+- **"$X/mo to recover"** is the Findings headline: the amount under **On the table (estimated)** on [Findings](/docs/concepts/findings) with the range set to All time. It counts open findings only, without double counting findings that cover the same dollars at more than one scope. A team or personal digest quotes the same figure over the findings in that reader's view.
+- **New this week** is the largest finding detected in the last seven days that is still open and worth at least $1 a month. Only findings that appear on Findings are used.
+
+A monthly amount on an open finding is an estimate until a fix is measured. Only the **Saved this week** row is a measured saving.
+
+## When a digest is skipped
+
+An empty digest trains people to ignore it, so PlanckSpace skips one when nothing moved. It is skipped when all of these hold:
+
+- The posture score is unchanged, or the reader's digest has no posture row.
+- No new finding worth $1 a month or more appeared.
+- Less than $1 was saved.
+- Billed spend and usage value each changed by less than 5%, or there was none.
+
+## Turn it off or on
+
+The digest is on for everyone by default. The switch belongs to you, applies in every workspace you are in, and stops only this email.
+
+<Steps>
+<Step>
+
+### Open your notifications
+
+Go to **Settings → Profile** and find **Notifications**.
+
+</Step>
+<Step>
+
+### Flip the switch
+
+Turn **Weekly digest** off or on. The change saves at once. **Budget threshold alerts** and **Spend anomaly alerts** sit beside it and are separate emails.
+
+</Step>
+</Steps>
+
+## Good to know
+
+- **Delivery.** The digest is sent by email, once a week on a seven-day cycle, so the weekday it lands on can change.
+- **No team yet.** A manager on no team receives the personal digest until they are placed on a team. See [Teams and roles](/docs/guides/teams-and-roles).
+- **Seats only.** A workspace that runs entirely on seats has no billed spend, so the **Spend this week** row never appears. The usage value row and the opening sentence carry the week.
+- **No per-person rows.** A team digest covers the team as a whole, and a personal digest covers only the reader.
+
+## Related
+
+<Cards>
+  <Card title="Findings" href="/docs/concepts/findings" description="The headline amount the digest quotes as $X/mo to recover." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How the Saved this week figure is measured." />
+  <Card title="Budgets and alerts" href="/docs/guides/budgets-and-alerts" description="The separate emails for budget thresholds and anomalies." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="What each role can see, and so which digest it receives." />
+</Cards>

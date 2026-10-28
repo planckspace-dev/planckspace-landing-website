@@ -1,0 +1,339 @@
+---
+title: Telemetry schema
+description: "The exact payload the CLI sends to the ingest API: the envelope, every session and turn field, device facts, and how unknown or malformed values are handled."
+icon: Braces
+---
+
+Every sync sends one JSON document to `POST /api/ingest`: an envelope that holds up to 500 sessions and a few optional batch fields. The schema is metadata only. It has no field that can hold prompt text, a model response or code, and the API rejects any session that carries a key it does not know. This page lists every field the API accepts, with its type, whether it is required, its constraints, and the CLI version that added it where that is known.
+
+To see what your own machine sends for a session, run `planck inspect <sessionId>`; see the [CLI reference](/docs/reference/cli#planck-inspect). For the privacy summary in plain language, see [Data we collect](/docs/security/data-we-collect). For authentication, rate limits and the response, see the [REST API](/docs/reference/api#ingest).
+
+## How the API treats what it receives
+
+The envelope is validated object by object, and the rule differs by object. Validation is all or nothing: a request with any invalid part is rejected with `400` and a list of the failing fields, and nothing from it is stored.
+
+| Object | A key the schema does not list | A malformed value |
+| --- | --- | --- |
+| A session (each item of `sessions`) | Rejected. The whole request fails with `400`. | Rejected with `400`. |
+| A turn (each item of `turns`) | Dropped. The rest of the turn is kept. | Rejected with `400`, except for the optional per-turn fields marked below, which are dropped. |
+| A tool call (each item of `toolCalls`) | Dropped. | Rejected with `400`. |
+| The envelope itself, the items of `workspaceSubscriptions`, `insights`, `anomalies` and `budgets`, and `productivityMetric` | Dropped. | Rejected with `400`. |
+| `claudeBilling`, `agentPolicyState` | Treated as malformed, so the whole field is dropped. | Dropped. The rest of the request is accepted. |
+| `agentConfig` | Rejected at every level of the snapshot. | Rejected with `400`. |
+
+Two fields are built to be forgiving on purpose. `claudeBilling` and `agentPolicyState` describe the device, not the batch, so a malformed value never costs you a sync. The optional per-turn fields are dropped for the same reason: a CLI that learns a new value must not break against an older backend.
+
+<Callout type="info" title="What the schema enforces, and what the CLI does">
+
+No schema field can carry prompt text, a model response or code. Two areas hold free-form values by design. File paths in `filesTouched` and `reReadPatterns` are strings the API does not inspect, and the CLI sends them relative to the repository root. On a local detector result, `evidence` accepts any JSON object and `titleShort` and `manualFix` are free text, so for those fields the guarantee comes from the CLI, which builds them from counts, session ids and file names, and not from the schema.
+
+</Callout>
+
+## Envelope
+
+The body of `POST /api/ingest` is an envelope object. A bare array of session objects, between 1 and 500 items, is still accepted from older CLIs; an empty array is rejected, while an envelope with `sessions: []` is valid. The body can be up to 10 MB. The CLI sends 100 sessions per request.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sessions` | Array of [session objects](#session-object), 0 to 500 items | Yes | Sessions to create or update. An empty array is how a device sends batch-level fields on their own. |
+| `workspaceSubscriptions` | Array of [subscription declarations](#workspacesubscriptions), default `[]` | No | Seat declarations from the device. |
+| `insights` | Array of [local detector results](#insights), default `[]` | No | Results of the CLI's local detectors. |
+| `anomalies` | Array of [spend jumps](#anomalies), default `[]` | No | Spend jumps the CLI flagged. |
+| `budgets` | Array of [budgets](#budgets), or `null`, default `null` | No | Budgets declared on the device. |
+| `productivityMetric` | [Metric object](#productivitymetric) or `null`, default `null` | No | Accepted. The current CLI sends `null`. |
+| `cliVersion` | String shaped like `0.5.0`, with an optional suffix such as `-beta.1` | No | Version of `@planckspace/cli` that produced the batch. Older CLIs omit it. |
+| `routingInstalled` | Boolean | No | Whether model routing is installed on the device. CLI 0.4.0 and later. |
+| `claudeBilling` | [Object](#claudebilling) | No | How Claude Code on the device is billed. CLI 0.5.0 and later. |
+| `agentPolicyState` | [Object](#agentpolicystate) | No | What the device did with the workspace's agent policy. CLI 0.5.0 and later. |
+| `agentConfig` | [Snapshot](#agentconfig) | No | Metadata-only snapshot of agent configuration. CLI 0.6.0 and later. |
+
+## Session object
+
+One object per session. Any key not listed here rejects the whole request.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sessionId` | String, at least 1 character | Yes | The session's identifier in the tool that ran it. For Claude Code, the UUID of the session file. Sending the same id again updates the session. |
+| `tool` | `claude_code`, `cursor`, `windsurf`, `antigravity` or `jetbrains` | Yes | The tool that ran the session. |
+| `model` | String, at least 1 character | Yes | The session's main model. Subagent turns carry their own model on each turn. |
+| `startedAt` | ISO 8601 timestamp with a UTC offset | Yes | When the session started. |
+| `endedAt` | ISO 8601 timestamp with a UTC offset | Yes | When the session ended. |
+| `inputTokens` | Integer, 0 or more | Yes | Fresh input tokens across the session. |
+| `outputTokens` | Integer, 0 or more | Yes | Output tokens across the session. |
+| `cacheReadTokens` | Integer, 0 or more | Yes | Tokens read from the prompt cache. |
+| `cacheWriteTokens` | Integer, 0 or more | Yes | Tokens written to the prompt cache. |
+| `costUsd` | Number, 0 or more | Yes | The session priced from the price list by the CLI. On a `billed` session it is the metered charge. On an `imputed` session it is the value of the work at API rates, not a charge. |
+| `costType` | `billed` or `imputed` | No | Which ledger the session belongs to. When omitted, the server looks at the tool's declared subscriptions: `imputed` if any is a seat subscription, `billed` if all are metered, and `imputed` when the tool has none. Older CLIs omit it. |
+| `subscriptionPlan` | String or `null`, default `null` | No | The plan a seat session ran under, such as `pro`, `max_5x`, `max_20x`, `team_standard`, `team_premium` or `enterprise`. Older CLIs send the generic `max` or `team`. |
+| `consumptionValueUsd` | Number, 0 or more, default `0` | No | Usage value of the session. Stored as `0` on a `billed` session. On an `imputed` session the server uses it, falling back to `costUsd` when it is `0`. |
+| `unmatchedTurns` | Integer, 0 or more, default `0` | No | Turns whose model the CLI could not price. Their cost is left out, not counted as zero. |
+| `mergedPrNumber` | Positive integer or `null`, default `null` | No | The pull request number, when the session shipped through a merge. |
+| `mergedAt` | ISO 8601 timestamp or `null`, default `null` | No | When the work reached the default branch, or was pushed. |
+| `repoName` | String, at least 1 character | Yes | Repository name. The CLI sends `unknown` when it cannot resolve one. |
+| `gitBranch` | String or `null` | Yes | The branch the session ran on. The key must be present; `null` is allowed. |
+| `gitAuthorEmail` | String or `null` | Yes | The git email that attributes the session to a person. The key must be present; `null` is allowed. When the device token belongs to a person, the server keeps this value only if it is one of that person's addresses, and otherwise uses the token owner's address. |
+| `outcome` | `shipped`, `partial`, `abandoned`, `errored` or `unknown` | Yes | How the session ended, decided by the CLI from git history. A settled outcome replaces a stored one, and `unknown` never replaces a settled one. See [sessions](/docs/concepts/sessions). |
+| `turnCount` | Integer, 0 or more | Yes | Number of turns. |
+| `filesTouchedCount` | Integer, 0 or more | Yes | Number of distinct files touched. |
+| `source` | `scraper` or `extension` | Yes | The CLI sends `scraper`. |
+| `workspaceId` | String, at least 1 character | Yes | In an envelope request it must equal the workspace of the device token, or the request fails with `400` and `workspaceId mismatch`. The workspace is always taken from the token. |
+| `turns` | Array of [turn objects](#turn-object), default `[]` | No | Per-turn metadata. Send the complete list every time: the server replaces a session's turns as a set. |
+| `reReadPatterns` | Array of objects with `path` (string) and `count` (integer, 0 or more), default `[]` | No | Files touched in more than one turn. Validated and then ignored; the server does not store it. |
+
+Two ledger fields deserve a note. `costType` decides which ledger a session's dollars belong to: `billed` is money that leaves the bank, `imputed` is [usage value](/docs/concepts/two-ledgers). The API never adds the two together.
+
+## Turn object
+
+One object per assistant turn. Unknown keys are dropped.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sequence` | Integer, 0 or more | Yes | Position of the turn in the session. |
+| `timestamp` | ISO 8601 timestamp with a UTC offset | Yes | When the turn happened. |
+| `model` | String, default `""` | No | The model that handled the turn. Subagent turns carry their own model. |
+| `inputTokens` | Integer, 0 or more, default `0` | No | Fresh input tokens. |
+| `outputTokens` | Integer, 0 or more, default `0` | No | Output tokens. |
+| `cacheReadTokens` | Integer, 0 or more, default `0` | No | Tokens read from the prompt cache. |
+| `cacheCreationInputTokens` | Integer, 0 or more, default `0` | No | Tokens written to the prompt cache. |
+| `toolCalls` | Array of [tool call objects](#tool-call-object), default `[]` | No | Tools used in the turn, by name and count. |
+| `filesTouched` | Array of strings, default `[]` | No | Paths touched in the turn. The CLI sends them relative to the repository root with forward slashes, and reduces a path outside the repository to its file name. File contents are never sent. |
+| `costUsd` | Number, 0 or more, default `0` | No | The turn priced at API list rates. |
+
+### Per-turn telemetry added in CLI 0.5.0
+
+Each of these is optional. An older CLI omits them, and a malformed value is dropped rather than failing the request.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `cacheWrite1hTokens` | Integer, 0 or more | The part of the cache writes that used the 1-hour cache. |
+| `thinkingTokens` | Integer, 0 or more | The part of the output that was thinking. |
+| `effort` | `low`, `medium`, `high`, `xhigh` or `max` | The effort level of the turn. |
+| `agentType` | Identifier, up to 100 characters | The subagent type on a subagent turn. Absent on the main session. |
+| `cacheMissReason` | Lowercase identifier, up to 64 characters, such as `model_changed` | Why the prompt cache missed, from Claude Code's cache diagnostics. |
+| `cacheMissedTokens` | Integer, 0 or more | Tokens that missed the cache. |
+| `toolResultTokens` | Integer, 0 or more | Tokens of tool output fed back into the context. |
+| `speed` | `standard` or `fast` | The speed mode of the turn. |
+| `compactionTrigger` | `auto` or `manual` | What triggered a context compaction at this turn. |
+| `preCompactTokens` | Integer, 0 or more | The context size before that compaction. |
+
+Since CLI 0.4.0 a session's turns also include its Claude Code subagents' turns, each carrying its own model, so routed work is priced as the model that did it. The session's `model` stays the main session's model.
+
+### Tool call object
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | String | Yes | The tool's name, such as `Read` or `Edit`. Calls to an MCP server appear as `mcp__<server>__<tool>`. Arguments are never sent. |
+| `count` | Integer, 0 or more | Yes | How many times the tool ran in the turn. |
+| `skill` | Identifier matching `[A-Za-z0-9][\w.:@/-]{0,99}` | No | On a Skill tool call, the name of the skill that ran. CLI 0.6.0 and later. A value that does not match the pattern rejects the request. |
+
+## Batch fields
+
+### `workspaceSubscriptions`
+
+Seat declarations from the device, the ones you make with `planck subscription add`. They bootstrap a workspace's seat inventory and never edit it.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `tool` | String, at least 1 character | Yes | The tool the seats are for. |
+| `plan` | String, at least 1 character | Yes | The plan name. |
+| `seatCount` | Integer, 0 or more | Yes | Number of seats. |
+| `seatCostUsdMonthly` | Number, 0 or more | Yes | Monthly price per seat. |
+| `billingMode` | `billed` or `imputed` | No | Metered or flat seat. When omitted, the server infers it from the tool and plan. |
+| `currency` | String, default `USD` | No | Currency label. |
+
+The backend applies a declaration only when the device token belongs to an owner, leader or admin, only for a tool the workspace has no seats for, and never when the plan is `api`, `usage`, `metered` or `payg`, or the seat price is `0`. Seat counts and prices are set in the console. See [subscriptions](/docs/guides/subscriptions).
+
+### `insights`
+
+Results of the CLI's local detectors. They are not the findings shown on the Findings page, which come from the server's own detectors. See [findings](/docs/concepts/findings).
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `detectorId` | String, at least 1 character | Yes | Which detector produced it. |
+| `scope` | `workspace`, `repo` or `developer` | Yes | What the result is about. |
+| `repoName` | String or `null`, default `null` | No | The repository, for a repository result. |
+| `developerEmail` | String or `null`, default `null` | No | The developer, for a developer result. |
+| `titleShort` | String, at least 1 character | Yes | A one-line title. |
+| `estimatedMonthlySavingsUsd` | Number, 0 or more | Yes | The detector's estimate. |
+| `confidence` | `high`, `medium` or `low` | Yes | The detector's confidence. |
+| `evidence` | Object | Yes | Detector-specific counts and session ids. Any JSON object is accepted. |
+| `manualFix` | String, default `""` | No | A short description of the fix. |
+
+The server drops results pinned to a repository the workspace does not track. A result the server has already measured on metered sessions is never overwritten.
+
+### `anomalies`
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | `repo-spike` or `session-outlier` | Yes | A repository's day far above its recent median, or one session far above the developer's usual. |
+| `scope` | String, at least 1 character | Yes | The repository name for a spike, or the session id for an outlier. |
+| `severity` | `warn` or `critical` | Yes | Severity. |
+| `baselineUsd` | Number, 0 or more | Yes | The baseline the CLI compared against. |
+| `observedUsd` | Number, 0 or more | Yes | The observed value. |
+| `dedupeKey` | String, at least 1 character | Yes | Sending the same key again updates the row instead of adding one. |
+
+Spikes pinned to an untracked repository are dropped.
+
+### `budgets`
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `scope` | `workspace`, `team` or `repo` | Yes | What the budget covers. The CLI sends `workspace` and `repo`. |
+| `scopeName` | String or `null`, default `null` | No | The repository or team name. |
+| `monthlyUsd` | Number, 0 or more | Yes | The monthly ceiling. |
+| `alertChannels` | Array of objects with `kind` (`email` or `slack`) and `target` (string, at least 1 character) | Yes | Where alerts go. The CLI sends an empty array. |
+
+The backend creates a budget only where none exists yet for that scope and name, and only for a device token that belongs to an owner, leader or admin. An existing budget is never changed from a device. See [budgets and alerts](/docs/guides/budgets-and-alerts).
+
+### `productivityMetric`
+
+Accepted, but the current CLI sends `null`.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `periodStart`, `periodEnd` | ISO 8601 timestamp with a UTC offset | Yes | The period. |
+| `scope` | `workspace`, `repo` or `developer` | Yes | What the metric covers. |
+| `scopeName` | String or `null`, default `null` | No | The repository or developer. |
+| `costPerShippedPr` | Number, 0 or more, or `null`; default `null` | No | Cost per shipped pull request. |
+| `costPerMergedLine` | Number, 0 or more, or `null`; default `null` | No | Cost per merged line. |
+| `timeToMergeMedianSec` | Integer, 0 or more, or `null`; default `null` | No | Median time to merge, in seconds. |
+| `aiAdoptionRate` | Number from 0 to 1, or `null`; default `null` | No | Share of work done with AI. |
+
+## Device facts
+
+### `claudeBilling`
+
+Which credential route Claude Code is configured to use on the device. The CLI sends it only where Claude Code exists, and it never contains a key or token. The same detection decides on the device whether a session is filed as billed, and the workspace uses the field to tell which devices run Claude Code on a metered route.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `mode` | `metered`, `seat` or `unknown` | Yes | Whether Claude Code bills per token or runs on a flat seat. `unknown` means the CLI could not tell. |
+| `via` | Lowercase identifier, up to 40 characters | Yes | The route. The current CLI sends `bedrock`, `vertex`, `foundry`, `auth_token`, `settings_api_key`, `env_api_key`, `api_key_helper`, `console_login`, `subscription` or `none`. Any identifier is accepted, so a newer CLI never fails against an older backend. |
+| `anthropicOrgId` | UUID or `null` | Yes | The Anthropic organization of a Console login. `null` for every other route. |
+
+### `agentPolicyState`
+
+What the device did with the workspace's [agent policy](/docs/guides/agent-policy). Sent once the device has received a policy.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version` | Integer, 0 or more | Yes | The policy version the device last acted on. |
+| `mode` | `off`, `suggest` or `apply` | Yes | The policy mode. |
+| `applied` | Boolean | Yes | Whether the device wrote the settings. |
+| `optedOut` | Boolean | Yes | Whether the developer ran `planck autopilot off`. |
+| `decisionProvider` | `off`, `typesafe`, `local` or `heuristic` | No | The task-decision provider in use. `heuristic` means the policy names `typesafe` but the device has no key for it. |
+
+### `routingInstalled`
+
+A boolean, sent only where Claude Code exists. When it is absent the state is unknown: it means an older CLI or no Claude Code, never "not installed".
+
+## `agentConfig`
+
+A snapshot of how Claude Code is set up: which instruction files, hooks, skills, commands and MCP servers exist, and how large and how old they are. It is metadata only and strict at every level. A payload that carries any key not listed here, such as a file's contents, a hook's command, or an MCP server's URL or environment keys, is rejected with `400` rather than stored. Sent by CLI 0.6.0 and later; CLI 0.5.0 does not send it.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `schemaVersion` | The number `1` | Yes | Snapshot format version. |
+| `collectedAt` | ISO 8601 timestamp with a UTC offset | Yes | When the snapshot was taken. |
+| `tokenEstimateMethod` | The string `chars/4` | Yes | How `tokensEst` is estimated: characters divided by 4. |
+| `hashMethod` | The string `hmac-sha256` | Yes | How `hash` is computed. |
+| `device` | [Config set](#config-set) | Yes | Facts about the device itself, such as user-level and managed settings. |
+| `repos` | Array of up to 500 objects, each a config set plus `repo` (string, 1 to 200 characters) | Yes | One entry per repository the CLI read. The CLI reads only repositories the workspace tracks, and the server drops any other. |
+
+### Config set
+
+A config set has six arrays, each limited to 500 items. A `scope` is `managed`, `user`, `project` or `local`.
+
+| Array | Item fields |
+| --- | --- |
+| `instructionFiles` | `path`: string up to 300 characters, relative or symbolic such as `~/.claude/CLAUDE.md` or `<managed>/CLAUDE.md`, never absolute and never containing `..`. `scope`. `tool`: `claude-code`, `cursor` or `shared`. `bytes`, `lines`, `tokensEst`: integers, 0 or more. `hash`: 64 lowercase hex characters. `hashKey`: `repo` or `device`. `mtime`: ISO 8601 timestamp. `lastCommitAt`: ISO 8601 timestamp or `null`. `commitsSince`: integer or `null`. |
+| `hooks` | `event`: one of `PreToolUse`, `PostToolUse`, `Notification`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `SessionStart`, `SessionEnd` or `other`. `scope`. `source`: string up to 120 characters. `count`: positive integer. |
+| `skills` | `name`: identifier of 1 to 100 characters. `scope`. |
+| `commands` | `name`: identifier of 1 to 100 characters. `scope`. |
+| `mcpServers` | `name`: identifier of 1 to 100 characters. `transport`: `stdio`, `http`, `sse` or `unknown`. `scope`. `source`: string up to 120 characters. |
+| `modelSettings` | `scope`. `source`: string up to 120 characters. `model`: a model identifier of up to 64 characters. |
+
+A hook is recorded as an event name and a count, never as the command it runs. An MCP server is recorded by name and transport, never by address or credentials. An instruction file is recorded by size, age and a keyed hash, never by content. For a project file the hash is keyed by the repository's root commit, so every clone agrees; for any other scope it uses a salt that exists only on the device.
+
+## Example
+
+An envelope with one metered session of two turns. The session totals are the sums of its turns.
+
+```json
+{
+  "sessions": [
+    {
+      "sessionId": "5f0c2a6e-8d0b-4b9e-9a3e-2c1d7e4b6a10",
+      "tool": "claude_code",
+      "model": "claude-sonnet-5-5",
+      "startedAt": "2026-10-27T09:12:04.000Z",
+      "endedAt": "2026-10-27T09:48:51.000Z",
+      "inputTokens": 18240,
+      "outputTokens": 9310,
+      "cacheReadTokens": 412800,
+      "cacheWriteTokens": 36200,
+      "costUsd": 0.45,
+      "costType": "billed",
+      "subscriptionPlan": null,
+      "consumptionValueUsd": 0,
+      "unmatchedTurns": 0,
+      "mergedPrNumber": 412,
+      "mergedAt": "2026-10-27T14:03:19.000Z",
+      "repoName": "billing-service",
+      "gitBranch": "fix/invoice-rounding",
+      "gitAuthorEmail": "dev@example.com",
+      "outcome": "shipped",
+      "turnCount": 2,
+      "filesTouchedCount": 1,
+      "source": "scraper",
+      "workspaceId": "your-workspace-id",
+      "turns": [
+        {
+          "sequence": 0,
+          "timestamp": "2026-10-27T09:12:40.000Z",
+          "model": "claude-sonnet-5-5",
+          "inputTokens": 9000,
+          "outputTokens": 4100,
+          "cacheReadTokens": 200000,
+          "cacheCreationInputTokens": 20000,
+          "toolCalls": [
+            { "name": "Read", "count": 2 },
+            { "name": "Edit", "count": 1 }
+          ],
+          "filesTouched": ["src/invoice/round.ts"],
+          "costUsd": 0.22,
+          "effort": "medium",
+          "speed": "standard"
+        },
+        {
+          "sequence": 1,
+          "timestamp": "2026-10-27T09:31:07.000Z",
+          "model": "claude-sonnet-5-5",
+          "inputTokens": 9240,
+          "outputTokens": 5210,
+          "cacheReadTokens": 212800,
+          "cacheCreationInputTokens": 16200,
+          "toolCalls": [{ "name": "Bash", "count": 1 }],
+          "filesTouched": ["src/invoice/round.ts"],
+          "costUsd": 0.23,
+          "effort": "medium",
+          "speed": "standard"
+        }
+      ],
+      "reReadPatterns": [{ "path": "src/invoice/round.ts", "count": 2 }]
+    }
+  ],
+  "cliVersion": "0.5.0",
+  "routingInstalled": false,
+  "claudeBilling": { "mode": "metered", "via": "env_api_key", "anthropicOrgId": null }
+}
+```
+
+## Related
+
+<Cards>
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="What leaves a developer's machine, and what never does." />
+  <Card title="REST API" href="/docs/reference/api" description="Authentication, rate limits and the ingest response." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="planck sync, planck inspect and every other command." />
+  <Card title="Sessions" href="/docs/concepts/sessions" description="How a session and its outcome are defined." />
+</Cards>

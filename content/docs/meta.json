@@ -1,0 +1,22 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Get started---",
+    "index",
+    "quickstart",
+    "installation",
+    "team-onboarding",
+    "editor-extension",
+    "---Concepts---",
+    "...concepts",
+    "---Guides---",
+    "...guides",
+    "---Security & privacy---",
+    "...security",
+    "---Reference---",
+    "...reference",
+    "---Help---",
+    "troubleshooting",
+    "faq"
+  ]
+}

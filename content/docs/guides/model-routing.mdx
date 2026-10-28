@@ -1,0 +1,90 @@
+---
+title: Model routing
+description: "Two separate ways to stop paying for a top model on routine work in Claude Code: a repo's default model setting, and the routing plugin with its workspace policy."
+icon: Route
+---
+
+"Model routing" names two different things in PlanckSpace, and they are easy to confuse. One is the repo setting that the model-routing [finding](/docs/concepts/findings) asks you to change. The other is a Claude Code plugin that hands subtasks to agents on Haiku, Sonnet or Opus according to the task, which a workspace policy can switch on for every developer. Both apply to Claude Code.
+
+## The two at a glance
+
+| | Repo default model | Routing plugin |
+| --- | --- | --- |
+| What it is | `"model": "sonnet"` in the repo's `.claude/settings.json` | The `planckspace-routing` plugin for Claude Code |
+| What it changes | The model each new main session starts on | Where subtasks run: three subagents pinned to models. The main session's model is untouched. |
+| Applied by | The finding's fix, in the editor or with Claude Code | `planck routing on`, or the workspace policy |
+| Reach | The repo, and the whole team once committed | One machine, every repo |
+| Counted in the finding's measured saving | Yes, for main-session turns that left the premium model | No. Subagent turns are not priced by that measurement. |
+| Undo | Undo in the editor, or edit the file | `planck routing off` |
+
+The two can run together. Use the repo setting when you want the finding's saving measured, and the plugin when you want lookups and routine edits moved off the top model across everything a developer does.
+
+## The finding's fix: a repo setting
+
+The model a session runs is a setting, not an instruction. Claude Code picks it from the `--model` flag, then the `ANTHROPIC_MODEL` variable, then `.claude/settings.local.json`, then `.claude/settings.json`, then `~/.claude/settings.json`. `CLAUDE.md` is text the model reads, and it cannot change which model runs. In a small test of 3 sessions each, a `CLAUDE.md` instruction left all 3 on Opus, and the setting moved all 3 to Sonnet.
+
+To apply it, use **Fix now** in the editor extension, or **Fix with Claude Code**, or add the key by hand. [Fix a finding](/docs/guides/fix-findings) walks through each. Commit `.claude/settings.json` so the whole team inherits the default. Opus stays one `/model opus` away for work that needs it. A `--model` flag, an `ANTHROPIC_MODEL` variable or a personal pin in `.claude/settings.local.json` still overrides the default, and the editor fix corrects such a pin. It does nothing when the repo already defaults to Sonnet or Haiku.
+
+The guided prompt for this finding offers the routing plugin first, as one command, and the settings change as the alternative. The plugin leaves the main session on whatever model it was on. The finding's [proof of savings](/docs/concepts/proof-of-savings) prices main-session turns that no longer ran on the premium model, as what they would have cost at the premium model's price minus what they cost. Subagent turns do not count toward it, so a saving is booked only where the main session itself moved off the premium model, which is what the settings change does.
+
+## The routing plugin
+
+`planck routing on` installs the plugin for Claude Code on your machine, in every repo. Claude Code must have run on the machine once. The plugin adds three agents and a rule.
+
+| Agent | Model | Used for |
+| --- | --- | --- |
+| `explorer` | Haiku | Read-only lookups: where is X, what does Y do, summaries. It reads and never edits. |
+| `builder` | Sonnet | Clear, scoped changes: a UI tweak, copy, a known bug, a self-contained feature, tests. |
+| `investigator` | Opus | Unknown-cause bugs, work across repos, architecture, large refactors, deploys, releases, auth, billing and money figures. |
+
+A session-start hook gives the main session the routing rule once per session, and again after a clear or a compaction. The rule says:
+
+- A model you name ("use opus") always wins, whatever the table says.
+- Something answerable from the context already there, or a one-line follow-up, runs inline with no agent, because a fresh agent re-reads everything.
+- Otherwise the task goes to the agent in the table. Failure escalates a builder to the investigator, never up front, and the reply says which agent and model ran.
+- If a repo's own instructions or agents conflict, the repo wins.
+
+The plugin never changes your default model. On metered API billing, the same work costs less. On a seat plan such as Pro, Max or Team, the bill does not change, but the usage limit goes further.
+
+`planck routing status` shows whether it is installed, this machine's choice, the workspace policy, and whether Claude Code was found. `planck routing off` removes the plugin and keeps it off on this machine, whatever the workspace policy says.
+
+The plugin is registered through Claude Code's own `claude plugin` commands, using the `claude` binary on your PATH, in the native installer's location, or inside the VS Code, Cursor or Windsurf extension. With none of those, the CLI adds two keys to `~/.claude/settings.json` after saving `settings.json.planckspace-backup`, and Claude Code needs a restart. Set `PLANCKSPACE_CLAUDE_BIN` to a path to pick a binary, or to `none` to use settings only.
+
+The same plugin carries the hooks behind the [agent policy](/docs/guides/agent-policy) guards, so they run only where it is installed.
+
+## The workspace policy
+
+Owners, leaders and admins set the policy in Controls → Harness, in the Policy card. Each change is recorded in the audit log, for example as "changed model routing from Ask each developer to On for everyone". Managers can read the policy but not change it.
+
+| Policy | What it does |
+| --- | --- |
+| Ask each developer (default) | `planck init` asks each developer, and the default answer is yes. Nothing is pushed to machines already connected. |
+| On for everyone | Installed without a question at connect, and on connected machines at their next sync. |
+| Off | Never offered or pushed. A machine that already runs it keeps it, and `planck routing on` still installs it. |
+
+A device learns the policy from the response to a sync, and a sync happens when it has new sessions to send. A machine with nothing new keeps its current state until then. The daemon installs the plugin when the policy is on and never removes it, so turning the policy off does not undo anything. `planck routing off` on a machine always wins over the policy, and the daemon never overrides it.
+
+On the model-routing group in Findings, **Fix for all N** turns this policy on and marks the open findings fixed. It does not edit repo settings, and the plugin's subagent work is not part of that finding's measurement.
+
+## Check that it reached the machines
+
+Next to the Policy card, Controls → Harness has two cards that show reach. **Enforced on machines** counts the machines that run routing out of the machines that reported in the last 30 days, and "enforcing" means the plugin is enabled in that machine's Claude Code. A machine reports from CLI 0.4.0 on, once Claude Code is installed. Older CLIs and machines without Claude Code say nothing, so they are counted neither way.
+
+**Reporting, not enforcing** lists the machines that report but do not run it, with the reason and the next step. Owners, leaders and admins see the machine, its holder, when it was last seen and its CLI version, for the 50 most recently seen. Managers see the counts.
+
+| Reason | What it means | Next step |
+| --- | --- | --- |
+| The policy is off, or the developer said no | The policy is Ask or Off, so nothing was pushed. | Turn the policy on, or the developer runs `planck routing on`. |
+| Has not synced since routing was turned on | The policy is On, but the machine has not reported since the switch, or reported only within the hour after it. | It installs on its next sync. If the machine is on but quiet, its developer runs `planck daemon fix`. |
+| Synced under On and still off | The machine reported under the On policy, past that hour, without the plugin. That almost always means its developer ran `planck routing off`. | A local opt-out wins. Ask them to run `planck routing on`. |
+
+In a workspace on the collaborative [privacy policy](/docs/security/workspace-policies), machines show as "Device N" and the holder is hidden for every role.
+
+## Related
+
+<Cards>
+  <Card title="Agent policy" href="/docs/guides/agent-policy" description="Compaction, effort, subagent model and guards, pushed to every developer." />
+  <Card title="Fix a finding" href="/docs/guides/fix-findings" description="Apply the repo setting from the editor or with Claude Code." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="What the routing finding's measurement prices, and what it ignores." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every planck command and flag." />
+</Cards>

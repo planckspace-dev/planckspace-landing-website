@@ -1,0 +1,126 @@
+---
+title: Billed and usage value
+description: "Every dollar in PlanckSpace sits in one of two ledgers: billed money that leaves the bank, and the usage value of work done on flat-rate seats."
+icon: Scale
+---
+
+PlanckSpace keeps every dollar in one of two ledgers. **Billed** is money that leaves the bank: per-token charges on metered access, plus the flat price of the seats you pay for. **Usage value** is the API-rate value of the work done on flat-rate seats. The two answer different questions, so PlanckSpace always shows them as two figures and never adds them together.
+
+## The two ledgers
+
+| | Billed | Usage value |
+| --- | --- | --- |
+| What it is | Money on an invoice | The API-rate value of work done on a flat-rate seat |
+| Where it comes from | Metered sessions (Anthropic API keys, Amazon Bedrock, Google Vertex AI and other pay-per-token access), plus seat price × seats | Seat sessions on flat-rate plans such as Claude Code Pro, Max and Team |
+| The question it answers | What did we pay? | How much work did the seats carry? |
+| How the console labels it | Billed spend | Usage value: what the work would cost at API rates, not a bill |
+
+Usage value is priced on the same price card as metered sessions: a seat session's tokens at the list rate of the model that produced them. Nobody is invoiced for it. It tells you what your seats delivered, which is why it sits next to the seat price rather than inside it.
+
+## How a session lands in a ledger
+
+Every session is either **metered** (billed) or **seat** (usage value). The CLI decides on the developer's machine when it reads the session, and sends the result with it.
+
+For Claude Code, the CLI reads Claude Code's own local configuration. A session is billed when any of these is true:
+
+- Claude Code is set to use Amazon Bedrock, Google Vertex AI or Microsoft Foundry (`CLAUDE_CODE_USE_BEDROCK`, `CLAUDE_CODE_USE_VERTEX` or `CLAUDE_CODE_USE_FOUNDRY`).
+- An `ANTHROPIC_AUTH_TOKEN` is set.
+- An `ANTHROPIC_API_KEY` is set, in the environment or in Claude Code's settings, and Claude Code has not rejected it.
+- Claude Code's settings name an `apiKeyHelper`.
+- Claude Code is logged in with an Anthropic Console account rather than a Claude subscription.
+- The Claude Code plan declared on that machine, with `planck init --plan` or `planck subscription add`, is a metered plan such as `api`.
+
+Otherwise the session is seat usage. The `CLAUDE_CODE_BILLING_MODE` environment variable overrides all of this when it is set, either way. Only the result leaves the machine: no key or token value is ever sent.
+
+The CLI applies the machine's current setup each time it reads the logs. If a machine's billing route changes, for example because a developer adds an API key, its earlier Claude Code sessions are re-filed under the new ledger on the next scan. A plan change made with `planck init --plan` is the exception: sessions from before the change keep the plan and ledger they were recorded under.
+
+Other tools follow the plan you declared for them. Cursor and Windsurf sessions are billed only when that tool's declared plan is a metered one; JetBrains AI sessions are always seat usage. If a session arrives from an older CLI that does not say which ledger it belongs to, PlanckSpace uses the workspace's declared subscriptions for that tool (any seat plan wins) and otherwise records seat usage.
+
+The default is deliberately seat usage. Filing seat work as billed would invent money that never left the bank; the opposite mistake only understates spend.
+
+### One dollar, one ledger
+
+The CLI reports an API-rate figure for every session. On a billed session that figure is the charge, and its usage value is stored as $0. On a seat session it is the usage value. A metered dollar is therefore never counted in both ledgers.
+
+## Seat price is billed
+
+A seat is invoiced whether anyone uses it or not, so its price is billed money: seats × price per seat, every month. The work done on the seat is usage value. A team on Claude Code Max seats appears in both ledgers: the monthly seat price in billed, the sessions run on those seats in usage value.
+
+The monthly AI bill on Spend is the seat price plus metered charges. Both are billed, which is the only reason adding them is legitimate. Usage value is never part of it.
+
+## The two are never added
+
+No money total, time series or KPI in PlanckSpace adds billed and usage value into one number. A blended figure is not a rounding problem: it answers no question anyone asked. It is neither what you paid nor what any provider charged.
+
+Reconciliation is where this was learned. It once compared a real Anthropic invoice against billed plus usage value. A workspace running mostly on Max seats showed more than 100% coverage of the invoice and a $0 gap, while its actual metered spend was unaccounted for. The page said everything was fine when it was not. Reconciliation now compares the invoice with billed metered sessions only.
+
+The same rule shapes every figure:
+
+| Rule | What it means |
+| --- | --- |
+| Two figures, always | Totals, charts and exports report billed and usage value separately. |
+| Ratios inside one ledger | Numerator and denominator come from the same ledger (see below). |
+| Change over time per ledger | A ledger with no spend in the previous period shows no baseline, not 0%. |
+| Billing words for billed only | Usage value is never called spend, cost, a bill or an invoice. |
+| Exports keep the split | The chargeback PDF's totals are "Billed (metered)" and "Usage value (seats)", never a single total cost. |
+
+PlanckSpace's test suite checks the first rule: it walks the main API responses and fails on any number equal to billed plus usage value.
+
+One figure deliberately counts both: the plan-usage meter, "Tracked AI activity this month". It values all work at API rates to measure use of your PlanckSpace plan, and is labelled as activity, not an amount billed. It is never shown as spend.
+
+## Ratios stay inside one ledger
+
+Cost per shipped unit is computed separately on each side:
+
+- **Billed:** metered charges divided by the units that billed sessions shipped.
+- **Usage value:** usage value divided by the units that seat sessions shipped.
+
+A unit is a merged pull request when the selection contains any, otherwise a shipped session (see [shipped units](/docs/concepts/sessions#shipped-units)). When a side has nothing to divide by, PlanckSpace says why:
+
+| Situation on one side | Shown |
+| --- | --- |
+| Its sessions shipped units | Its dollars ÷ its units |
+| No dollars and no units, but the other side shipped | $0: the work shipped and used nothing from this ledger |
+| Dollars but no units, or nothing shipped anywhere | Not measurable (—) |
+
+Dividing both sides by the combined count understates cost per shipped unit in any mixed workspace, because seat sessions inflate the denominator of the billed figure. The worked example below shows by how much.
+
+## Which features use which ledger
+
+| Feature | Ledger | Why |
+| --- | --- | --- |
+| [Budgets and alerts](/docs/guides/budgets-and-alerts) | Billed: metered session charges in the current calendar month (UTC) | A budget is a ceiling on money that leaves the bank. Usage value never counts against it. |
+| [Reconciliation](/docs/guides/reconciliation) against a provider invoice | Billed metered sessions only | Only metered sessions can appear on a provider's usage invoice. |
+| Seats in reconciliation | Seat price × seats, checked against the seat invoice you enter | Seats are reconciled against their own invoice, never against usage value. |
+| Spend's monthly AI bill | Seat price + metered charges | Both are billed. |
+| [Findings](/docs/concepts/findings) | Billed | Every current finding type is a seat price or a metered charge. |
+| [Proof of savings](/docs/concepts/proof-of-savings) | The finding's ledger: billed for every current finding type | A saving lives in the ledger of the money it saved. |
+| Overview verdict and posture | The ledger your money is in: billed when there is any metered spend, otherwise usage value | A one-line verdict can only be about one kind of dollar; when it falls back to usage value, it says so. Posture's waste ratio uses billed only and is left out under $20 of metered spend. |
+| [Agent setup](/docs/concepts/agent-setup), [cost anatomy](/docs/concepts/cost-anatomy), sessions | Both, side by side | Each figure is labelled with its ledger. |
+
+## Worked example
+
+For example, a team's month looks like this:
+
+| Item | Ledger | Amount |
+| --- | --- | --- |
+| 12 Claude Code seats at $100 a seat | Billed (seat price) | $1,200 |
+| Work done on those seats, at API rates | Usage value | $4,350 |
+| Three developers on Anthropic API keys | Billed (metered) | $830 |
+
+What PlanckSpace shows:
+
+- **Spend:** a monthly AI bill of $2,030 ($1,200 seat price + $830 metered). The $4,350 of usage value is never part of it, and a blended $6,380 appears nowhere: nobody paid it.
+- **A $1,000 workspace budget:** 83% used. It measures the $830 of metered charges.
+- **Reconciliation:** Anthropic invoices $900 for API usage. Tracked metered sessions come to $830, so coverage is 92.2% and the gap is $70. Had usage value been included, the attributed figure would read $5,180, coverage 575.6% and the gap $0, hiding the $70.
+- **Seat check:** a seat invoice of $1,200 entered for the month matches 12 declared seats × $100, so the seat gap is $0.
+- **Cost per shipped unit:** billed sessions shipped 25 pull requests and seat sessions shipped 145. Billed: $830 ÷ 25 = $33.20 per shipped PR. Usage value: $4,350 ÷ 145 = $30.00 per shipped PR. Dividing the $830 by all 170 PRs would give $4.88, making metered work look almost 7 times cheaper than it is.
+
+## Related
+
+<Cards>
+  <Card title="Sessions and outcomes" href="/docs/concepts/sessions" description="What a session is, how its outcome is decided, and what counts as shipped." />
+  <Card title="Findings" href="/docs/concepts/findings" description="The three finding types and how their monthly amounts are set." />
+  <Card title="Reconciliation" href="/docs/guides/reconciliation" description="Check tracked metered spend and declared seats against your invoices." />
+  <Card title="Budgets and alerts" href="/docs/guides/budgets-and-alerts" description="Set a monthly ceiling on billed spend and get alerted as it fills." />
+</Cards>

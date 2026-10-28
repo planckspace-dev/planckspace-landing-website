@@ -1,0 +1,170 @@
+---
+title: Glossary
+description: "Plain-language definitions of the terms PlanckSpace uses, from billed and usage value to coverage, findings and savings, each linked to the page that explains it."
+icon: BookA
+---
+
+This glossary defines the terms PlanckSpace uses in the console, the CLI and the API. Each entry is short and links to the page that explains the idea in full. Two rules hold throughout: money is always **billed** or **usage value**, never a blend of the two, and a **saving** is something measured, never a forecast.
+
+## A
+
+**Agent policy.** A workspace setting for how its developers' Claude Code should be configured: when to compact, which effort level to use, which model subagents run on. Its mode is `off`, `suggest` or `apply`, and each device picks it up on its next sync. See the [agent policy guide](/docs/guides/agent-policy).
+
+**Agent setup.** The configuration around an AI coding agent: instruction files such as CLAUDE.md, hooks, skills and MCP servers. PlanckSpace scores it from sizes, ages and counts, never from contents, and shows which gaps cost money. See [agent setup](/docs/concepts/agent-setup).
+
+**Anomaly.** A spend jump flagged against a baseline: a repository's day far above its recent median, or one session far above the developer's usual. Budget threshold alerts are listed with anomalies. See [budgets and alerts](/docs/guides/budgets-and-alerts).
+
+**Approval.** The sign-off an owner, leader or admin gives in the console before a seat finding can be acted on, because acting on it changes a person's access. A device token can never give it. See [fix findings](/docs/guides/fix-findings).
+
+**Ask PlanckSpace.** The assistant in the console that answers questions about your spend and findings. It sees exactly what the person asking is allowed to see, so it never shows more than their own console does. See [Ask PlanckSpace](/docs/guides/ask-planckspace).
+
+**Autopilot.** The CLI's name for applying the workspace's agent policy on a machine. A developer can switch it off for their own machine with `planck autopilot off`. See the [CLI reference](/docs/reference/cli#planck-autopilot).
+
+## B
+
+**Billed.** Money that leaves the bank: metered API, Bedrock and Azure token charges, plus the flat price of seats. Budgets, reconciliation and invoice totals are billed only. See [two ledgers](/docs/concepts/two-ledgers).
+
+**Budget.** A monthly ceiling on billed money for the workspace, a team or a repository, with alert thresholds. Usage value never counts against it. See [budgets and alerts](/docs/guides/budgets-and-alerts).
+
+## C
+
+**Cache efficiency.** A metered-waste finding type. It flags metered sessions that paid full input price because the prompt cache hit rate was low. See [findings](/docs/concepts/findings).
+
+**Cache read.** Tokens served from the prompt cache instead of being processed as fresh input. They are priced well below fresh input, which is why a healthy cache lowers cost. See [cost anatomy](/docs/concepts/cost-anatomy).
+
+**Cache write.** Tokens written into the prompt cache so that later turns can read them instead. A write costs more than fresh input, and each later read repays it. See [cost anatomy](/docs/concepts/cost-anatomy).
+
+**Chargeback.** A monthly export that allocates billed money and usage value to teams, repositories and developers for finance, as CSV or PDF. Its totals are labelled "Billed (metered)" and "Usage value (seats)", never a blended total. See [exports](/docs/guides/exports).
+
+**CLAUDE.md.** The instruction file Claude Code loads into every conversation. PlanckSpace measures its size, age and how often it changes, never its contents, because a large file adds to the context of every turn. See [agent setup](/docs/concepts/agent-setup).
+
+**Collaborative.** A workspace policy under which cost is shared and identity is private. Developer names and emails are hidden from every role, owners and leaders included. See [workspace policies](/docs/security/workspace-policies).
+
+**Compaction.** Claude Code replacing a long conversation with a summary to free context. A turn records whether the compaction was `auto` or `manual` and how large the context was before it. See [agent policy](/docs/guides/agent-policy).
+
+**Connect code.** A one-time code, such as `7KQ4-M2XD`, that the console mints for a signed-in person. It works once within 10 minutes, and `planck init --code` exchanges it for that person's own device token. See [team onboarding](/docs/team-onboarding).
+
+**Console.** The PlanckSpace web app, where spend, findings, budgets, teams and savings are shown to each person according to their role. See the [introduction](/docs).
+
+**Cost observer.** A grant that gives a person read access to cost data, meaning sessions, subscriptions, seat figures, reconciliation and exports, at team or workspace scope without changing their role. See [teams and roles](/docs/guides/teams-and-roles).
+
+**Coverage.** How much of your team is reporting, shown as "N of M developers reporting". While it is incomplete, figures built from usage are floors, not totals. See [coverage](/docs/concepts/coverage).
+
+## D
+
+**Daemon.** The background process, started by `planck daemon install`, that watches your tools' session logs and syncs usage metadata to your workspace. It starts at login and restarts itself after a failure. See the [CLI reference](/docs/reference/cli#daemon).
+
+**Device token.** A credential that starts with `pk_live_` and belongs to one person on one machine. It is shown once when created, and a request made with it acts with that person's role. See [authentication](/docs/reference/api#authentication).
+
+**Dormant seat.** A paid seat whose holder has run no sessions in 30 days. The finding's amount is the seat price, and it is never actioned without an admin's approval. See [dormant seats](/docs/concepts/findings#dormant-seats).
+
+## E
+
+**Editor extension.** The PlanckSpace extension for VS Code, Cursor and Windsurf. It shows findings next to the code they concern and applies fixes in one click, with undo. See the [editor extension](/docs/editor-extension).
+
+## F
+
+**Finding.** A detected item of waste with a monthly dollar amount, the evidence behind it and a fix. There are three types: dormant seats, right-sizing, and metered waste. See [findings](/docs/concepts/findings).
+
+## H
+
+**Hook.** A command Claude Code runs when something happens, such as before a tool runs or when a session starts. PlanckSpace records the event and how many hooks exist, never the command. See [agent setup](/docs/concepts/agent-setup).
+
+## I
+
+**Imputed.** The name the API and exports use for usage value. A field called `imputed`, such as `imputedUsd` or `costType: imputed`, is the API-rate value of seat work and never money that was charged. See [two ledgers](/docs/concepts/two-ledgers).
+
+## J
+
+**Join code.** A team code that starts with `pk_join_`, shared by an owner, leader or admin. Each developer who runs `planck init --join` gets their own device token as a developer; the code expires after 30 days, and revoking it stops new joins without cutting off tokens already issued. See [team onboarding](/docs/team-onboarding).
+
+## L
+
+**Ledger.** One of the two accounts every dollar in PlanckSpace belongs to: billed, or usage value. They are shown side by side and never added. See [two ledgers](/docs/concepts/two-ledgers).
+
+## M
+
+**MCP server.** A Model Context Protocol server that gives an agent extra tools. PlanckSpace records its name and transport, never its address or credentials. See [agent setup](/docs/concepts/agent-setup).
+
+**Measuring.** The state of a fix a person has marked as done, until it is judged. A fix measured from sessions is judged after 7 days and 20 settled sessions in scope, and until then its forecast counts as claimed, never as captured. See [proof of savings](/docs/concepts/proof-of-savings).
+
+**Metered.** Pay-per-token usage billed by a provider, such as an API key or Amazon Bedrock. It is the opposite of a seat, and its charges are billed money. See [two ledgers](/docs/concepts/two-ledgers).
+
+**Metered waste.** A finding type for pay-per-token sessions. It covers premium-model work that a cheaper model could have done, which is model routing, and a low cache hit rate, which is cache efficiency. See [findings](/docs/concepts/findings).
+
+**Model routing.** Sending easy tasks to a cheaper model and hard ones to a stronger one. PlanckSpace uses the term for a finding and for the Claude Code plugin that `planck routing on` installs, which a workspace policy of `ask`, `on` or `off` controls. See [model routing](/docs/guides/model-routing).
+
+## O
+
+**Outcome.** How a session ended, decided by the CLI from git history. It is `shipped` when a commit reached the default branch or was pushed, `partial` when work was committed but not pushed, `abandoned` when nothing was committed within 24 hours, `errored` when the tool reported an error, and `unknown` while it is too early to tell. See [sessions](/docs/concepts/sessions).
+
+## P
+
+**Plan stamp.** The subscription plan recorded on a seat session, such as `pro`, `max_5x` or `team_premium`. It tells PlanckSpace which seat covered the work, so right-sizing can be measured against it. See [subscriptions](/docs/guides/subscriptions).
+
+**Possible holder.** A person whose session has no plan stamp on a tool where the workspace holds more than one plan, so the session could belong to any of those seats. They count as active and are never named as idle. See [dormant seats](/docs/concepts/findings#dormant-seats).
+
+## R
+
+**Receipt.** The record behind one booked saving: a session or a seat-month, what it cost, what the same work would have cost without the fix, and how that was worked out. See [proof of savings](/docs/concepts/proof-of-savings).
+
+**Reconciliation.** Checking your tracked metered spend against what Anthropic, OpenAI or Amazon Bedrock invoiced, using billed money only, with seat subscriptions checked separately as seat price times seats. It is unrelated to the CLI command `planck reconcile`, which resyncs local state. See [reconciliation](/docs/guides/reconciliation).
+
+**Reporting.** A member is reporting when one of their active device tokens has contacted the workspace in the last 26 hours. See [coverage](/docs/concepts/coverage).
+
+**Right-sizing.** Moving a seat to a cheaper plan when its usage fits. PlanckSpace flags a Max seat whose usage value stays under $100 over 30 days, worth the price difference to Pro, and an admin must approve acting on it. See [findings](/docs/concepts/findings).
+
+**Role.** A member's place in a workspace: owner, leader, admin, manager or developer. Owners, leaders and admins share every operational permission, managers see their team, and developers see their own work. See [teams and roles](/docs/guides/teams-and-roles).
+
+## S
+
+**Saving.** A dollar that was measured, not forecast: a session or a seat-month priced against what the same work would have cost without the fix, and booked only after a person acted on a finding. See [proof of savings](/docs/concepts/proof-of-savings).
+
+**Scope.** How much of a workspace a role can read: `all`, `team` or `own`. A cost observer grant can widen it for cost data. See [teams and roles](/docs/guides/teams-and-roles).
+
+**Seat.** A flat-rate subscription held by one person, such as Claude Code Pro or Max, or Cursor Business. The seat's price is billed, and the work done on it is usage value. See [two ledgers](/docs/concepts/two-ledgers).
+
+**Session.** One run of an AI coding tool in one repository, from start to end. PlanckSpace stores its tool, model, token counts, timings, repository, branch, author and outcome, never its prompts or code. See [sessions](/docs/concepts/sessions).
+
+**Shipped unit.** What cost per shipped unit divides by: merged pull requests when any session carries a pull request number, otherwise shipped sessions. Each ledger is divided by its own count. See [sessions](/docs/concepts/sessions).
+
+**Skill.** A named capability that Claude Code can load on demand. PlanckSpace records skill names and how often they run, never their contents. See [agent setup](/docs/concepts/agent-setup).
+
+**Step-up confirmation.** An extra confirmation required before a destructive action, such as disconnecting a billing integration, removing a member or changing the workspace policy. The API issues a single-use token, valid for 5 minutes, for that one action. See the [security overview](/docs/security/overview).
+
+**Subagent.** A helper agent that Claude Code's main session starts for part of a task, often on a different model. Since CLI 0.4.0 a session includes its subagents' turns, each priced as the model that ran it. See [cost anatomy](/docs/concepts/cost-anatomy).
+
+**Subscription.** A declared seat inventory for one tool and plan: how many seats, and the price per seat. It feeds the seat findings and the billed seat total. See [subscriptions](/docs/guides/subscriptions).
+
+## T
+
+**Team.** A named group of members, optionally with a manager. Teams set a manager's scope and are the unit for team budgets and the team column in chargeback exports. See [teams and roles](/docs/guides/teams-and-roles).
+
+**Threshold.** The percentage of a budget at which an alert fires. The defaults are 50%, 80% and 100%, and when one check crosses several, only the highest is sent. See [budgets and alerts](/docs/guides/budgets-and-alerts).
+
+**Tracked repositories.** The repositories a workspace chooses to measure. Sessions from any other repository stay on the developer's machine and are never uploaded. See [repository scope](/docs/guides/repo-scope).
+
+**Turn.** One model call within a session. A turn records its model, token counts, tool names and the files it touched, and from CLI 0.5.0 also cache and effort details. See [sessions](/docs/concepts/sessions).
+
+## U
+
+**Unmeasured member.** A member who is not reporting. They are subtracted from the idle count and never named, so a gap in coverage cannot pass as recoverable money. See [coverage](/docs/concepts/coverage).
+
+**Usage value.** The API-rate value of work done on flat-rate seats: what the same tokens would have cost on a metered key. Nobody is invoiced for it, and it is never added to billed. See [two ledgers](/docs/concepts/two-ledgers).
+
+## W
+
+**Weekly digest.** A weekly email of what changed: spend against last week, the top new finding, savings booked and the one problem worth attention. Each reader gets what their role can see, and it is skipped when there is nothing to say. See the [weekly digest](/docs/guides/weekly-digest).
+
+**Workspace.** The account that holds your members, teams, sessions, subscriptions, budgets and findings. Every device token and every figure belongs to exactly one workspace. See [team onboarding](/docs/team-onboarding).
+
+**Workspace policy.** A workspace-wide setting that decides how developer identity and detail are shown. It is one of personal, collaborative, education, organization or enterprise, and changing it needs step-up confirmation. See [workspace policies](/docs/security/workspace-policies).
+
+## Related
+
+<Cards>
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="The two ledgers every figure belongs to." />
+  <Card title="Findings" href="/docs/concepts/findings" description="The three finding types and the evidence behind each." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a saving is measured and booked." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every planck command and flag." />
+</Cards>

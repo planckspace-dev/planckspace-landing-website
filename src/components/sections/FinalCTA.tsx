@@ -1,58 +1,44 @@
-"use client";
-
-import { useRef } from "react";
+import { BookOpen } from "lucide-react";
 import Button from "@/components/site/Button";
+import Reveal from "@/components/site/Reveal";
 import { PlanckMark } from "@/components/ui/logo";
 import { DEMO_PATH } from "@/lib/plans";
-import { gsap, useGSAP, MOTION_OK } from "@/lib/gsap";
 
-/* The bookend. Tokens sweep in from the top-left through the mark, are
-   counted, and spread into a ledger that runs the full width of the screen.
-   Same scene and shader as the hero, read once more on the way out. */
+/* The close: the same two actions as the hero, on graph paper. */
+
+const PROMISES = ["30 minutes with a founder", "Billed dollars, checked against the invoice", "Metadata only"];
 
 export default function FinalCTA() {
-  const root = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add(MOTION_OK, () => {
-        gsap.from(".cta-copy > *", {
-          y: 40,
-          autoAlpha: 0,
-          stagger: 0.12,
-          duration: 1.2,
-          scrollTrigger: { trigger: root.current, start: "top 55%" },
-        });
-      });
-      return () => mm.revert();
-    },
-    { scope: root },
-  );
-
   return (
-    <section ref={root} aria-labelledby="cta-title" className="relative isolate flex min-h-[max(100svh,46rem)] flex-col overflow-hidden border-t border-[var(--line)] bg-ink">
-      <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute inset-0 bg-[radial-gradient(46%_30%_at_50%_52%,rgb(11_11_12/0.7),transparent_80%)]" />
-        <div data-stream-ap className="cta-mark absolute left-1/2 top-[13%] z-10 aspect-[320/300] w-[clamp(64px,7vw,108px)] -translate-x-1/2">
-          <PlanckMark className="h-full w-full" />
-        </div>
-      </div>
-
-      <div data-stream-calm className="cta-copy wrap relative my-auto flex flex-col items-center pb-[18vh] pt-[28vh] text-center">
-        <h2 id="cta-title" className="t-display text-[clamp(2.4rem,7vw,6.6rem)] leading-[0.95] [--wdth:108]">
-          See what your AI bill is made of.
+    <section aria-labelledby="cta-title" className="relative overflow-hidden border-t border-line">
+      <div aria-hidden className="dot-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(50%_70%_at_50%_45%,#000_15%,transparent_80%)]" />
+      <Reveal className="wrap relative flex flex-col items-center py-[clamp(7rem,14vw,12rem)] text-center">
+        <span className="grid h-14 w-14 place-items-center rounded-[16px] border border-line bg-surface shadow-[var(--shadow-card)]">
+          <PlanckMark className="h-7 w-7" />
+        </span>
+        <h2 id="cta-title" className="title-xl mt-10 max-w-[15ch]">
+          See what your AI bill <span className="tone">is made of.</span>
         </h2>
-        <p className="t-lead mt-7 max-w-[34rem]">
-          Thirty minutes with a founder, on your own tools and your own numbers. If you don&apos;t need us yet, we&apos;ll say so.
+        <p className="lede mx-auto mt-6 max-w-[34rem]">
+          Bring one month of your tools and plans. We will show you where it goes, what can be cut, and how the saving would be proven.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Button href={DEMO_PATH}>Book a demo</Button>
-          <Button href="/contact" variant="ghost">
-            Talk to us
+          <Button href={DEMO_PATH} size="lg">
+            Book a demo
+          </Button>
+          <Button href="/docs" size="lg" variant="secondary" icon={<BookOpen className="h-[17px] w-[17px]" strokeWidth={1.8} />}>
+            Read the docs
           </Button>
         </div>
-      </div>
+        <ul className="mt-10 flex flex-wrap justify-center gap-x-7 gap-y-2 text-[0.875rem] text-muted">
+          {PROMISES.map((p) => (
+            <li key={p} className="flex items-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-subtle" aria-hidden />
+              {p}
+            </li>
+          ))}
+        </ul>
+      </Reveal>
     </section>
   );
 }

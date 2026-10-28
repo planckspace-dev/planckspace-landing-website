@@ -1,0 +1,152 @@
+---
+title: Fix a finding
+description: "Apply a finding's fix from the console or the editor extension: one-click changes with Undo, guided fixes in your own Claude Code, and seat changes that need approval."
+icon: Hammer
+---
+
+Every [finding](/docs/concepts/findings) comes with a fix, and there are three ways to apply one. A mechanical change applies in one click from the editor and can be undone in one more. A judgement call is handed to your own Claude Code with the measured numbers attached. A seat change waits for an owner, leader or admin to approve it. A saving counts only once PlanckSpace has measured it.
+
+## Pick the fix path
+
+| Finding (as named on Findings) | Fix path | Who applies it |
+| --- | --- | --- |
+| Opus running routine work (model routing) | One click in the editor sets the repo's default model, or a guided fix. | Developers for their own findings. Owners, leaders and admins in the console. |
+| Repeated context at full price (cache efficiency) | Guided fix: Claude Code restructures the prompt prefix. | Same. |
+| Dormant seats | Approval, then the seat is removed at the tool and on the subscription. | Owners, leaders and admins. |
+| Max seats used at Pro level | Approval, then the plan is changed at the tool and recorded. | Owners, leaders and admins. |
+
+<Callout title="PlanckSpace never changes a seat">
+It names the seat, the person and the evidence. An owner, leader or admin approves and makes the change at the provider. Nothing in the editor or the CLI can action a seat finding.
+</Callout>
+
+## Fix from the editor
+
+You need the [editor extension](/docs/editor-extension) connected to your workspace, and the repository open in the editor. The Insights tab lists findings about your own work, and a fix applies to the folder that is open.
+
+<Steps>
+<Step>
+
+### Open the finding
+
+In the PlanckSpace sidebar, open Insights. Each card shows the finding, its monthly amount and its confidence. See fix expands the written fix before you apply anything.
+
+</Step>
+<Step>
+
+### Apply it
+
+Click **Fix now** for a mechanical change. PlanckSpace copies every file it will touch to `~/.planckspace/fix-backups/`, writes the change, marks the finding fixed and shows a notification with an Undo button.
+
+Click **Fix with Claude Code** for a guided change. PlanckSpace saves the fix prompt as a `/planckspace-fix` command in the repo's `.claude/commands/` folder and runs it in a terminal. The prompt carries your measured numbers, such as the premium-session share or the cache hit rate, and requires Claude Code to show its plan and diff before it writes a file. When you are done, click Done — mark fixed. If no `claude` binary can be found, the prompt is copied to your clipboard. Run `/planckspace-fix` in your Claude Code panel.
+
+</Step>
+<Step>
+
+### Check the result
+
+The card reads "Measuring in telemetry". Review and commit any changed files in the repository. The team inherits the change once it is committed.
+
+</Step>
+</Steps>
+
+### What Fix now writes
+
+| Fix | What it writes |
+| --- | --- |
+| Set this repo's default model to Sonnet | `"model": "sonnet"` in the repo's `.claude/settings.json`, and in `.claude/settings.local.json` when that file pins a more expensive model, since it outranks the committed one. |
+| Split CLAUDE.md into on-demand section files | One file per `##` section under `.claude/docs/`. `CLAUDE.md` keeps its header and a short "Context index" of pointer lines. |
+| Add session-discipline rules to CLAUDE.md | Appends a short "Session discipline (cost)" block. |
+| Set default model to Sonnet in `~/.claude/settings.json` | `"model": "sonnet"` for every repo on that machine. |
+
+The Insights tab applies the fix its finding names. The extension's Optimize tab lists all four under Fixes for you, each judged on your own last 30 days as ready, applied or not needed. Its Preview for the CLAUDE.md split shows the new index and every proposed section file before anything is written.
+
+The split uses pointer lines, not `@import`: imports load in full at the start of every conversation, so they save no tokens, while a pointer line loads a section only when its topic comes up.
+
+A fix refuses rather than churn files: a `CLAUDE.md` under 2,000 characters, one with no `##` sections or already split, a settings file that is not valid JSON, or a repo already on Sonnet or Haiku. The notification then offers Fix with Claude Code instead.
+
+## Undo a fix
+
+Click Undo in the notification, click Undo last fix in the sidebar, or run Planckspace: Undo Last Fix from the command palette. Each file is restored from its backup, a file the fix created is deleted, and the finding returns to Open with its measurement dropped.
+
+Only the newest fix can be undone, because fixes to the same file stack. If an undo fails, the backups stay in `~/.planckspace/fix-backups/`.
+
+## Fix from the console
+
+Owners, leaders and admins apply findings from Findings. Everyone else sees the finding and a note that an owner, leader or admin applies it.
+
+For the two metered findings, click **Fix** on a finding. The panel points to the editor's one-click fix where one exists, and offers **Copy prompt for Claude Code** and **Show me how (manual)**. When the change is made, click **I fixed this**.
+
+<Callout type="warn" title="Fix for all is a different action">
+On the model-routing group, **Fix for all N** turns on the workspace's [model routing](/docs/guides/model-routing) policy and marks the open findings fixed. It does not edit any repo setting.
+</Callout>
+
+### Approve and apply a seat finding
+
+<Steps>
+<Step>
+
+### Approve the finding
+
+Open the finding with Approve or Preview. The panel shows "Human approval required" and a checklist built from the measured numbers: the seat, the person, the price and the evidence. Click **Approve**. The approver and the time are recorded.
+
+</Step>
+<Step>
+
+### Make the change at the provider
+
+For a dormant seat, confirm with the holder, then remove the seat in the tool's admin console. For a Max seat used at Pro level, change the plan there.
+
+</Step>
+<Step>
+
+### Record it on the subscription
+
+In Spend, click Add or change seats and lower the seat count for that plan. See [Seats and subscriptions](/docs/guides/subscriptions).
+
+</Step>
+<Step>
+
+### Mark it done
+
+Click **I made the change**. On a group of approved seat findings, **Mark N done** does it for all of them after you confirm. The finding moves to Being measured, and a subscription change schedules a re-check about 30 seconds later.
+
+</Step>
+</Steps>
+
+PlanckSpace credits a seat only when an owner, leader or admin lowered the count in PlanckSpace after the approval. The saving is booked by the day, prorated within each calendar month, for as long as the seat stays off. It is labeled declared until a seat invoice shows it.
+
+- A dormant seat is not credited if its named holder keeps working on the tool after the removal.
+- A Max to Pro move also needs a Pro seat recorded for the same tool after the approval, and a session by the holder on Pro.
+- Each removed seat is credited once. Deleting a subscription is not a removal, so lower its count instead.
+- Seats put back reopen the finding as regressed. Months already booked stay.
+
+## Dismiss, reopen and snooze
+
+**Dismiss** takes a finding out of Open and out of the open totals, and keeps it on file. It stays dismissed even if the detector keeps seeing the problem. Dismiss all N on a group asks you to confirm. **Reopen** brings a dismissed or fixed finding back to Open. Reopening a fixed finding ends its measured window, and savings already booked stay.
+
+A snoozed finding is hidden until its snooze date, then returns to Open on its own. The Findings page has no snooze button today. To get a finding out of the way for now, dismiss it and reopen it later.
+
+## What happens next
+
+A finding you mark fixed moves to Being measured. A model-routing or cache fix is judged after at least 7 days and 20 settled sessions in scope, and each session is priced against what the same work would have cost before the fix. A seat fix is judged from the lowered seat count on the subscription, and books by the day while the seat stays off. The finding then carries one of these statuses.
+
+- **Confirmed.** Savings are booked and shown as Saved (measured).
+- **At risk.** The ship rate fell by more than 10 points after the fix, so booking stops.
+- **No effect.** Nothing was saved in 30 days, and the finding goes back on the table.
+- **Regressed.** The old behavior came back. The finding reopens and booked rows stay.
+
+[Proof of savings](/docs/concepts/proof-of-savings) explains the arithmetic. The dollar figure on a card is an estimate until then.
+
+## Edge cases
+
+- A `--model` flag or an `ANTHROPIC_MODEL` variable still overrides the settings default.
+- Claude Code protects its own settings files. Expect a permission prompt for `.claude/` edits and approve it, or the model stays on Opus.
+- Without a connection to your workspace, the editor shows your CLI's local analysis. Fixes still apply, but marking them fixed and measuring them waits for the connection.
+## Related
+
+<Cards>
+  <Card title="Findings" href="/docs/concepts/findings" description="The finding types, the evidence behind each, and how an amount is set." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a saving is measured, booked and guarded." />
+  <Card title="Seats and subscriptions" href="/docs/guides/subscriptions" description="Declare seats so seat findings can be measured." />
+  <Card title="Model routing" href="/docs/guides/model-routing" description="The repo setting and the routing plugin, and how they differ." />
+</Cards>

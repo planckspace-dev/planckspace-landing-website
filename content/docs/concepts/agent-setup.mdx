@@ -1,0 +1,137 @@
+---
+title: Agent setup
+description: "How PlanckSpace scores each repository's AI agent setup, finds what is oversized or missing, and verifies a fix from config history."
+icon: Wrench
+---
+
+Agent setup is how well each repository is prepared for an AI coding agent: its instruction files, the hooks that check the agent's work, the skills it can call and its model setting. PlanckSpace reads that setup as metadata from developers' machines, scores it per repository, ranks what to fix by the billed dollars at stake, and marks a fix verified only when the repository's own sessions show the effect.
+
+## What PlanckSpace reads
+
+The CLI sends a snapshot of each in-scope repository's agent configuration. It is metadata only, never file contents:
+
+| Item | What is sent |
+| --- | --- |
+| Instruction files, such as CLAUDE.md and AGENTS.md | A repository-relative or symbolic path (such as `~/.claude/CLAUDE.md`, never an absolute one), scope, size in bytes and lines, an estimated token count (characters ÷ 4), a keyed hash, the modified time, the last commit date and the commits since |
+| Hooks | The number of hooks per event, such as PostToolUse or Stop. Never the command. |
+| Skills and commands | Their names |
+| MCP servers | Name and transport. Never a URL or an environment variable. |
+| Model setting | The value of Claude Code's `model` setting |
+
+The agent-config snapshot is checked at every level against a fixed schema, so one carrying file contents, a hook command or an MCP URL is refused rather than stored. Each instruction file is identified by a keyed hash (HMAC-SHA256) of its contents, which lets PlanckSpace see that a file changed without receiving the file. PlanckSpace stores config only for repositories in the workspace's [scope](/docs/guides/repo-scope); any other repository is dropped on arrival.
+
+Config snapshots and skill names come from CLI 0.6.0. Devices on older versions are counted as needing an update. A repository no device has reported is treated as not reported: its setup is unknown, never "missing".
+
+## The five setup findings
+
+| Finding | Fires when | Severity |
+| --- | --- | --- |
+| Oversized CLAUDE.md | The instruction files loaded into every session, `CLAUDE.md` and `.claude/CLAUDE.md`, total more than 5,000 tokens | By billed $ at stake a month: $100 or more critical, $25 high, $5 medium, less is low. With no billed $: high at 3× the threshold, medium at 1.5×, low below that. |
+| Missing CLAUDE.md | The repository has no instruction file at all, and had 20 or more sessions in the window | High at 60 sessions, else medium |
+| Stale CLAUDE.md | An instruction file unchanged for 90 days or more while the repository took 20 or more commits | High at 100 commits, else medium |
+| Missing hooks | No hook that checks the agent's work, and 20 or more sessions in the window | High at 60 sessions, else medium |
+| Unused skill | A skill installed in the repository ran 0 times in the window | Low |
+
+Hook commands are never collected, so a verification hook is inferred from its event: a PostToolUse, Stop or SubagentStop hook, in the repository or in the settings of a device that reports it. An unused skill is judged only once skill names reach PlanckSpace; without them, every skill would look unused.
+
+Every setup finding except an unused skill states its impact against comparable repositories: an oversized file in dollars a month against a 5,000-token file, a missing CLAUDE.md in ship-rate points against repositories that have one, a stale file in ship-rate points against set-up repositories, and missing hooks in errored-session rate against repositories with a verification hook. A rate needs 5 settled sessions on each side; otherwise it is withheld, with the reason.
+
+These are not [findings](/docs/concepts/findings) in the Findings sense: they never appear on the Findings page or in its headline. Most carry no dollar amount by design, since a missing hook is measured in errored sessions, not dollars.
+
+## How the oversized-CLAUDE.md amount is set
+
+On every Claude Code session, the always-loaded tokens are priced twice:
+
+- **Re-read on every turn:** tokens × turns × the session model's cache-read rate.
+- **Written once per session:** tokens × the model's 1-hour cache-write rate.
+
+On a metered session this is billed money; on a seat session it is usage value. The two are reported side by side and never summed. The window's figure is scaled to 30 days, and the amount at stake is the part above the threshold: the monthly figure × (tokens − 5,000) ÷ tokens. That equals the figure at today's size minus the figure at 5,000 tokens.
+
+A session that sent no turns borrows the repository's average turn count, then the workspace's, then 20. Figures built that way are marked estimated.
+
+For example, a repository's CLAUDE.md loads 12,000 tokens. In 30 days it had 300 metered Claude Code sessions averaging 40 turns, on a model whose cache reads cost $0.20 and 1-hour cache writes $8 per million tokens:
+
+| Step | Figure |
+| --- | --- |
+| Re-reads per session: 12,000 × 40 × $0.20 per million | $0.096 |
+| One cache write per session: 12,000 × $8 per million | $0.096 |
+| Per session | $0.192 |
+| 300 sessions in 30 days | $57.60 |
+| Above the threshold: × 7,000 ÷ 12,000 | $33.60 billed a month |
+
+That is high severity, at $25 or more. The same repository on seats would show $33.60 of usage value a month, at medium severity, because 12,000 tokens is 2.4 times the threshold.
+
+## Open, Fixed, Verified
+
+Setup findings have their own lifecycle: the config history moves them to Fixed, and the repository's sessions move them to Verified.
+
+| Stage | Rule |
+| --- | --- |
+| Open | Created when a state holds over the last 30 days. The baseline is captured at once: the per-session context figure for an oversized file, otherwise the cost or usage value per shipped session. It is taken in the repository's main ledger (billed when at least half its sessions are metered), along with the file's hash and path. |
+| Fixed | Set by the config history. Oversized or stale: a new version of the file is first seen after the baseline. Missing: an instruction file appears. Missing hooks: a verification hook appears. Unused skill: the skill is removed or runs. |
+| Verified | At least 5 sessions in the repository after the fix, and the metric moved at least 10% in the improving direction. Otherwise it stays Fixed, with the latest check recorded. |
+
+An oversized file is verified on the cause. Its always-loaded tokens must have fallen at least 10%, and the before and after figures are priced over the same post-fix sessions, so a provider price cut or shorter sessions can never verify a fix on their own.
+
+Only a verified oversized-CLAUDE.md fix in a mostly metered repository carries captured savings: the drop in the per-session figure × the repository's metered Claude Code sessions in the last 30 days since the fix, a pace taken from real sessions rather than projected. In a seat repository the improvement is recorded as usage value, never as savings. Either way the figure stays in Agent setup and never enters the Findings headline.
+
+When a state stops holding with no fix seen, for example because the repository went quiet, the open finding is removed. When a verified problem comes back, the closed finding is archived and a new one opens.
+
+## The Agent setup view
+
+PlanckSpace assembles each repository's setup into one view, over a window of 7, 30 or 90 days.
+
+**Score.** A number from 0 to 100, weighted by sessions so busy repositories count more. Only reported repositories count.
+
+| Factor | Weight | A repository scores full marks when |
+| --- | --- | --- |
+| Instruction files | 40% | Its CLAUDE.md is healthy. Oversized or stale scores half, missing scores 0. Missing needs 20 sessions, so a quieter repository without a file is not marked down. |
+| Verification hooks | 30% | It has a PostToolUse, Stop or SubagentStop hook. |
+| Model routing | 15% | A `model` setting is configured, or the reporting device runs the routing plugin. |
+| Skills in use | 15% | Every installed skill ran in the window, with partial credit by share. Full marks until skill names arrive. |
+
+The change against the previous window compares only repositories reported in both, so a repository that starts reporting never reads as the score moving.
+
+**At stake.** Billed dollars and usage value, separately, plus the repositories exposed, each counted once at its worst severity, and the savings from verified fixes.
+
+**Queue.** Every problem ranked by billed dollars at stake, then severity, then sessions.
+
+**Coverage by team.** Repositories grouped by team (the most common team among their session authors), each with its CLAUDE.md state, hooks, skills, MCP servers, routing and score.
+
+**Payoff.** Repositories with an instruction file against reported repositories without one: ship rate, plus billed dollars and usage value per shipped session, each in its own ledger. It is labelled associated, never causal, and withheld when either side has fewer than 5 settled sessions. It also lists verified fixes with their before and after.
+
+**Skills and hooks.** Inventories across repositories and devices, with run counts once skill names arrive.
+
+The view follows the reader's scope: a developer sees their own repositories and devices, a manager their team's, and no person is named. [Ask PlanckSpace](/docs/guides/ask-planckspace) reads it when you ask about CLAUDE.md files, hooks or skills.
+
+## Thresholds
+
+| Threshold | Value |
+| --- | --- |
+| Oversized: always-loaded instruction tokens | More than 5,000 |
+| Stale: days unchanged, and commits since | 90 days and 20 commits |
+| Missing CLAUDE.md or hooks: sessions in the window | 20 |
+| Any rate or comparison: settled sessions on each side | 5 |
+| Verification hook events | PostToolUse, Stop, SubagentStop |
+| Turns assumed for a session with no turn data | 20 (marked estimated) |
+| Severity by billed $ a month: critical, high, medium | $100, $25, $5 |
+| Severity by size with no billed $: high, medium | 3×, 1.5× the threshold |
+| Missing CLAUDE.md or hooks: high severity at | 60 sessions |
+| Stale: high severity at | 100 commits since |
+| Verified: sessions after the fix, and metric move | 5 sessions and 10% |
+| Score weights: instructions, hooks, routing, skills | 40%, 30%, 15%, 15% |
+
+## What it does not do
+
+- It never reads file contents, hook commands, MCP URLs or environment variables.
+- It does not claim causation. The payoff comparison shows association between setup and outcomes.
+- It does not judge a repository no device has reported.
+- It never counts usage value as a saving.
+
+## Related
+
+<Cards>
+  <Card title="Findings" href="/docs/concepts/findings" description="The money findings, which agent setup problems are kept apart from." />
+  <Card title="Cost anatomy" href="/docs/concepts/cost-anatomy" description="Where context size and cache traffic show up in agent spend." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="Every field that leaves a developer's machine." />
+</Cards>

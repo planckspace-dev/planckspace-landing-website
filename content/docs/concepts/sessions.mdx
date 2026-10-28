@@ -1,0 +1,109 @@
+---
+title: Sessions and outcomes
+description: "What a session and a turn are, how each session's outcome is decided from git, and how a session is attributed to a person."
+icon: Activity
+---
+
+A session is the unit everything in PlanckSpace is built from: one conversation with an AI coding tool, as that tool records it on the developer's machine. Every figure, from spend to findings to measured savings, is a sum or a ratio over sessions, so how a session is counted, attributed and judged decides what those figures mean.
+
+## Sessions and turns
+
+The CLI reads each tool's local logs and turns every conversation into one session row. A Claude Code transcript, for example, becomes one session.
+
+| A session records | Notes |
+| --- | --- |
+| Tool and model | The model is the main session's model. |
+| Start and end time | Wall-clock bounds of the conversation. |
+| Tokens | Input, output, cache reads and cache writes. |
+| Dollars and ledger | The charge on a metered session, or the usage value of a seat session. See [billed and usage value](/docs/concepts/two-ledgers). |
+| Seat plan | The plan the session ran on, when the CLI knows it. See [plan names](/docs/concepts/findings#plan-names). |
+| Repository, branch and git author email | Where the work happened and who did it. |
+| Outcome | Shipped, partial, abandoned, errored or unknown (below). |
+| Turn count and files touched | Counts, plus the merged pull request number when the work shipped. |
+
+A **turn** is one request to the model. Each turn carries its own model, its tokens by type, its dollar figure at API rates, the tools it called and the files it touched, and a timestamp. From CLI 0.5.0, Claude Code turns also carry the share of cache writes kept for an hour, thinking tokens, the effort level, the subagent type, why a cache was missed, the size of tool results, the speed mode and compaction markers. These feed [cost anatomy](/docs/concepts/cost-anatomy). The full field list is in the [telemetry reference](/docs/reference/telemetry).
+
+A session grows until it ends. The CLI sends its complete turn list on every sync, and PlanckSpace replaces the stored turns with it, so a session is never double counted while it is still running.
+
+## Outcomes
+
+Each session has one outcome. The CLI decides it on the developer's machine, from local git history, and recomputes it on every scan, because branches merge and sessions age. No code leaves the machine to do this.
+
+| Outcome | Rule |
+| --- | --- |
+| Shipped | A commit credited to the session reached the default branch (`main` or `master`) within 7 days of the session's start, or was pushed to the branch on `origin`. |
+| Partial | The session made commits, none of them merged to the default branch within 7 days of its start or pushed, and it started more than 7 days ago. |
+| Abandoned | No commit is credited to the session, and it ended more than 24 hours ago. |
+| Errored | The session was reported as failed. Git history never overrides it. The current CLI does not report failures, so this outcome is rare. |
+| Unknown | Too early to tell. A fresh session stays unknown until one of the rules above applies, and a session run outside a git repository stays unknown. |
+
+Any outcome other than unknown is **settled**. Settled sessions are what PlanckSpace judges work by: the model routing finding counts only settled sessions, and a model routing or cache fix is measured only after [7 days and 20 settled sessions](/docs/concepts/proof-of-savings#the-gates).
+
+### Which commits count for a session
+
+A commit is credited to a session only when all of these hold:
+
+- Its author is the session's git author, and it is on the session's branch.
+- It was authored after the session started.
+- It was authored before the earlier of two cut-offs: 12 hours after the session ended, and the start of the developer's next session in the same working copy and branch.
+
+When the next session overlaps this one (two terminals at once), commits count only up to this session's end, plus one minute for clock skew. Without these bounds, one commit would mark every earlier session on the branch as shipped, including sessions that only read code.
+
+### How the server treats outcomes
+
+- **A settled outcome replaces a stored one.** When the CLI re-sends a session because its outcome moved, the new verdict wins.
+- **Unknown never downgrades a settled outcome.** A re-sync that carries unknown keeps the stored verdict.
+- **No back-filling.** PlanckSpace never marks one session shipped because another session by the same developer shipped. Each session's outcome comes from its own commits.
+
+## Shipped units
+
+PlanckSpace measures shipped work in one of two units:
+
+- **Merged pull requests.** When a session's commit reaches the default branch, the CLI reads the pull request number from the subject line of the merge or squash commit, when it contains one (for example `#142`). A session shipped by a push alone carries none.
+- **Shipped sessions.** Used when no session in the selection has a pull request number.
+
+For any selection, such as a repository, a team or a date range, the unit is distinct pull request numbers if any session in it has one, and shipped sessions otherwise. Units are counted per ledger, so cost per shipped unit always divides billed dollars by what billed sessions shipped, and usage value by what seat sessions shipped. See [ratios stay inside one ledger](/docs/concepts/two-ledgers#ratios-stay-inside-one-ledger).
+
+## Attribution to people
+
+Every session is attributed to a person by email address.
+
+A device token (`pk_live_`) belongs to the workspace member who created it. For the sessions it sends, that member is authoritative. The git author email on a session is kept only when it is one of the member's own addresses, their account email or their git email, in any letter case. Otherwise the session is filed under the member. Trusting the session's git email alone once filed a developer's metered sessions under a leader, because a repository's local git configuration carried the leader's address.
+
+If the member who created a device token leaves the workspace, the token stops working and its syncs are refused, so no session is ever filed under a guessed address.
+
+## Subagent turns
+
+From CLI 0.4.0, a Claude Code session includes the turns of its subagents. Claude Code writes each subagent to its own transcript; the CLI merges those turns into the parent session in time order.
+
+Each turn is priced at its own model. Work a subagent ran on Haiku is priced as Haiku, even when the session's main model is Opus, and the session's model stays the main session's model. From CLI 0.5.0, subagent turns are tagged with the subagent type, so PlanckSpace can tell main-session work from subagent work. On older sessions without the tag, the savings measurement treats a turn on a model other than the session's main model as a subagent's.
+
+A turn on a model with no price is left out of the dollar figures rather than guessed, and counted as unpriced. [Coverage](/docs/concepts/coverage#unpriced-turns) reports how many turns are unpriced, because spend is undercounted while any exist.
+
+## Active time
+
+A session's duration is wall-clock time from start to end. Its **active minutes** count only the time spent working: the gaps between consecutive events (the session start, each turn, the session end) that are 30 minutes or shorter. A longer gap is time away. Active minutes need per-turn timestamps, so a session without turns shows none.
+
+For example, a session starts at 09:00, has turns at 09:04, 09:20, 09:31, 11:02 and 11:10, and ends at 11:12. The gaps are 4, 16, 11, 91, 8 and 2 minutes. The 91-minute gap is time away, so the session was active for 41 minutes out of 2 hours 12 minutes of wall clock.
+
+## Hidden sessions
+
+Some sessions never reach the workspace's figures:
+
+- **Repository scope.** When a workspace tracks only selected repositories, the CLI does not send sessions from other repositories at all: they stay on the machine, and are sent later only if the workspace starts tracking that repository. Any that reach PlanckSpace anyway, such as sessions synced before the scope was narrowed, are stored hidden. No member sees a hidden session, leaders included, and it is left out of spend, findings, budgets, savings and reconciliation. Changing the tracked list re-applies it to stored history in both directions. See [repository scope](/docs/guides/repo-scope).
+- **Education policy.** A workspace on the education policy stores new sessions hidden by default, and widening the repository scope never un-hides them. See [workspace policies](/docs/security/workspace-policies).
+
+## What a session does not contain
+
+A session is metadata only: counts, timings, models, tool names, repository and file names, and the email that attributes it. Your prompts, the model's responses and your code are never sent to PlanckSpace. Every session is checked on arrival against a fixed list of metadata fields, and a session that carries any other field is rejected. See [data we collect](/docs/security/data-we-collect).
+
+One opt-in feature sends prompt text off the machine, though never to PlanckSpace: when the workspace's [agent policy](/docs/guides/agent-policy) uses TypeSafe for task decisions and a developer has set their own TypeSafe API key, the routing plugin sends the previous and current prompt, each cut to 2,000 characters, from that machine to TypeSafe. It is off by default.
+
+## Related
+
+<Cards>
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="The two ledgers every session's dollars belong to." />
+  <Card title="Findings" href="/docs/concepts/findings" description="How sessions become findings, and which sessions each finding reads." />
+  <Card title="Telemetry reference" href="/docs/reference/telemetry" description="Every field a session and a turn carry." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="What leaves a developer's machine, and what never does." />
+</Cards>

@@ -1,0 +1,193 @@
+---
+title: Teams and roles
+description: "The five workspace roles and what each can see and do, plus teams, managers, cost-view grants, ownership transfer and the audit log."
+icon: Network
+---
+
+Every person in a workspace holds one of five roles and sits on at most one team. The role sets what they can see and change. The team sets whose numbers roll up together. The console applies both to every page, so a manager's Spend and an owner's Spend are different slices of the same data.
+
+## The five roles
+
+Roles rank in this order: owner, leader, admin, manager, developer. Owners, leaders and admins run the workspace and hold the same operational rights. The rank between them matters only when one of them changes or removes another.
+
+| Role | What it is for |
+| --- | --- |
+| Owner | Created the workspace or received it by transfer. Holds every right below, plus the actions that cannot be undone. |
+| Leader | Runs the workspace. Same operational rights as an admin, and outranks admins. |
+| Admin | Runs the workspace: people, teams, budgets, subscriptions, billing connections and exports. |
+| Manager | Sees and supports one team. |
+| Developer | Sees their own sessions and findings. |
+
+Only an owner can delete the workspace, transfer ownership, change the workspace's plan, change the privacy policy, disconnect a billing connection, or promote someone to leader.
+
+## What each role can see and do
+
+| Area | Owner, leader, admin | Manager | Developer |
+| --- | --- | --- | --- |
+| Sessions and findings | All | Team | Own |
+| Dismiss, apply or approve findings | Yes | No | No |
+| Anomaly alerts | All | Team | No |
+| Budgets | View and edit, all | View, team | No |
+| Seats and subscriptions | View and edit | View | No |
+| Billing connections (provider keys) | View and edit; the owner disconnects | View status | No |
+| Invoice check and seat efficiency | All | No | No |
+| Exports | All | Team | Own sessions only |
+| Audit log | All | No | No |
+| People, invites and teams | Manage all | View own team; add developers to it | No |
+| Cost-view grants | Any scope | Own team only | No |
+| Requests queue | All | No | No |
+| Workspace settings and privacy policy | View and edit | View | View |
+| CLI tokens | All | Own | Own |
+
+**All** is the whole workspace. **Team** is the people on the manager's team. **Own** is the person's own sessions and findings. A manager who is on no team gets nothing at team scope, but still has My work.
+
+PlanckSpace attributes a session to a person by its git author email, matched against each member's account email and git email. Four rules sit on top of the table:
+
+- **Cost-view grants** widen a person's reads without changing their role. See [Give someone a cost view](#give-someone-a-cost-view).
+- **Privacy policy.** In a collaborative workspace, developer names and emails are hidden from every role, owners included. See [Workspace policies](/docs/security/workspace-policies).
+- **Individual sessions.** A manager sees the team's sessions in lists and totals. Opening one session's detail page needs a workspace setting that is off by default, so the console shows those rows without a link.
+- **Plan features.** Team-level figures, budgets and anomaly alerts, the invoice check, chargeback exports and the audit log depend on your plan. The console names the plan that includes a missing feature.
+
+## My work
+
+**My work** shows a person's own sessions, findings and fixes, and every role has it, owners included. It is built from the signed-in person's account email and git email, matched without regard to case, and it cannot be pointed at a colleague. A manager who has no team yet can still open My work, Chat and Settings.
+
+## Create a team and set its manager
+
+Owners, leaders and admins create and manage teams.
+
+<Steps>
+<Step>
+
+### Create the team
+
+Open **Team → Teams** and select **New team**. Name the team and pick at least one person. Anyone already on another team moves to this one. Team names are unique within a workspace.
+
+</Step>
+<Step>
+
+### Add or move people
+
+On **Team → People**, select people, open the **Move to team…** menu, choose a team (or **Remove from team**) and select **Apply**. From a team's own page, **Manage → Add members** does the same for that team.
+
+</Step>
+<Step>
+
+### Name the manager and give them the role
+
+Open the team, go to **Manage**, choose someone under **Team manager** and select **Save manager**. They must already be on the team. Then open them on **Team → People**, choose **Manager** under **Role and team** and select **Save changes**.
+
+</Step>
+</Steps>
+
+<Callout type="warn" title="The team manager label does not grant access">
+Naming a team manager records who leads the team and shows it on the team's card. It does not change anyone's role. A person sees their team's data only when their role is manager and they are on that team.
+</Callout>
+
+What happens next:
+
+- A new workspace starts with one empty team named Everyone.
+- People on no team count toward no team's figures. The Teams page lists them under **Not on a team**.
+- **Delete team** in a team's Manage section detaches its members. Nobody leaves the workspace.
+
+## Let a manager add people
+
+A manager can add an existing workspace member who has the developer role to their own team. On **My team → Roster**, select **Add member** (or **Request a member**) and enter the person's email. A workspace setting decides what happens next. It is off by default, and the console has no control for it.
+
+- **Setting on:** the person joins the team at once.
+- **Setting off:** the add becomes a request. Owners, leaders and admins select **Approve** or **Reject** under **Team → Requests**. A rejection needs a reason, which is saved to the audit log.
+
+## Give someone a cost view
+
+A cost view lets a person read spend and seat data, the invoice check, exports and sessions for one team or the whole workspace, without changing their role. It adds read access only. It never grants write access and never narrows what the role already allows. The audit log and the API call it a cost observer grant.
+
+Owners, leaders and admins can grant the whole workspace or any one team. A manager can grant only their own team, and only to a member of it.
+
+<Steps>
+<Step>
+
+### Open the person
+
+Go to **Team → People** and open a developer.
+
+</Step>
+<Step>
+
+### Choose the scope and the length, then grant
+
+Under **Spend access**, set **Can see** to **The whole workspace** or **Team: name**, set **For** to **No expiry**, **30 days** or **90 days**, and select **Grant**. The person's page then lists the grant with its scope, its expiry and who issued it.
+
+</Step>
+</Steps>
+
+A manager does the same from **My team → Roster**: **Give cost view** on a teammate's row, with **30 days** ticked first for a grant that expires. **Revoke** (or **Revoke cost view**) withdraws a grant at once. The console updates the person's navigation when their tab regains focus, or within five minutes.
+
+## Change a role or remove someone
+
+You must outrank the person you change or remove, and you can only hand out roles below your own. The owner role never moves through a role change. It moves only by transfer or, in a workspace with no owner, by a claim.
+
+| Your role | Roles you can assign | People you can remove |
+| --- | --- | --- |
+| Owner | Leader, admin, manager, developer | Leaders, admins, managers, developers |
+| Leader | Admin, manager, developer | Admins, managers, developers |
+| Admin | Manager, developer | Managers, developers |
+
+You cannot change your own role, remove yourself, or remove the last owner.
+
+<Steps>
+<Step>
+
+### Open the person
+
+Go to **Team → People** and open the person. To change several roles at once, select people in the table and use **Change role…** then **Apply**. People at or above your role are skipped.
+
+</Step>
+<Step>
+
+### Change the role or remove them
+
+Choose the new role under **Role and team** and select **Save changes**. To remove the person instead, select **Remove** under **Remove from workspace** and confirm.
+
+</Step>
+</Steps>
+
+A role change takes effect on the person's next page load, and PlanckSpace emails them about it. A removed person loses access immediately, and their past sessions stay in reports.
+
+## Transfer or claim ownership
+
+The owner transfers ownership in **Settings → Workspace**. In the **Danger zone**, select **Transfer**, choose the new owner, type the workspace name and confirm. The new owner takes the owner role and you become an admin.
+
+A workspace with no owner can be claimed by its most senior member: a leader, or an admin when there is no leader. The claim needs the workspace name typed as confirmation and is recorded in the audit log. It is available through the API, and the console has no screen for it. See the [API reference](/docs/reference/api).
+
+## Actions that ask you to confirm
+
+| Action | Who can do it | Confirmation |
+| --- | --- | --- |
+| Remove a person | Owner, leader or admin who outranks them | Confirm dialog |
+| Change the privacy policy | Owner | Confirm dialog |
+| Disconnect a billing connection | Owner | Confirm dialog |
+| Transfer ownership | Owner | Type the workspace name |
+| Delete the workspace | Owner | Type the workspace name |
+| Claim an ownerless workspace | Most senior leader or admin | Type the workspace name |
+
+Behind a confirm dialog is a one-time confirmation for one action on one target, which expires after five minutes. A script that calls the API fetches the same confirmation first.
+
+## The audit log
+
+The audit log is append-only and records who did what, and when. Owners, leaders and admins can read it under **Controls → Security → Audit log**. **Open the full log** filters by kind of event, person and date range, and **Export CSV** downloads up to 2,000 events. Reading the log depends on your plan, but events are recorded on every plan.
+
+It records:
+
+- Team changes, role changes, removals, ownership transfers and claims.
+- Cost-view grants issued and revoked, and requests raised, rejected and carried out.
+- Exports, repository scope changes, privacy policy changes and billing connections.
+- Every denied request, and every change made in a sensitive area such as people, budgets, subscriptions, billing connections or the privacy policy.
+
+## Related
+
+<Cards>
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="How the privacy policy changes who sees developer names." />
+  <Card title="Team onboarding" href="/docs/team-onboarding" description="Invite people and connect their machines." />
+  <Card title="Tracked repositories" href="/docs/guides/repo-scope" description="Choose which repositories a workspace tracks." />
+  <Card title="Chargeback and exports" href="/docs/guides/exports" description="Download spend by team, repository and developer." />
+</Cards>

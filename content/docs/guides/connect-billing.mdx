@@ -1,0 +1,125 @@
+---
+title: Connect billing
+description: "Connect Anthropic, OpenAI or Amazon Bedrock so metered spend is checked against the provider's own bill, and learn how keys are held, synced and disconnected."
+icon: Plug
+---
+
+Without a provider connection, a metered session's cost is what the daemon prices from its token counts, and nothing checks it. Connect a provider and PlanckSpace reads that provider's own cost report, so [billed](/docs/concepts/two-ledgers) dollars can be held up against the invoice, and spend from machines that do not run the daemon shows up as a gap instead of staying invisible. Seats need no key: their price is the bill.
+
+## Before you start
+
+- **Role.** Owners, leaders and admins connect, replace and sync. Only an owner disconnects. Managers can see what is connected but not change it.
+- **Plan.** Connecting is part of invoice reconciliation, a plan feature. If your workspace's plan does not include it, Settings → API keys shows an upgrade prompt.
+- **A credential from the provider**, from the table below.
+
+| Provider | Credential | Starts with | What PlanckSpace reads |
+| --- | --- | --- | --- |
+| Anthropic | Admin key | `sk-ant-admin` | The organization's cost report |
+| Anthropic | Regular API key | `sk-ant-api` | Nothing. It is verified with a free call and discarded. |
+| OpenAI | Admin key | `sk-admin-` | The organization's cost report |
+| Amazon Bedrock | IAM role | `arn:aws:iam::<12-digit account>:role/<name>` | Cost Explorer, grouped by service |
+
+Only an Anthropic organization admin can create an admin key, and individual organizations cannot. OpenAI admin keys come from an organization owner, and project keys cannot read organization costs. Azure OpenAI and Google Vertex are not supported yet.
+
+## Connect a provider
+
+<Steps>
+<Step>
+
+### Open Settings → API keys
+
+Each provider has a card: Anthropic, OpenAI and AWS Bedrock. Click **Connect** on the one you use.
+
+</Step>
+<Step>
+
+### Create the credential at the provider
+
+The card names the place to create it and links to it: `console.anthropic.com → Settings → Admin keys`, `platform.openai.com → Settings → Organization → Admin keys`, or `AWS console → IAM → Roles → Create role`.
+
+For Bedrock, give the role one read-only permission, `ce:GetCostAndUsage`, and a trust policy that lets PlanckSpace's AWS account assume it with an external ID condition. The card shows the permission policy and generates the external ID for you to paste into the trust policy's `sts:ExternalId` condition. Ask your PlanckSpace contact for the account to trust.
+
+</Step>
+<Step>
+
+### Paste it
+
+The field checks the prefix as you type. An admin key reads "Admin key: reads the invoice". A regular key reads "Regular API key: verifies the org". An OpenAI project key, or a Claude sign-in token starting `sk-ant-oat`, is refused before anything is sent.
+
+</Step>
+<Step>
+
+### Verify and connect
+
+Click **Verify & connect**, or **Verify key** for a regular Anthropic key. PlanckSpace pulls the report, the card turns to Connected with last month's total and this month so far, and a confirmation line quotes both figures.
+
+</Step>
+</Steps>
+
+You can also connect from a terminal with a token created by an owner, leader or admin. The key is sent to your workspace and never written to your machine.
+
+```bash
+planck connect anthropic --admin-key <key>
+planck connect openai --api-key <key>
+planck connect bedrock --role-arn <arn>
+planck integrations list
+```
+
+`planck connect bedrock` sends your workspace ID as the external ID, while the console generates its own. The external ID in the role's trust policy has to match the path you connect by.
+
+## What connecting does
+
+PlanckSpace validates by pulling the previous UTC month and the month to date. The credential is saved only if that read succeeds, together with the monthly totals the read produced. A failed connect stores nothing, and an existing working connection stays as it was.
+
+The credential is encrypted before it is stored, with AES-256-GCM under a key held outside the database. It is never sent back to a browser or the CLI, and provider error text has keys redacted before it is shown or stored. Connecting and disconnecting are written to the workspace audit log. The totals feed [reconciliation](/docs/guides/reconciliation).
+
+For Bedrock, PlanckSpace sums every Cost Explorer service whose name contains "bedrock". That includes Claude billed through AWS Marketplace, listed as "… (Amazon Bedrock Edition)". Cost Explorer lags about a day, so month to date leaves out today, and on the 1st it reads $0.
+
+## Regular Anthropic API keys
+
+An organization without an admin key can still add a regular key. PlanckSpace makes one free call that lists models, spends no tokens, and names the key's organization. Then it throws the key away. It keeps only the last 4 characters, the organization ID, a one-way fingerprint that recognizes the same key again, and when it was verified. The 20 most recent keys are remembered.
+
+A regular key cannot read Anthropic's bill, so there is no invoice and nothing to reconcile against. The spend is measured instead, from billed Claude Code sessions on Anthropic's own API (not Bedrock or Vertex), for last month and this month so far. The card shows it as measured on developer machines, with how many devices bill per token and how many are on a subscription. Usage from machines without the daemon stays invisible until you add an admin key.
+
+An owner can click **Remove verified keys…** to delete the record of which keys were checked. Measured spend stays, because it comes from developer machines and not from the key.
+
+## Manual seat invoices
+
+A flat seat plan has no admin key. Owners, leaders and admins check a seat invoice under Spend, in the Invoice check card's Seat invoices section. Choose the month, enter the Invoice total (USD), and click **Save invoice**. An invoice within $1 of your declared seats counts as a match. Otherwise the card says how much more or less it is and links to the seats.
+
+## Keep it current
+
+Reports are read when a key is connected and whenever someone clicks **Sync now** on a provider card or **Sync all reports** at the top of the page. They do not refresh on their own yet.
+
+| Status | Meaning |
+| --- | --- |
+| Connected | The last read succeeded. |
+| Key verified | A regular Anthropic key was checked. There is no report behind it. |
+| Needs attention | The last read failed. The card shows the provider's error with keys redacted. Use **Replace key** or **Retry sync**. |
+| Pending | Added but not yet validated. |
+
+To rotate a credential, open the card's more-actions menu, choose Replace key, and paste the new one. Revoke the old one at the provider.
+
+## Disconnect
+
+Only an owner can disconnect. Open the card's more-actions menu and choose **Disconnect…**. The dialog "Disconnect Anthropic?" lists what happens, and asks you to confirm with **Disconnect** or back out with Keep connected.
+
+- The encrypted key or role is deleted.
+- The months of billing it pulled are deleted with it, so reconciliation for those months shows no invoice.
+- The key is not revoked at the provider. Revoke it there too.
+
+## Edge cases
+
+- If a provider is down or rate limiting, PlanckSpace says the key was not checked and nothing was saved. Try again in a minute.
+- A 401 means the key was revoked or copied incompletely. A 403 means it authenticated but cannot read the cost report.
+- Bedrock errors name the step that failed: AWS refused the assume-role call, the external ID did not match, or the role cannot read Cost Explorer.
+- On Claude Pro, Max or Cursor seats there is nothing to connect. Declare your seats instead.
+
+## Related
+
+<Cards>
+  <Card title="Reconciliation" href="/docs/guides/reconciliation" description="Hold the provider's report and your seat invoices up against tracked spend." />
+  <Card title="Seats and subscriptions" href="/docs/guides/subscriptions" description="Declare the seats whose price is the bill." />
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="Why invoices and seat usage are never added together." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="What leaves a developer's machine, and what never does." />
+</Cards>

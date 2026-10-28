@@ -1,0 +1,476 @@
+---
+title: REST API
+description: "Authentication, rate limits, errors and the endpoints customers integrate with: ingest, sessions, findings, savings, spend, exports, budgets, subscriptions and policies."
+icon: Code
+---
+
+The PlanckSpace API is the interface the CLI, the editor extension and the console are built on. This page documents the endpoints customers integrate with: sending sessions, reading sessions and findings, the savings ledger, spend and overview figures, exports, budgets, subscriptions, and the routing and agent policies. Every other route belongs to the console and is internal to it; it is not covered here.
+
+The base URL is `https://api.planckspace.dev`. Request and response bodies are JSON, timestamps are ISO 8601, and money is in US dollars.
+
+Money comes in two ledgers that are never added together. Where a response splits it, `billedUsd` is money that leaves the bank and `imputedUsd` is the [usage value](/docs/concepts/two-ledgers) of work done on flat-rate seats. No endpoint returns a total of the two, and you should not compute one.
+
+## Authentication
+
+Send a token in the `Authorization` header on every request:
+
+```bash
+curl https://api.planckspace.dev/api/me \
+  -H "Authorization: Bearer pk_live_xxxxxxxx"
+```
+
+There are two kinds of token. The prefix tells them apart.
+
+| Token | Looks like | Acts as | Where you get it |
+| --- | --- | --- | --- |
+| Device token | `pk_live_` followed by 43 characters | The member who created it, with that member's role. | A join code or connect code issues one when you run `planck init`, or you copy one from Settings in the console and run `planck login`. See the [CLI reference](/docs/reference/cli#planck-init). |
+| Session token | A signed token with no `pk_live_` prefix | The signed-in user. | `POST /api/auth/login`. Valid for 30 days. |
+
+A device token is shown once, when it is issued. It stops working as soon as the member who created it leaves the workspace. Every request made with a valid device token also counts as that device reporting, which is what the console's [coverage](/docs/concepts/coverage) meter is built on.
+
+### Signing in
+
+```bash
+curl https://api.planckspace.dev/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "you@example.com", "password": "..." }'
+```
+
+A successful call returns `200` with `{ "token": "<session token>", "user": { "id", "email", "name" } }`. Wrong credentials return `401` with `{ "error": "invalid email or password" }`. The email is matched without regard to case.
+
+### Which token each endpoint accepts
+
+A route with No under Device token rejects a device token with `401`, and a route with No under Session token rejects a session token. Where both are accepted, a device token is checked against its creator's role exactly as a session token would be.
+
+| Endpoint | Device token | Session token |
+| --- | --- | --- |
+| `POST /api/ingest` | Yes | No |
+| `GET /api/me`, `GET /api/me/health`, `GET /api/me/recoverable` | Yes | No |
+| `GET /api/routing-policy`, `GET /api/agent-policy` | Yes | No |
+| `GET /api/sessions/manifest` | Yes | Yes |
+| `GET /api/sessions`, `/api/sessions/summary`, `/api/sessions/filters` | Yes | Yes |
+| `GET /api/savings-ledger` and its receipts | Yes | Yes |
+| `GET /api/insights/:id/remediation`, `PATCH /api/insights/:id/status`, `POST /api/insights/:id/report-fixed`, `GET /api/insights/developer` | Yes | Yes |
+| `GET /api/insights`, `GET /api/insights/:id`, and the other finding endpoints | No | Yes |
+| `GET /api/overview`, `GET /api/spend-timeseries` | No | Yes |
+| `GET /api/exports/chargeback`, `GET /api/exports/sessions` | No | Yes |
+| `/api/budgets`, `/api/subscriptions` | No | Yes |
+| `/api/workspaces/:id/model-routing`, `/api/workspaces/:id/agent-policy` | No | Yes |
+
+## Choosing the workspace
+
+A device token belongs to one workspace, and every request made with it runs in that workspace. A `workspaceId` query parameter that names another workspace is ignored.
+
+A session token can reach every workspace its user belongs to. Pass `workspaceId` as a query parameter. If you omit it, the API uses your default workspace: the earliest workspace you created or joined after sign-up, or your personal workspace if there is none. A workspace you are not a member of returns `403` with `not a member of this workspace`. On a route whose path names the workspace, such as `/api/workspaces/:id/model-routing`, the path decides; a `workspaceId` query parameter that names a different workspace fails with `400` and `workspaceId does not match the workspace in the path`.
+
+Your role decides how much of a workspace you see. Owners, leaders and admins read the whole workspace, managers read their team, and developers read their own work. `mine=1` on the session, finding and savings endpoints narrows any role to the caller's own work. A `cost_observer` grant adds read access to spend data at team or workspace scope. See [teams and roles](/docs/guides/teams-and-roles).
+
+In a workspace with the [collaborative policy](/docs/security/workspace-policies), identity is private for every role: the fields `developer`, `developerEmail` and `gitAuthorEmail` are omitted from responses or set to `null`, and email addresses in finding text are replaced with `a developer`.
+
+## Errors
+
+An error response is JSON with an `error` string. A body that fails validation adds `details` with `formErrors` and `fieldErrors`. An unhandled server error returns `{ "error": "Internal Server Error", "statusCode": 500 }` and nothing more.
+
+| Status | Meaning |
+| --- | --- |
+| `400` | The body or query failed validation, a `workspaceId` did not match, or the URL held a `%00` character. |
+| `401` | No valid token. The message is `authentication required`, or `valid workspace token required` on device-token routes. |
+| `402` | A plan limit. A plan-gated route answers `{ "code": "PLAN_UPGRADE_REQUIRED", "feature", "requiredPlan", "currentPlan", "effectivePlan", "error" }`. Ingest answers `{ "code": "SPEND_LIMIT_REACHED", "plan", "used", "limit", "error" }` when the month's tracked AI activity, valued at API rates and not an amount billed, has reached the plan's limit. |
+| `403` | Your role or scope does not allow it: `not available for your role`, `not a member of this workspace`, or `owner, leader or admin role required`. |
+| `404` | Not found. A finding outside your scope also returns `404`, so its existence is not revealed. |
+| `409` | A conflict, such as a budget that already exists, or a seat finding that needs approval first (`code: "approval_required"`). |
+| `429` | Rate limit exceeded. The response has a `Retry-After` header with the seconds to wait. |
+
+### Rate limits
+
+These are the defaults. The other endpoints on this page have no per-route limit.
+
+| Route | Limit | Counted per |
+| --- | --- | --- |
+| `POST /api/ingest` | 120 requests a minute | Device token |
+| `GET /api/me/recoverable` | 12 requests a minute | Device token |
+| `POST /api/auth/login`, `POST /api/auth/register` | 20 requests a minute | IP address |
+| `POST /api/join`, `POST /api/connect` | 10 requests a minute | IP address |
+
+## Ingest
+
+### `POST /api/ingest`
+
+Creates or updates sessions and records a device's batch-level facts. This is the endpoint the CLI sends usage to.
+
+**Auth.** Device token only. The request is also refused with `402` when the workspace's plan limit for the month has been reached.
+
+**Body.** An envelope with up to 500 sessions, or the older bare array of sessions. Every field is specified in the [telemetry schema](/docs/reference/telemetry). In an envelope request every session's `workspaceId` must equal the token's workspace, or the request fails with `400` and `workspaceId mismatch`. An unknown key in a session fails the whole request with `400`.
+
+**Behavior.** Sending a session again updates it, so a retry never duplicates. New sessions schedule a detector run for the workspace, which the server starts about 30 seconds after a burst of syncs settles. When the token belongs to a person, sessions are attributed to that person.
+
+**Response.** `200` with the counts below. An envelope with `sessions: []` is valid, and carries batch-level facts on their own.
+
+| Field | Description |
+| --- | --- |
+| `created`, `updated` | Sessions created and sessions updated. The only two fields returned for the bare-array format. |
+| `subscriptionsUpserted` | Seat declarations created from the envelope. |
+| `insightsUpserted` | Local detector results stored. |
+| `anomaliesUpserted` | Spend jumps stored. |
+| `budgetsReplaced` | Budgets created from the envelope. |
+| `productivityMetricUpserted` | Whether a productivity metric was stored. |
+| `agentConfig` | Present only when the request carried a snapshot: `reports`, `entries` and `droppedOutOfScope`, the number of repositories dropped because the workspace does not track them. |
+| `cli` | What the server wants this client to run: `latest`, `minSupported`, `state` and `reason`. `state` is `current`, `outdated`, `unsupported` or `unknown`. `unsupported` means the build cannot price models now in use, so the spend it reports is understated. |
+| `routing` | `{ "policy": ... }`, where the value is `ask`, `on` or `off`. The workspace's [model routing](/docs/guides/model-routing) policy. |
+| `agentPolicy` | The workspace's [agent policy](#agent-policy). |
+
+## Device endpoints
+
+These are the calls the CLI makes around a sync. They accept a device token.
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/me` | `{ workspaceId, workspaceName }`. Confirms that a token is valid. |
+| `GET /api/me/health` | `{ ok, workspaceId, workspaceName, tokenIssuedAt, backendDbInstanceId }`. The CLI calls it before each sync and every 5 minutes from the daemon. A change in `backendDbInstanceId` tells it the backend's database was reset. |
+| `GET /api/me/recoverable` | The figure `planck init` prints. Pass `refresh=1` to run the detectors first. Fields: `windowDays` (30), `ready`, `missing`, `recoverableMonthlyUsd` (`null` until there is enough history), `ledger` (always `billed`), `findingCount`, `top` (up to three findings with `title`, `typeLabel` and `monthlyUsd`), `data` (`sessionCount30d`, `firstSessionAt`, `historyDays`), `coverage` (`reporting`, `teamSize`, `teamSizeSource`, `status`, `staleCount`, `notYetConnected`) and `view`. A developer's token gets only the findings about that developer, with `view` set to `developer`. |
+| `GET /api/sessions/manifest` | The ids of the workspace's sessions since `since` (an ISO 8601 timestamp, default 90 days ago): `sessionIds`, `count`, `windowStart`, `generatedAt`, `workspaceId`, `workspaceName` and `repoScope` with its `mode` and `repos`. With a session token, `workspaceId` is required. |
+
+## Sessions
+
+The three read endpoints share one set of filters, so a summary always describes the same sessions as the list beside it. They need the `read session` permission: developers see their own sessions, managers their team's, and owners, leaders and admins all of them. Sessions from repositories the workspace does not track are never returned.
+
+### Filters
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace, for a session token. |
+| `range` | A rolling window of `7`, `30` or `90` days. |
+| `from`, `to` | An explicit window, as ISO 8601 timestamps or bare dates. It overrides `range`, must be at most 800 days, and is ignored unless both are valid. With neither `range` nor a window, the list covers all time. |
+| `outcome` | `shipped`, `partial`, `abandoned`, `errored` or `unknown`. Ignored by the summary, whose outcome counts are the partition. |
+| `developer` | A developer's email, matched exactly. |
+| `repo`, `branch`, `model` | Exact match. |
+| `tool` | `claude_code`, `cursor`, `windsurf`, `antigravity` or `jetbrains`. |
+| `excludeTool` | Comma-separated tools to leave out. |
+| `billing` | `seat` for flat-rate sessions or `metered` for pay-per-token sessions. |
+| `minCost`, `maxCost` | Bounds on the session's `costUsd`. |
+| `mine` | `1` returns only the caller's own sessions, for every role. |
+
+### `GET /api/sessions`
+
+A page of sessions. Adds paging and sorting to the filters above.
+
+| Parameter | Description |
+| --- | --- |
+| `page` | Page number. Default `1`. |
+| `limit` | Page size. Default `20`, maximum `100`. |
+| `sort` | `date` (default), `cost`, `billed`, `tokens`, `turns` or `duration`. With `billed`, metered sessions come first, ordered by what they charged, then seat sessions by date, so a seat session is never ranked by its estimate. |
+| `order` | `asc` or `desc`. Default `desc`. |
+
+The response holds `data`, `total`, `page`, `limit`, `totalPages`, `filters` (the filters applied, plus `sort` and `order`) and `detailAvailable`. That last field is `false` when the caller is a manager and the workspace keeps individual sessions private. Each row has:
+
+| Field | Description |
+| --- | --- |
+| `id`, `sessionId` | The record id and the tool's session id. |
+| `tool`, `model`, `repo`, `gitBranch`, `outcome`, `mergedPrNumber` | What the session was. `developer` is the git email, or `unknown`. |
+| `startedAt`, `endedAt`, `durationMin`, `activeMin` | Timing. `activeMin` counts gaps between events of up to 30 minutes as work, and is `null` when the session has no turn times. |
+| `costType`, `billing` | The ledger: `billed` and `metered`, or `imputed` and `seat`. |
+| `billedUsd` | What the session charged. It is `0` for a seat session, and is the only dollar figure that is money on every row. |
+| `costUsd` | The session priced at API rates. On a seat session this is an estimate of usage value, not a charge. |
+| `planLabel` | The plan a seat session ran under, such as `Max 20×`, or `null`. |
+| `turnCount`, `inputTokens`, `outputTokens`, `cacheReadTokens`, `cacheWriteTokens`, `filesTouchedCount` | Counts. |
+
+### `GET /api/sessions/summary`
+
+The band above the session table, in one request. It takes the filters above, plus `tzOffsetMinutes`, the caller's `Date#getTimezoneOffset()` value, for the hour-of-week grid.
+
+| Field | Description |
+| --- | --- |
+| `total`, `outcomes` | The session count, and counts for `shipped`, `abandoned`, `errored`, `partial` and `unknown`. |
+| `seat`, `metered` | Each with `sessions`, `outputTokens` and `turns`. `metered` adds `billedUsd`. Seat work is reported as sessions and tokens, never as dollars. |
+| `tokens` | `input`, `output`, `cacheRead` and `cacheWrite` across all sessions. |
+| `activeDevelopers` | Distinct authors in the window. |
+| `daily` | One entry per UTC day, zero-filled: `date`, `seat`, `metered`, `billedUsd`, `outputTokens`. |
+| `previous` | The window just before this one, for comparison: `total`, `billedUsd` and `shipped`. `null` when the window is open-ended. |
+| `hourly` | A 7 by 24 grid of session starts, Monday first, in the caller's local time. |
+| `costBands` | Metered sessions by what each cost: under $1, $1 to $3, $3 to $10, $10 to $30, and $30 or more. Each has `label`, `min`, `max` and `sessions`. |
+| `unshippedBilledUsd` | Metered dollars on abandoned and errored sessions. |
+| `repos` | The eight busiest repositories: `repo`, `sessions`, `shipped`, `meteredSessions`, `billedUsd`, `outputTokens`. |
+
+### `GET /api/sessions/filters`
+
+The distinct values available for each filter, to populate dropdowns. It takes `workspaceId`, `range` (default 30), `from`, `to` and `mine`. It returns `developers`, `repos`, `branches`, `models`, `tools`, `outcomes` and `costRange` with `min` and `max`. In a collaborative workspace `developers` is empty, unless you pass `mine=1`.
+
+## Findings
+
+A finding is a detected item of waste with a monthly amount and a fix. See [findings](/docs/concepts/findings) for the three types and [proof of savings](/docs/concepts/proof-of-savings) for how a saving is booked.
+
+### `GET /api/insights`
+
+The findings list and the headline figures. Session token only. It needs the `read insight` permission and a plan with cost insights.
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace. |
+| `pilot` | `true` limits the list and the summary to the finding types the Findings page shows: `dormant-seat`, `seat-rightsize`, `model-routing` and `cache-efficiency`. |
+| `scope` | `workspace`, `repo` or `developer`. |
+| `status` | `open`, `dismissed`, `applied`, `fixed`, `snoozed` or `verified_fixed`. By default the list holds open findings plus snoozed ones whose date has passed. |
+| `includeAll` | `true` returns findings of every status. |
+| `detectorId` | One detector only. |
+| `since` | `7`, `30` or `90`. Only findings detected in that many days, in both the rows and the summary. |
+| `mine` | `1` returns only the caller's own findings. |
+
+The response is `{ data, summary }`. A manager gets the developer findings of their team. A developer gets their own developer findings plus workspace and repository findings. When the workspace has no findings yet and too little data to produce any, the response is `{ "data": null, "emptyState": { "missing": [...] } }`, for example `need 7+ days of session data`.
+
+Each finding in `data` has `id`, `detectorId`, `scope`, `repoName`, `developerEmail`, `titleShort`, `estimatedMonthlySavingsUsd`, `confidence` (`high`, `medium` or `low`), `status`, `snoozeUntil`, `createdAt`, `approvedAt`, `fixedAt`, `capturedSavingsUsd`, `measurementStatus`, `measurementNote`, `ledger` and `finding`. `measurementStatus` is `measuring`, `confirmed`, `at_risk`, `no_effect` or `regressed`. `finding` describes the type: `type` (`dormant_seat`, `plan_rightsize` or `metered_waste`), `typeLabel`, `effort`, `risk`, `fixKind` (`approval`, `deterministic` or `agent`) and `requiresApproval`. It is `null` for detectors outside those types.
+
+The `summary` is computed once and is the figure every page quotes:
+
+| Field | Description |
+| --- | --- |
+| `openMonthlyUsd` | Dollars per month that are open: findings that are open, plus snoozed ones past their date. This is the Findings page's "open" figure. |
+| `openSeatsUsd`, `openMeteredUsd` | `openMonthlyUsd` split into seat findings and metered findings. They add up to it exactly. |
+| `identifiedMonthlyUsd` | Open and snoozed findings, plus fixes a person has marked but that are not yet measured. |
+| `claimedMonthlyUsd`, `measuringCount` | Fixes marked as done and still being measured, and how many there are. |
+| `capturedMonthlyUsd` | The measured current pace: what confirmed fixes saved over the last 30 days. |
+| `realizedToDateUsd` | Measured dollars saved to date. |
+| `pendingCount` | The number of open and past-snooze findings. |
+| `byPattern` | Per detector: `detectorId`, `openMonthlyUsd` and `capturedMonthlyUsd`. Open values add up to `openMonthlyUsd`. |
+
+A detector can report the same dollars at workspace, repository and developer scope, so never add up the rows yourself. Use `summary`.
+
+### `GET /api/insights/:id`
+
+One finding in full. Session token only. It adds `evidence`, `manualFix`, `dedupeKey`, `measurement` and `proof` to the fields above. `measurement` compares the finding's metric before and after: `metricKind`, `baseline`, `baselineCapturedAt`, `current`, `measuredFrom`, `source`, `postFixSessions`, `requiredSessions` and `improvementPct`. `proof` is the booked savings: `method`, `status`, `note`, `fixedAt`, `measuredAt`, `realizedUsd`, `paceUsd`, `sessionsBooked`, `requiredSessions` and `requiredDays`. Either is `null` when it does not apply.
+
+### Other finding endpoints
+
+| Endpoint | Token | Who | Description |
+| --- | --- | --- | --- |
+| `GET /api/insights/:id/remediation` | Either | Anyone who can read the finding | The paste-ready fix. Returns `insightId`, `detectorId`, `eligible`, `prompt`, `predictedOutcome`, `ineligibleReason`, `fixKind` and `approvalSteps`. An ineligible finding returns the reason instead of a prompt. |
+| `PATCH /api/insights/:id/status` | Either | Owners, leaders and admins | Body `{ "status": ... }`, where the status is `open`, `fixed`, `snoozed` or `dismissed`. `snoozed` also needs `snoozeUntil`, a future ISO 8601 date. Marking a fix `fixed` starts its measurement window. |
+| `POST /api/insights/:id/report-fixed` | Either | Owners, leaders and admins for any finding; others only for their own developer findings | Body `{ "status": ... }`, where the status is `fixed` (the default) or `open` to undo. |
+| `POST /api/insights/:id/approve` | Session token | Owners, leaders and admins | Records the human sign-off a seat finding needs. `400` if the finding does not need approval, `409` if it is not open. |
+| `POST /api/insights/:id/dismiss`, `POST /api/insights/:id/apply` | Session token | Owners, leaders and admins | Set the status to `dismissed` or `applied`. |
+| `POST /api/insights/recompute` | Session token | Owners, leaders and admins | Runs the detectors now. Returns `upserted`, `removedStale` and `recomputedAt`. |
+| `GET /api/insights/developer` | Either | The caller | The caller's own developer findings, as the editor extension shows them. With a device token, `email` defaults to the token creator's address. |
+
+A seat finding, such as a dormant seat or a Max seat that fits Pro, acts on a person's access, so it is never actioned automatically. Moving it to `fixed` or `applied` needs a prior approval and a signed-in user. A device token receives `409` with `code: "approval_required"`.
+
+## Savings ledger
+
+### `GET /api/savings-ledger`
+
+Measured savings: every dollar is a booked row, priced against what the same work would have cost without the fix. Either token. It needs the `read insight` permission.
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace. |
+| `pilot` | `true` limits the ledger to the finding types the Findings page shows, so the headline matches it. |
+| `mine` | `1` returns only fixes about the caller or marked by the caller. |
+
+A session token is scoped by role: a manager sees their team's savings and a developer their own. A device token sees the workspace figure.
+
+The two top-level totals add up every booked row. With `pilot=true` every row is on the billed ledger. Without it, rows on the usage-value ledger can be included, so read `byLedger` when you need the two apart.
+
+| Field | Description |
+| --- | --- |
+| `installDate` | When the workspace was created. |
+| `realizedToDateUsd` | Measured dollars saved to date, the sum of every booked row. `cumulativeCapturedUsd` carries the same value for older clients. |
+| `capturedMonthlyUsd` | The current pace over the last 30 days. |
+| `claimedMonthlyUsd`, `measuringCount` | Fixes marked as done and still being measured. Their forecast is never part of the headline. |
+| `byLedger` | `billed` and `imputed`, each with `realizedToDateUsd` and `capturedMonthlyUsd`. Read this to keep the two ledgers apart. |
+| `byMethod` | Realized dollars per method: `repriced`, `rebased_cache` or `seat_removed`. |
+| `entries` | One per finding with savings. See below. |
+| `monthlySeries` | One point per calendar month since install: `month` and `cumulativeCapturedUsd`. |
+| `dailySeries` | Realized dollars per UTC day over the last 90 days, zero-filled: `date` and `savedUsd`. |
+
+An entry holds `insightId`, `detectorId`, `scope`, `repoName`, `title`, `capturedMonthlyUsd`, `realizedToDateUsd`, `method`, `confidence` (`high` for exact arithmetic on recorded tokens, `medium` for an assumption or a declared seat change), `unitsBooked` (sessions or seat-months), `measurementStatus`, `measurementNote`, `fixedAt`, `detectedAt`, `approvedAt`, `estimatedMonthlyUsd` (the forecast, shown against what was measured and never added to it), `ledger`, `developerEmail` and `fixedBy`.
+
+### `GET /api/savings-ledger/:insightId/receipts`
+
+The rows behind one finding's savings, newest first, up to 200. Same auth and scope as the ledger; a scoped caller can open only findings about their people. Returns `404` for an unknown finding.
+
+The response holds `insightId`, `realizedToDateUsd`, `units` and `receipts`. Each receipt has `occurredAt`, `periodEnd`, `method`, `confidence`, `ledger`, `counterfactualUsd` (what the work would have cost without the fix), `actualUsd` (what it cost), `savedUsd`, `session` (`id`, `sessionId`, `model`, `repoName` and `outcome`, or `null` for a seat-month) and `details`. See [proof of savings](/docs/concepts/proof-of-savings).
+
+## Overview and spend
+
+Both endpoints need a session token and the `read session` permission, and both follow the caller's scope.
+
+### `GET /api/overview`
+
+The numbers behind the Overview page.
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace. |
+| `range` | `7`, `30` or `90` days. Default `30`. |
+| `from`, `to` | An explicit window, as for sessions. It overrides `range`. |
+
+The response carries each figure per ledger, never a total. `spend` is `{ billedUsd, imputedUsd }`, and `billedSpendUsd` and `consumptionValueUsd` mirror its two halves for older clients. `hasSpend` says whether either ledger has money in it. Further fields include `momChange`, `activeDevelopers`, `sessionCount`, `avgCostPerSession`, `shippedRatePct`, `costPerShippedUnit`, `shippedUnitCount`, `shippedUnitLabel` (`PRs` or `sessions`), `prevPeriodShippedRatePct`, `prevPeriodCostPerShippedUnit`, `dailySpend`, `dailySessions`, `byDeveloper`, `byRepo` and `byModel`. Alongside them: `recoverableWasteUsd`, `wasteBreakdown`, `needsSubscriptions`, and, for owners, leaders and admins, `costSummary`, `verdict` and `budgetRunway`. `fleetHealth` is returned to owners and leaders. For other roles those fields are `null`.
+
+### `GET /api/spend-timeseries`
+
+Money over time, in both ledgers, optionally grouped.
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace. |
+| `range`, `from`, `to` | The window, as for the overview. |
+| `granularity` | `hour`, `day`, `week` or `month`. Chosen from the window length when omitted. |
+| `groupBy` | `none` (default), `team`, `project`, `repo`, `model`, `tool` or `developer`. `team` needs an owner, leader or admin; for other roles it falls back to `none`. |
+| `tzOffsetMinutes` | The caller's UTC offset, as `Date#getTimezoneOffset()` reports it. Buckets and bare dates then align to the caller's local day. Clamped to 14 hours either way. |
+
+The response holds `granularity`, `groupBy`, `buckets` (the bucket start keys), `total` (`billedUsd` and `imputedUsd` for the window), `billedTotals` and `imputedTotals` (one value per bucket, in two parallel arrays), `series`, `shippedUnits` and `shippedUnit`. Each entry in `series` has `key`, `label`, `total`, `billedPoints`, `imputedPoints`, `sessionCount`, `shippedSessionCount`, `developerCount`, `repoCount`, `sessionPoints`, `shippedPoints`, `outcomes`, `tokens` and `billed`. The `billed` object counts metered sessions only, and is the only valid denominator for billed dollars. Plot the two ledgers as two lines, never as their sum.
+
+## Exports
+
+Both exports need a session token and the `read export` permission, and a plan with chargeback exports. Developers can export their own sessions but get `403` on the chargeback.
+
+| Parameter | Description |
+| --- | --- |
+| `workspaceId` | The workspace. |
+| `month` | The month to export, as `YYYY-MM`. Required. |
+| `format` | `csv` or `pdf` for the chargeback, `jsonl` for the sessions export. Required. |
+
+The response is a file. It carries `Content-Disposition: attachment` with the file name, and an `X-Cache` header that says `HIT` or `MISS`. See [exports](/docs/guides/exports).
+
+### `GET /api/exports/chargeback`
+
+Spend for a month grouped for finance, as `planckspace-chargeback-YYYY-MM.csv` or `.pdf`. A manager's export holds only their team's rows.
+
+The CSV has the columns `month`, `costCenter`, `team`, `repo`, `developerEmail`, `tool`, `model`, `costType`, `costUsd`, `consumptionValueUsd`, `shippedPrCount` and `sessions`. `costCenter` is the workspace name, and `team` is the developer's team, or empty. In a collaborative workspace `developerEmail` is omitted.
+
+To add up money, filter on `costType`. Sum `costUsd` over rows where `costType` is `billed` for billed money. Sum `consumptionValueUsd` over rows where `costType` is `imputed` for usage value. The `costUsd` of an `imputed` row is the API-rate estimate and is not a charge, so do not add it to billed. The PDF's totals are labelled "Billed (metered)" and "Usage value (seats)".
+
+### `GET /api/exports/sessions`
+
+One JSON object per line, as `planckspace-sessions-YYYY-MM.jsonl`, with no prompt text. Each line has `sessionId`, `tool`, `model`, `startedAt`, `endedAt`, `durationMin`, `costUsd`, `consumptionValueUsd`, `costType`, `repoName`, `gitAuthorEmail`, `gitBranch`, `outcome`, `turnCount`, `filesTouchedCount`, `inputTokens`, `outputTokens`, `cacheReadTokens`, `cacheWriteTokens`, `mergedPrNumber` and `subscriptionPlan`. In a collaborative workspace `gitAuthorEmail` is omitted. The same rule applies to `costUsd`: it is money only where `costType` is `billed`.
+
+## Budgets
+
+A budget is a ceiling on billed money for the workspace, a team or a repository. Usage value is never counted against it. See [budgets and alerts](/docs/guides/budgets-and-alerts). All four endpoints need a session token. Writes are for owners, leaders and admins.
+
+### `GET /api/budgets`
+
+The workspace's budgets with their burn. Owners, leaders, admins and managers can read them. It needs a plan with budgets and alerts. Returns `{ "data": [...] }`, where each budget has:
+
+| Field | Description |
+| --- | --- |
+| `id`, `scope`, `scopeName`, `monthlyUsd` | The budget. `scope` is `workspace`, `team` or `repo`, and `scopeName` is `null` for `workspace`. |
+| `mtdSpendUsd` | Billed spend this month so far. This is what the budget is measured against. |
+| `mtdConsumptionValueUsd` | Usage value this month so far. It is not budget burn. |
+| `dailyBilledUsd` | Billed dollars per UTC day this month, the first entry being the 1st. |
+| `burnPct` | `mtdSpendUsd` as a percentage of `monthlyUsd`. |
+| `projectedMonthEndUsd`, `status`, `breachEtaDays` | A linear projection from the month's pace. `status` is `on_track` when the projection is under 90% of the budget, `at_risk` from 90% to 100%, and `breach` over 100%. `breachEtaDays` is `null` unless breaching, and `0` when already over. |
+| `thresholds`, `alertChannels` | Alert percentages, and where alerts go. |
+| `createdAt` | When the budget was created. |
+
+### `POST /api/budgets`
+
+Creates a budget. Returns `201` with the budget. Body:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `scope` | `workspace`, `team` or `repo` | Required. |
+| `scopeName` | String | Required for `team` and `repo`. A team must already exist. Ignored for `workspace`. |
+| `monthlyUsd` | Number greater than 0 | Required. |
+| `thresholds` | Array of 1 to 5 unique integers, each from 1 to 500 | Percentages of the budget that trigger an alert. Default `[50, 80, 100]`. |
+| `alertChannels` | Object | Optional. `email` is an array of addresses and `slack` is a webhook URL. |
+
+A second budget for the same target returns `409` with the existing budget's `id`.
+
+### `PATCH /api/budgets/:id`
+
+Changes `monthlyUsd`, `thresholds` or `alertChannels`. It needs a plan with budgets and alerts. Returns the updated budget, or `404`.
+
+### `DELETE /api/budgets/:id`
+
+Removes a budget. Returns `204`, also when it was already gone.
+
+## Subscriptions
+
+A subscription is a declared seat inventory for one tool and plan. Seat counts and prices feed the seat findings and the billed seat total. All endpoints need a session token. Reads are open to owners, leaders, admins and managers; writes are for owners, leaders and admins. See [subscriptions](/docs/guides/subscriptions).
+
+### `GET /api/subscriptions`
+
+Returns `{ "data": [...] }`. Each subscription has `id`, `tool`, `plan`, `billingMode` (`imputed` for a flat seat, `billed` for metered), `seatCount`, `costPerSeatUsd`, `totalMonthlyUsd`, `monthlyRateUsd`, `startDate`, `cumulativeToDateUsd`, `renewalDate`, `createdBy`, `createdAt` and `updatedAt`.
+
+### `POST /api/subscriptions`
+
+Declares a subscription. Returns `201` with it.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `tool` | `claude_code`, `cursor`, `copilot`, `windsurf`, `jetbrains` or `other` | Required. |
+| `plan` | String of 1 to 60 characters | Default `default`. |
+| `billingMode` | `imputed` or `billed` | Default `imputed`. |
+| `seatCount` | Positive integer | Required. |
+| `costPerSeatUsd` | Number, 0 or more | Required. Monthly price per seat. |
+| `renewalDate`, `startDate` | ISO 8601 timestamp with a UTC offset | Optional. `startDate` defaults to now. |
+
+A subscription for the same tool and plan returns `409` with its `id`. Edit it instead.
+
+### `PATCH /api/subscriptions/:id`
+
+Changes `seatCount`, `costPerSeatUsd`, `renewalDate` or `startDate`. The last two accept `null`. Returns the updated subscription, or `404`.
+
+### `DELETE /api/subscriptions/:id`
+
+Removes a subscription. Returns `204`, also when it was already gone. Every change to a subscription is recorded with its actor, and schedules a detector run, so seat findings follow the seats you declared.
+
+## Routing policy
+
+The workspace policy for [model routing](/docs/guides/model-routing) is `ask`, `on` or `off`. The default is `ask`.
+
+### `GET /api/routing-policy`
+
+Device token only. Returns `{ "policy": ... }`, where the value is `ask`, `on` or `off`. This is what `planck init` reads before offering routing.
+
+### `GET /api/workspaces/:id/model-routing`
+
+Session token only. Returns the policy and how far it has reached.
+
+| Field | Description |
+| --- | --- |
+| `policy` | `ask`, `on` or `off`. |
+| `canEdit` | `true` for owners, leaders and admins. |
+| `devices` | `reporting` and `installed`, counted over the last `windowDays` days (30), and `notEnforcing`. Only devices that said whether routing is installed are counted. |
+| `devices.notEnforcing` | For owners, leaders and admins, up to 50 reporting devices without routing: `id`, `label`, `ownerName`, `ownerEmail`, `lastSeenAt`, `routingSeenAt`, `cliVersion` and `reason`. `reason` is `policy_not_on`, `awaiting_sync` or `declined_locally`. `null` for other roles. In a collaborative workspace the label is `Device N` and the owner fields are `null`. |
+
+### `PUT /api/workspaces/:id/model-routing`
+
+Owners, leaders and admins only. Body `{ "policy": ... }`, where the value is `ask`, `on` or `off`. Returns `{ "policy": ... }` with the saved value. A change is recorded in the audit log, and devices learn the new policy from their next sync.
+
+## Agent policy
+
+The agent policy is how a workspace wants its developers' Claude Code configured. Devices receive it with every ingest response and apply it according to the mode. See [agent policy](/docs/guides/agent-policy) and the [`planck autopilot` command](/docs/reference/cli#planck-autopilot).
+
+| Field | Description |
+| --- | --- |
+| `mode` | `off` pushes nothing. `suggest` is a recommendation and changes nothing. `apply` has the CLI write the settings below into the developer's Claude Code user settings, with a backup and an undo. |
+| `autoCompactWindow` | An integer from 100,000 to 1,000,000 tokens, or `null`. |
+| `idleCompaction` | A boolean, or `null`. Compact a large idle session before it resumes. |
+| `effortLevel` | `low`, `medium`, `high`, `xhigh` or `null`. |
+| `subagentModel` | `haiku`, `sonnet`, `opus`, `inherit` or `null`. The model for subagents that set none. |
+| `promptCacheTtl` | `5m`, `1h` or `null`. |
+| `guards` | `resume`, `modelSwitch` and `loop`, each a boolean. Hook nudges from the PlanckSpace plugin. |
+| `decisions` | An object with one field, `provider`, set to `off`, `typesafe` or `local`. Where the plugin's task decisions come from. |
+| `version`, `updatedAt` | Returned only. `version` starts at `0` and rises by one on every change. `updatedAt` is `null` until the first change. |
+
+A `null` setting leaves Claude Code's default. The default policy has `mode` `off`, every setting `null`, all three guards `true` and `decisions.provider` `off`.
+
+### `GET /api/agent-policy`
+
+Device token only. Returns `{ "policy": { ... } }`.
+
+### `GET /api/workspaces/:id/agent-policy`
+
+Session token only. Returns `{ "policy", "canEdit", "devices" }`. `devices` counts the devices that synced in the last `windowDays` days (30): `active` is all of them, `reporting` those on a CLI that reports policy state, `current` those that acted on the latest version, `applied` those among them that wrote the settings, and `optedOut` those whose developer ran `planck autopilot off`.
+
+### `PUT /api/workspaces/:id/agent-policy`
+
+Owners, leaders and admins only. Send every field above except `version` and `updatedAt`, using `null` to leave a setting at Claude Code's default. An unknown key fails with `400`. Returns `{ "policy": { ... } }` with the new `version`. A change is recorded in the audit log.
+
+## Related
+
+<Cards>
+  <Card title="Telemetry schema" href="/docs/reference/telemetry" description="Every field the ingest endpoint accepts." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="The client that calls most of these endpoints." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="What each role and scope can read." />
+  <Card title="Exports" href="/docs/guides/exports" description="Chargeback and session exports in the console." />
+</Cards>

@@ -1,0 +1,112 @@
+---
+title: Cost anatomy
+description: "How billed spend and usage value break down by token type and context size, and five levers sized on your team's own per-turn data."
+icon: Layers
+---
+
+Cost anatomy shows what your agents' tokens were for, and how much context each call carried. It then sizes five levers, changes that would lower those numbers and most of which map to a Claude Code setting or a guard, by replaying or re-pricing your team's own recorded turns rather than applying a flat percentage. It is the analysis on the Optimize page, next to the agent policy that applies the levers.
+
+## What it reads
+
+Cost anatomy reads the sessions in the window you choose (7, 30 or 90 days), scoped like the Sessions page: a developer sees their own sessions, a manager their team's. The context-size bands and the lever figures are normalised to 30 days; the token-type breakdown shows the window's own totals. Billed spend and usage value are always reported as two figures (see [billed and usage value](/docs/concepts/two-ledgers)).
+
+The levers need **per-turn detail**: each turn's own cache reads and cache writes. Sessions synced before turns carried those counts still appear in the token-type breakdown, priced from their totals, but cannot feed the levers. The page says how much it measured, for example "Measured on 412 of 530 sessions with per-turn detail".
+
+The effort, subagent and cache-miss levers also need the turn metadata that CLI 0.5.0 added for Claude Code: the effort level, the subagent type, why a cache was missed, the share of cache writes kept for an hour, and thinking tokens. Until every device runs 0.5.0, those levers see only part of the team.
+
+## By token type
+
+For each ledger separately, cost anatomy splits the dollars into four parts:
+
+| Part | What it is |
+| --- | --- |
+| Input | New, uncached input tokens |
+| Cache reads | Context read back from the prompt cache, on every call |
+| Cache writes | Context written to the prompt cache |
+| Output | Generated tokens, with thinking tokens shown as their share of output (CLI 0.5.0 and later) |
+
+Each part is priced on its own at the rate tier of the request it belongs to, so a tiered model such as Haiku 5.5 prices a request with a large prompt at its long-context rate. A session without per-turn detail is priced at its average request size.
+
+An agent re-sends its whole context on every call, mostly from the prompt cache, so cache reads grow with context size and session length. On the pinned price card, Opus 5.5 and Sonnet 5.5 charge the same rate for cache reads, so switching to a cheaper model barely changes that part. Context size and effort do.
+
+## By context size
+
+Calls are grouped by how much context each carried (input, cache reads and cache writes together): under 100K tokens, 100K–200K, 200K–400K and over 400K. Each band shows its number of calls, billed spend and usage value. Only calls with per-turn detail are counted. A large context is re-read on every turn, so the upper bands are where cache reads add up.
+
+## The five levers
+
+| Lever | What it sizes | Method | Confidence | What it maps to |
+| --- | --- | --- | --- | --- |
+| [Context lifecycle](#context-lifecycle) | Compacting long contexts sooner | Replay | Medium | `autoCompactWindow`, plus `idleCompaction` |
+| [Subagent fit](#subagent-fit) | Read-only subagents moved to Haiku 5.5 | Re-priced | High | No direct setting |
+| [Cache breaks](#cache-breaks) | Cache re-written mid-session | Exact | High | The model-switch guard |
+| [Effort mix](#effort-mix) | Output at xhigh and max effort | Modeled | Low | `effortLevel` |
+| [Cache TTL](#cache-ttl) | 5-minute against 1-hour prompt caching, metered only | Replay | Medium | `promptCacheTtl` |
+
+Each lever reports what the change would have taken off the window, scaled to 30 days, as billed spend and usage value separately. A lever appears only when that figure is above zero.
+
+### Context lifecycle
+
+Each context is replayed separately, the main session and each subagent type, with automatic compaction at 150,000, 250,000 and 400,000 tokens. Each window is tried with and without compacting a context over 100,000 tokens when the session resumes after an idle hour, which makes six options.
+
+In the replay, a compaction is charged as one read of the full prompt (uncached after an idle hour), a 25,000-token summary as output, and cache writes for the summary plus 15% of the dropped context, which the agent is assumed to fetch again. The always-loaded start of the prompt, up to 40,000 tokens, survives. Every later call then reads a smaller prompt. The lever is the best of the six options: the sessions as recorded, minus the same sessions replayed.
+
+Compacting too early can cost more, because the agent re-reads what it dropped. The 15% re-read share is an assumption, which is why this lever is medium confidence and is measured again after rollout.
+
+### Subagent fit
+
+A subagent type qualifies when every one of its calls used only reading tools (file reads, directory listings, searches, web fetches, to-do and task tools, and tool search; MCP calls are not counted against it) and it ran on a model other than Haiku. Its recorded tokens are re-priced on Haiku 5.5. The lever names the subagent types. It has no setting attached: the agent policy's subagent model (`CLAUDE_CODE_SUBAGENT_MODEL`) covers only subagents that set no model of their own.
+
+### Cache breaks
+
+When Claude Code records why a turn missed the cache, the tokens it had to re-write are priced as a cache write, minus the same tokens as a cache read. A turn that wrote 1-hour cache is priced at the 1-hour write rate. The result is grouped by the cause Claude Code recorded:
+
+| Cause | Console label |
+| --- | --- |
+| The model changed | switched models mid-session |
+| The messages changed | history edited |
+| The previous message was not found | cache expired / session resumed |
+
+For example, a turn that had to re-write 180,000 tokens after a model switch, on a model whose 5-minute cache writes cost $5.00 and cache reads $0.20 per million tokens, cost 180,000 × ($5.00 − $0.20) ÷ 1,000,000 = $0.86 more than reading them would have. This lever maps to the guard that asks before switching models mid-session on a large context.
+
+### Effort mix
+
+The lever needs a base effort level with at least 30 calls: high if it has them, otherwise medium. For every call at xhigh or max effort, the output tokens above the base level's average are priced as output. The result is split between the ledgers in proportion to the analysed billed spend and usage value. It maps to `effortLevel`, set to the base level, with effort raised per task when a task needs it.
+
+For example, if calls at high effort average 1,200 output tokens and 50 calls at xhigh average 3,000, the extra is 1,800 × 50 = 90,000 output tokens; at an output rate of $20 per million tokens, that is $1.80 over the window.
+
+The method is modeled and the confidence low. It leaves out that every extra token is also re-read on later calls, so the true effect is larger, and tasks run at different levels are not the same tasks.
+
+### Cache TTL
+
+This lever covers metered sessions only; on a seat, Claude Code sets the cache lifetime. It needs at least 5 metered main-session contexts with more than one call. Each is replayed twice, with the real gaps between its calls: a call within the cache lifetime of the previous one reads the cached prefix and writes only what is new, and a later call re-writes the whole prompt.
+
+A 1-hour write costs 2 times the input rate, against 1.25 times for a 5-minute write, so the 1-hour lifetime pays off only when calls are 5 to 60 minutes apart. The lever appears when the cheaper lifetime differs from the one most contexts use now, and maps to `promptCacheTtl`.
+
+## Applying a lever
+
+"Use this" on a lever pre-fills the agent policy, shown as Autopilot on the same page, with the matching setting. The policy has three modes: off, suggest (devices show the suggested settings and change nothing) and apply (the CLI writes the settings into each developer's Claude Code settings, backed up and undoable). A developer can opt out on their own machine with `planck autopilot off`. See [agent policy](/docs/guides/agent-policy).
+
+## Methods and confidence
+
+| Method | Console label | Meaning |
+| --- | --- | --- |
+| Replay | Replayed on your sessions | Your recorded turns re-run under the new setting |
+| Re-priced | Re-priced | The same tokens priced at another model's rates |
+| Exact | Exact | Arithmetic on what Claude Code recorded |
+| Modeled | Modeled — estimate | A model of the effect, to be measured after rollout |
+
+## What it does not do
+
+- A lever's figure is what the change would have taken off past sessions. It is not a saving: PlanckSpace books savings only for findings, after a fix, from the sessions that follow. See [proof of savings](/docs/concepts/proof-of-savings).
+- It never guesses at sessions without per-turn detail; they are counted in the coverage line instead.
+- It never shows billed spend and usage value as one dollar figure.
+
+## Related
+
+<Cards>
+  <Card title="Agent policy" href="/docs/guides/agent-policy" description="Push the levers to every device as Claude Code settings." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a saving is measured once a fix is in place." />
+  <Card title="Sessions and outcomes" href="/docs/concepts/sessions" description="What a turn records, and which CLI version adds what." />
+  <Card title="Agent setup" href="/docs/concepts/agent-setup" description="Oversized instruction files and the context they add to every call." />
+</Cards>

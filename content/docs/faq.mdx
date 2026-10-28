@@ -1,0 +1,116 @@
+---
+title: FAQ
+description: "Short answers on what data leaves a machine, how billed and usage value differ, how to install, and who can see what, with links to the detail."
+icon: MessageCircleQuestion
+---
+
+Short answers to the questions people ask first. Each one links to the page that covers it in full.
+
+## Data and privacy
+
+<Accordions type="single">
+<Accordion title="What leaves my machine?">
+
+Usage metadata reaches PlanckSpace: token counts, timings, models, tool names, repository and file names, and the git email that attributes a session to a person. Your prompts, the model's responses and your code are never sent to PlanckSpace. Every session is checked on arrival against a fixed list of metadata fields, and a session that carries any other field is rejected. `planck inspect <session-id>` prints what would be sent for any session. The one exception is opt-in and off by default: when your workspace's [agent policy](/docs/guides/agent-policy) sets its decision provider to TypeSafe and a developer has set their own `TYPESAFE_API_KEY`, the PlanckSpace routing plugin sends that developer's previous and current prompt, each cut to 2,000 characters, from their machine straight to TypeSafe, and PlanckSpace never receives them. See [Data we collect](/docs/security/data-we-collect).
+
+</Accordion>
+<Accordion title="Does the CLI read my code?">
+
+The CLI works from your tools' local session records and from git metadata. It can also read a local file to measure it, for example `CLAUDE.md`, whose size it estimates in tokens. Only derived counts and names are sent to PlanckSpace, and file contents are never uploaded. The first answer above covers the one opt-in exception for prompts. See [Telemetry](/docs/reference/telemetry) for every field.
+
+</Accordion>
+<Accordion title="Does the editor extension send anything?">
+
+Not until you connect it. Its numbers are computed on your machine from the local database, which it opens read-only. Once connected, it calls PlanckSpace to list your own findings, fetch fix prompts and mark a finding fixed. It also asks for skill recommendations, which carry names from your project's manifest files and the file types you have open. See [the extension's privacy notes](/docs/editor-extension#privacy).
+
+</Accordion>
+<Accordion title="Who can see my individual sessions?">
+
+It depends on your role and the workspace policy. Developers see their own sessions, managers see their team's, and owners, leaders and admins see the whole workspace. In a workspace with the collaborative policy, individual identity is hidden for every role, leadership included. See [Workspace policies](/docs/security/workspace-policies) and [Teams and roles](/docs/guides/teams-and-roles).
+
+</Accordion>
+</Accordions>
+
+## Money and savings
+
+<Accordions type="single">
+<Accordion title="What is the difference between billed and usage value?">
+
+Billed is money that leaves the bank: metered API, Bedrock and Azure token charges, plus the flat price of seats. Usage value is what work done on a flat-rate seat would have cost at API rates. It is not a charge, so PlanckSpace never calls it spend, cost or an invoice, and it never adds the two together. See [Billed and usage value](/docs/concepts/two-ledgers).
+
+</Accordion>
+<Accordion title="Why do my Cursor sessions show $0?">
+
+Cursor does not store token counts locally. The CLI records the session, its timing, repository, turns and tool calls, but no tokens and no dollar amount. The session still counts as activity. See [Supported tools](/docs/reference/supported-tools#cursor).
+
+</Accordion>
+<Accordion title="Is the number from init a saving?">
+
+No. It is an estimate of what the open findings could recover each month. A saving is booked only after you apply a fix and PlanckSpace measures the effect on real sessions. A session-level fix is judged after at least 7 days and 20 settled sessions, and booking stops if outcomes get worse. See [Proof of savings](/docs/concepts/proof-of-savings).
+
+</Accordion>
+<Accordion title="Why does tracked spend not match my invoice?">
+
+Tracked spend is what developer machines reported, priced from their token counts. The usual gaps are machines that are not reporting, turns on models the CLI cannot price, repositories your workspace does not track, tools the CLI does not read, and usage that never ran on a machine with the CLI. [Reconciliation](/docs/guides/reconciliation) shows the difference per provider, and [Troubleshooting](/docs/troubleshooting#tracked-spend-does-not-match-the-invoice) lists each cause.
+
+</Accordion>
+</Accordions>
+
+## Setup
+
+<Accordions type="single">
+<Accordion title="What do I need to install it?">
+
+Node.js 20 or newer and npm. The install script runs on macOS, Linux and WSL. On native Windows, install with `npm install -g @planckspace/cli`. See [Install the CLI](/docs/installation).
+
+</Accordion>
+<Accordion title="What does the daemon do, and can I stop it?">
+
+The daemon watches your tools' session records, uploads new sessions, and pings PlanckSpace every 5 minutes so the console knows the machine is reporting. To stop uploads, run `planck logout`. To stop it starting at login, run `planck daemon uninstall`. `planck daemon stop` ends the process, but the login auto-start stays registered. See [the daemon](/docs/installation#the-daemon).
+
+</Accordion>
+<Accordion title="Which tools does PlanckSpace support?">
+
+Claude Code is fully supported. Cursor sessions are read, without tokens or dollar amounts. Windsurf is in beta, JetBrains AI Assistant is only detected, and other tools are not read. The console currently shows Claude Code and Cursor. See [Supported tools](/docs/reference/supported-tools).
+
+</Accordion>
+<Accordion title="Can I try it without a workspace?">
+
+Yes, locally. Run `planck init` and press Enter at the token prompt, or run `planck scan` and then `planck status`. The CLI keeps your sessions in a local database, and nothing is uploaded until you connect. The editor extension also works without a connection. Findings, budgets and savings need a workspace, and workspaces are set up after a demo, so [book one](https://planckspace.dev/demo) when you are ready.
+
+</Accordion>
+</Accordions>
+
+## Teams and access
+
+<Accordions type="single">
+<Accordion title="How do I get my whole team reporting?">
+
+An owner, leader or admin generates the team command under Team, Invites, Connect your team, and pastes it in the team channel. Each developer who runs it joins as themselves and gets their own token. See [Onboard your team](/docs/team-onboarding).
+
+</Accordion>
+<Accordion title="Can a join code give someone admin access?">
+
+No. A join code only ever creates developer access. People who need a higher role join through an email invite, which carries the role, or have their role changed after they join. See [Onboard your team](/docs/team-onboarding#email-invites) and [Teams and roles](/docs/guides/teams-and-roles).
+
+</Accordion>
+<Accordion title="How long do codes and invites last?">
+
+A team join code lasts 30 days, and a workspace has one live code at a time. An email invite lasts 48 hours. A one-time connect code lasts 10 minutes and works once.
+
+</Accordion>
+<Accordion title="What does N of M developers reporting mean?">
+
+A developer is reporting when their machine has contacted PlanckSpace in the last 26 hours. M is the number of developers in the workspace, or the largest declared seat count for a coding tool if that is higher. While some are missing, every figure built from usage is a floor, not a total. See [Coverage](/docs/concepts/coverage).
+
+</Accordion>
+</Accordions>
+
+## Related
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="Connect a machine and print your first recoverable figure." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="Symptoms, causes and fixes." />
+  <Card title="Glossary" href="/docs/reference/glossary" description="The terms PlanckSpace uses, defined once." />
+  <Card title="Security overview" href="/docs/security/overview" description="How PlanckSpace protects the data it collects." />
+</Cards>

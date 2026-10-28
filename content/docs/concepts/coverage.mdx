@@ -1,0 +1,98 @@
+---
+title: Coverage
+description: "How PlanckSpace counts who is reporting, sizes the team, and keeps a gap in coverage from reading as a low total or an idle seat."
+icon: Gauge
+---
+
+Coverage says whose work the numbers describe. "16 of 22 developers reporting" means every usage figure on the page is built from 16 people's sessions, so until everyone reports, those figures are floors rather than totals. PlanckSpace also uses coverage to stop a gap from turning into money: a member it cannot see is never counted as an idle seat.
+
+## Who is reporting
+
+A member is **reporting** when one of their active device tokens was used in the last 26 hours. Any authenticated call from the device counts, including the daemon's check-in when it has nothing new to send. Reporting therefore means "the daemon on this machine is alive", not "this person coded today". The 26-hour window matches the daemon chip in the console sidebar.
+
+| State | Meaning |
+| --- | --- |
+| Reporting | A device token was used within the last 26 hours. |
+| Went silent | Connected before, but silent for more than 26 hours. Usually a stopped daemon. |
+| Never connected | No active device token, or a token that was created but never used. |
+
+A revoked token counts as no token, because revoking is a deliberate disconnect. When a silent daemon comes back, it reads the same local logs and sends the sessions it has not sent yet, as far back as those logs go. `planck daemon fix` diagnoses and repairs a daemon in one pass, from its version and connection to auto-start and a restart; see [troubleshooting](/docs/troubleshooting).
+
+## Who is counted
+
+The population behind "N of M" is:
+
+- every member with the developer role, and
+- any other member whose device token has authenticated at least once.
+
+A leader who installed the CLI contributes sessions to every total, so they belong in the count. Owners, leaders, admins and managers who never connected a device are left out: they oversee rather than code, and their absence does not make coverage incomplete. A token generated in the console but never used is intent, not a connection.
+
+## Team size
+
+Team size is the larger of two numbers: the population, and the largest seat count on any single coding-tool subscription, meaning one plan of one tool (Claude Code, Cursor, Windsurf, Antigravity or JetBrains AI). Plans are not added together: 3 Max seats and 8 Pro seats on Claude Code count as 8. Paid seats with no member behind them are people who have not been invited yet. Without this rule the meter could read "5 of 5" while 22 seats are paid for. The difference shows as paid seats nobody holds yet.
+
+## Status
+
+| Status | When | What it means |
+| --- | --- | --- |
+| None | No one is reporting | Nothing is measured yet. |
+| Incomplete | At least one member is reporting, but fewer than the team size | Every figure built from usage is a floor. |
+| Complete | The reporting count reaches the team size | Figures cover the whole team. |
+
+## Floors while incomplete
+
+While coverage is incomplete, any figure that sums people's usage describes only the people reporting: spend and usage value from sessions, session counts, per-team and per-repository figures, and findings built from sessions. Each is a floor, meaning the real figure is at least this much. The console marks money tiles "Incomplete — at least this much", and `planck init` says that every figure is a floor until the whole team reports.
+
+Figures that do not come from usage, such as declared seat prices and provider invoices, are not affected.
+
+## Unmeasured members and dormant seats
+
+Idle seats use a related rule that looks at every role. A member is **unmeasured** when they are not reporting and either:
+
+- they are a developer or a manager, or
+- they have connected a device at some point.
+
+Managers count because a manager who codes but has not connected still holds a seat PlanckSpace cannot measure. Owners, leaders and admins who never connected are assumed not to code; counting them would hide a genuinely idle seat behind every non-coding admin.
+
+Unmeasured members are subtracted from a subscription's idle seats and are never named. The [dormant-seat finding](/docs/concepts/findings#dormant-seats), Spend and the posture score all use this definition of an unmeasured member, so a coverage gap is never counted as idle in any of them.
+
+For example, a workspace has 18 developers and a leader who codes, and declares 22 Claude Code seats:
+
+| | Count |
+| --- | --- |
+| Population: 18 developers, plus the leader, who connected a device | 19 |
+| Team size: 22 declared seats is larger than 19 | 22 |
+| Paid seats nobody holds yet | 3 |
+| Reporting | 16 |
+| Meter | 16 of 22, incomplete |
+
+In the last 30 days, 14 people ran seat sessions on the subscription, and the 3 members who are not reporting had none. Idle seats = 22 − 14 − 3 unmeasured = 5: the 2 reporting members who did not use their seats, and the 3 seats nobody holds. Without the unmeasured rule, the finding would claim 8 seats, 3 of them possibly in use on machines PlanckSpace cannot see.
+
+## How a seat's age is decided
+
+A seat can only be called idle if it existed for the whole 30-day window. Its effective start is the earlier of:
+
+- its declared start date, or the day it was recorded when no start date was given, and
+- the earliest seat session attributed to it in the last 90 days.
+
+A plan that `planck init` declares today, but that was used 45 days ago, is therefore measurable on the first run: the CLI sends history from local logs, and a session from before the window proves the seat existed then. A seat genuinely bought last week is skipped until it has had 30 days to be used.
+
+## Unpriced turns
+
+Coverage also counts turns from the last 30 days whose model has no price. Their dollars are left out rather than guessed, so spend is undercounted while any exist.
+
+## Where you see coverage
+
+- **The Coverage card**, on the Overview's AI posture tab, for owners, leaders and admins. It shows "16 / 22 reporting", one cell for each place in the team size up to 30 (a proportion bar for larger teams), and counts for Reporting, Went silent and Never connected; Never connected includes paid seats nobody holds yet. It lists up to 4 people who are not reporting, each with a Nudge link, the number of unpriced turns, and a link to connect the team.
+- **Money tiles**, while coverage is incomplete: "Incomplete — at least this much", with the reporting count.
+- **`planck init`**, after connecting a machine. It prints counts only: a developer's device never receives colleagues' names.
+
+To bring the rest of the team in, see [team onboarding](/docs/team-onboarding).
+
+## Related
+
+<Cards>
+  <Card title="Team onboarding" href="/docs/team-onboarding" description="Connect every developer's machine with one command." />
+  <Card title="Findings" href="/docs/concepts/findings" description="How unmeasured members are kept out of dormant-seat findings." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="Bring a silent daemon back." />
+</Cards>

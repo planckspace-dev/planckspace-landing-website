@@ -43,19 +43,17 @@ const ASSURANCES = [
 /** Matches the form's footprint so the layout doesn't jump before hydration. */
 function FormFallback() {
   return (
-    <div className="frame [--ch:24px]" aria-busy="true">
-      <div className="frame-in min-h-[34rem] p-6 sm:p-9">
-        <div className="h-6 w-40 bg-fg/10" />
-        <div className="mt-4 flex gap-1.5">
-          <span className="h-[3px] flex-1 bg-lime" />
-          <span className="h-[3px] flex-1 bg-fg/10" />
-          <span className="h-[3px] flex-1 bg-fg/10" />
-        </div>
-        <div className="mt-9 space-y-5">
-          <div className="h-12 bg-fg/[0.06]" />
-          <div className="h-12 bg-fg/[0.06]" />
-          <div className="h-12 bg-fg/[0.06]" />
-        </div>
+    <div className="box min-h-[34rem] p-6 sm:p-9" aria-busy="true">
+      <div className="h-6 w-40 rounded-md bg-canvas" />
+      <div className="mt-4 flex gap-1.5">
+        <span className="h-[3px] flex-1 rounded-full bg-brand-600" />
+        <span className="h-[3px] flex-1 rounded-full bg-track" />
+        <span className="h-[3px] flex-1 rounded-full bg-track" />
+      </div>
+      <div className="mt-9 space-y-5">
+        <div className="h-12 rounded-[10px] bg-canvas" />
+        <div className="h-12 rounded-[10px] bg-canvas" />
+        <div className="h-12 rounded-[10px] bg-canvas" />
       </div>
     </div>
   );
@@ -66,53 +64,50 @@ export default function DemoPage() {
     <>
       <Navbar />
       <main id="main" className="overflow-x-clip">
-        <section className="relative pb-24 pt-[calc(var(--nav-h)+4.5rem)] sm:pb-32 sm:pt-[calc(var(--nav-h)+6rem)]">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 h-[34rem] w-[60%] bg-[radial-gradient(rgb(198_255_61/0.22)_1px,transparent_1.4px)] [background-size:22px_22px] [mask-image:radial-gradient(70%_70%_at_80%_20%,#000,transparent)]"
-          />
-          <div className="wrap relative grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-20">
+        <section className="relative isolate pb-24 pt-[calc(var(--nav-h)+3.5rem)] sm:pb-32 sm:pt-[calc(var(--nav-h)+5rem)]">
+          <div className="grid-bg pointer-events-none absolute inset-x-0 top-0 -z-10 h-[40rem]" aria-hidden="true" />
+          <div className="wrap relative grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-20">
             <div>
-              <p className="t-kicker">Book a demo</p>
-              <h1 className="t-display mt-5 text-[clamp(2.6rem,5vw,4.4rem)] leading-[0.95] [--wdth:106]">
-                See it on your own numbers.
-              </h1>
-              <p className="t-lead mt-6 max-w-md">
-                PlanckSpace is rolled out with us, not around us. Tell us about your team, we&apos;ll walk you through
-                what your AI spend actually looks like, then set your workspace up with you.
+              <p className="eyebrow">Book a demo</p>
+              <h1 className="title-xl mt-4 text-[clamp(2.4rem,4.6vw,3.75rem)]">See it on your own numbers.</h1>
+              <p className="lede mt-6 max-w-md">
+                PlanckSpace is rolled out with us, not around us. Tell us about your team, we&apos;ll walk you through what
+                your AI spend actually looks like, then set your workspace up with you.
               </p>
 
-              <ul className="mt-9 flex flex-wrap gap-2">
+              <ul className="mt-8 flex flex-wrap gap-2">
                 {ASSURANCES.map((a) => (
-                  <li key={a.label} className="ch-br flex items-center gap-2.5 bg-ink-2 px-3.5 py-2.5 [--ch:8px]">
-                    <a.icon className="h-4 w-4 shrink-0 text-lime" strokeWidth={1.7} />
-                    <span className="text-[0.88rem] font-medium text-fg">{a.label}</span>
-                    <span className="t-mono text-[11px] text-fg-3">{a.sub}</span>
+                  <li key={a.label} className="flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 shadow-[var(--shadow-flat)]">
+                    <a.icon className="h-4 w-4 shrink-0 text-brand-600" strokeWidth={1.8} />
+                    <span className="text-[0.875rem] font-medium text-ink">{a.label}</span>
+                    <span className="text-[0.8125rem] text-muted">{a.sub}</span>
                   </li>
                 ))}
               </ul>
 
-              <h2 className="t-h4 mt-12">What we&apos;ll cover</h2>
+              <h2 className="title-sm mt-12">What we&apos;ll cover</h2>
               <ol className="mt-6 space-y-6">
                 {AGENDA.map((a, i) => (
-                  <li key={a.title} className="flex gap-5">
-                    <span className="t-meter w-6 shrink-0 pt-0.5 text-[1.25rem] text-lime">{i + 1}</span>
+                  <li key={a.title} className="flex gap-4">
+                    <span className="num mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line-strong bg-surface text-[0.8125rem] font-medium text-ink">
+                      {i + 1}
+                    </span>
                     <div>
-                      <h3 className="text-[1rem] font-semibold text-fg">{a.title}</h3>
-                      <p className="mt-1 text-[0.92rem] leading-relaxed text-fg-3">{a.body}</p>
+                      <h3 className="text-[1rem] font-semibold text-ink">{a.title}</h3>
+                      <p className="mt-1 text-[0.92rem] leading-relaxed text-body">{a.body}</p>
                     </div>
                   </li>
                 ))}
               </ol>
 
-              <div className="mt-12 border-t border-[var(--line)] pt-7">
-                <p className="text-[0.95rem] leading-relaxed text-fg-3">
+              <div className="mt-12 border-t border-line pt-7">
+                <p className="text-[0.95rem] leading-relaxed text-body">
                   Not ready for a call? Read{" "}
-                  <Link href="/#how-it-works" className="link-lined text-fg">
+                  <Link href="/#how-it-works" className="link-under text-ink">
                     how it goes live
                   </Link>
                   , or email{" "}
-                  <a href={`mailto:${CONTACT_EMAIL}`} className="link-lined text-fg">
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="link-under text-ink">
                     {CONTACT_EMAIL}
                   </a>
                   .
@@ -127,9 +122,9 @@ export default function DemoPage() {
                           target="_blank"
                           rel="noreferrer"
                           aria-label={s.label}
-                          className="ch-br grid h-11 w-11 place-items-center bg-ink-3 text-fg-2 transition-colors duration-300 hover:bg-lime hover:text-ink [--ch:8px]"
+                          className="grid h-10 w-10 place-items-center rounded-[10px] border border-line bg-surface text-body transition-colors duration-200 hover:border-line-strong hover:text-ink"
                         >
-                          <Icon className="h-[17px] w-[17px]" />
+                          <Icon className="h-4 w-4" />
                         </a>
                       </li>
                     );

@@ -2,81 +2,87 @@
 
 import * as Accordion from "@radix-ui/react-accordion";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
+import Reveal from "@/components/site/Reveal";
 
 /* Fair questions, straight answers. Radix supplies the keyboard model and
-   the ARIA; the open/close is a grid-rows transition, so the height animates
-   without measuring anything. */
+   the ARIA; the open/close animates on Radix's measured height. The full
+   list lives in the docs. */
 
 const FAQS = [
   {
     q: "How does the tracking actually work?",
-    a: "AI coding tools already write session logs to your machine: model, token counts, timestamps. The PlanckSpace CLI and its background daemon read that metadata locally, price it at current model rates, and sync the numbers to your workspace. Nothing is intercepted, proxied or injected into your editor.",
+    a: "AI coding tools already write session logs on the developer's machine: models, token counts, timestamps. The PlanckSpace CLI and its background daemon read that metadata locally and sync it to your workspace. Nothing is intercepted, proxied or injected into your editor.",
   },
   {
     q: "Which tools are supported?",
-    a: "Claude Code and Cursor today, with Windsurf and Antigravity in beta, plus metered API spend through Anthropic, OpenAI and Bedrock admin keys. The VS Code extension also runs in Cursor and Windsurf through Open VSX.",
+    a: "Claude Code, Cursor and Windsurf on the developer's machine, plus metered API spend through Anthropic, OpenAI and Amazon Bedrock. The editor extension runs in VS Code, and in Cursor and Windsurf through Open VSX. The docs list exactly what each tool reports.",
   },
   {
-    q: "Do you ever see our code or prompts?",
-    a: "No. PlanckSpace syncs usage metadata only: model, token counts, cost, duration, tool, repo name and git author. Source code, prompts, responses and file contents never leave the machine. Run planck inspect on any session to see the exact payload.",
+    q: "Do our code or prompts ever reach PlanckSpace?",
+    a: "No. PlanckSpace syncs usage metadata only: models, token counts, timings, tool, repository and file names, outcome and the git email that attributes a session. Prompts, responses, source code and file contents are never sent to PlanckSpace; run planck inspect on any session to check its payload. The one opt-in exception sends truncated prompts to a third party, never to us: an agent policy that uses TypeSafe's decision model, on machines where the developer adds their own TypeSafe key.",
   },
   {
-    q: "What does verified savings actually mean?",
-    a: "When a fix is applied, PlanckSpace snapshots the metric it targets, waits for at least three sessions afterwards, and measures the same metric again from your telemetry. Only the improvement that shows up is booked, with a dated receipt. A fix whose metric never moved stays unverified and is never counted.",
+    q: "What does a measured saving mean?",
+    a: "Every saved dollar is a booked row you can open. After a routing or cache fix, each session is priced at what the same work cost before the fix, and the difference is booked; a removed seat is counted for each day it stays off. Nothing books until a session fix has run for 7 days and 20 sessions. If the ship rate drops 10 points, booking stops, and if the old behaviour comes back, the finding reopens.",
   },
   {
     q: "We pay for Claude Max and Pro seats, not the API. Is it useful?",
-    a: "Yes. Seat findings are some of the largest: seats nobody opens, and Max seats used at Pro levels. Work done on flat plans is shown as usage value and labelled imputed, so it is never mixed up with money that actually leaves the account.",
+    a: "Yes. Seat findings are some of the largest: seats nobody opens, and Max seats used at Pro levels. Work done on flat-rate seats is shown as usage value, and never added to the money that actually leaves the account.",
   },
   {
     q: "How is this different from each provider's usage page?",
-    a: "A provider dashboard shows one tool and one account, without team context, and cannot show you a competitor's spend. PlanckSpace puts every tool on one ledger, attributes it per developer, team and repo, checks it against the invoice, and prices the waste.",
+    a: "A provider dashboard shows one tool and one account, without team context. PlanckSpace puts every tool on one ledger, attributes it per developer, team and repository, checks it against the invoice, and prices the waste.",
   },
   {
     q: "How do we get access, and what does it cost?",
-    a: "Through a demo. We spend 30 minutes on your setup, size the plan to your team and tools, then provision the workspace and help roll it out. There is no self-serve sign-up, because onboarding runs with us so your numbers are right from the first session.",
+    a: "Through a demo. We spend 30 minutes on your setup, size the plan to your team and tools, then provision the workspace and help roll it out. Onboarding runs with us so your numbers are right from the first session.",
   },
 ];
 
 export default function FAQ() {
   return (
-    <section id="faq" aria-labelledby="faq-title" className="section">
-      <div className="wrap grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:gap-20">
-        <div className="lg:sticky lg:top-28 lg:self-start">
-          <h2 id="faq-title" className="t-display t-h2 max-w-[12ch]">
-            Fair questions, straight answers.
-          </h2>
-          <p className="t-lead mt-6 max-w-[24rem]">
-            Something we have not covered?{" "}
-            <Link href="/contact" className="link-lined text-fg">
-              Ask us directly
+    <section id="faq" aria-labelledby="faq-title" className="section pt-0">
+      <div className="wrap">
+        <div className="rule mb-[var(--section-y)]" />
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.35fr)] lg:gap-24">
+          <Reveal className="lg:sticky lg:top-28 lg:self-start">
+            <p className="eyebrow">Questions</p>
+            <h2 id="faq-title" className="title-lg mt-5 text-[clamp(2rem,2.8vw,2.5rem)]">
+              Fair questions, <span className="tone">straight answers.</span>
+            </h2>
+            <p className="lede mt-6 max-w-[24rem]">
+              Something we have not covered?{" "}
+              <Link href="/contact" className="link-under text-ink">
+                Ask us directly
+              </Link>
+              . A founder replies.
+            </p>
+            <Link href="/docs/faq" className="link-arrow mt-6">
+              Every question in the docs <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
-            . A founder replies.
-          </p>
-        </div>
+          </Reveal>
 
-        <Accordion.Root type="single" collapsible defaultValue="item-0" className="border-t border-[var(--line)]">
-          {FAQS.map((f, i) => (
-            <Accordion.Item key={f.q} value={`item-${i}`} className="faq-item border-b border-[var(--line)]">
-              <Accordion.Header>
-                <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left">
-                  <span className="text-[clamp(1.05rem,1.5vw,1.3rem)] font-medium leading-snug text-fg transition-colors group-hover:text-lime">
-                    {f.q}
-                  </span>
-                  <span className="ch-br grid h-9 w-9 shrink-0 place-items-center bg-ink-3 text-lime transition-colors group-data-[state=open]:bg-lime group-data-[state=open]:text-ink [--ch:7px]">
-                    <Plus className="h-4 w-4 transition-transform duration-500 group-data-[state=open]:rotate-45" strokeWidth={1.8} />
-                  </span>
-                </Accordion.Trigger>
-              </Accordion.Header>
-              <Accordion.Content className="faq-content">
-                <div className="overflow-hidden">
-                  <p className="max-w-[44rem] pb-7 pr-12 text-[1rem] leading-relaxed text-fg-2">{f.a}</p>
-                </div>
-              </Accordion.Content>
-            </Accordion.Item>
-          ))}
-        </Accordion.Root>
+          <Reveal>
+            <Accordion.Root type="single" collapsible defaultValue="item-0" className="border-t border-line">
+              {FAQS.map((f, i) => (
+                <Accordion.Item key={f.q} value={`item-${i}`} className="border-b border-line">
+                  <Accordion.Header>
+                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                      <span className="text-[1.125rem] font-medium leading-snug tracking-[-0.018em] text-ink">{f.q}</span>
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-body transition-[transform,background-color,color,border-color] duration-300 group-hover:border-line-strong group-data-[state=open]:rotate-45 group-data-[state=open]:border-ink group-data-[state=open]:bg-ink group-data-[state=open]:text-white">
+                        <Plus className="h-4 w-4" strokeWidth={1.8} />
+                      </span>
+                    </Accordion.Trigger>
+                  </Accordion.Header>
+                  <Accordion.Content className="faq-content">
+                    <p className="max-w-[44rem] pb-7 pr-14 text-[1rem] leading-relaxed text-body">{f.a}</p>
+                  </Accordion.Content>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
+          </Reveal>
+        </div>
       </div>
     </section>
   );

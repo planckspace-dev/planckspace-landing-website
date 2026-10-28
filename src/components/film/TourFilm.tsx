@@ -6,8 +6,8 @@ import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import TokenStream from "@/components/hero/TokenStream";
 import FixScene from "@/components/product/FixScene";
 import { buildFixTimeline } from "@/components/product/fix-timeline";
-import { FindingCard } from "@/components/sections/FindingsGallery";
-import { SavingsCurve } from "@/components/sections/Verify";
+import { FindingCard } from "@/components/film/FindingCard";
+import { SavingsCurve } from "@/components/film/SavingsCurve";
 import { PlanckMark } from "@/components/ui/logo";
 import { FINDINGS, RECEIPTS, realizedTotal, removableTotal, savedToDate, usd } from "@/lib/sample";
 import { setFilmTime } from "@/lib/film-clock";
@@ -144,7 +144,7 @@ export default function TourFilm() {
           <TokenStream className="absolute inset-0 h-full w-full" />
           <div className="hero-vignette" />
           <div data-stream-ap className="ft-mark hero-mark">
-            <PlanckMark className="h-full w-full" />
+            <PlanckMark className="h-full w-full" tone="dark" />
           </div>
           <div data-stream-ledger className="hero-ledger" />
         </div>
@@ -175,7 +175,7 @@ export default function TourFilm() {
               <FindingCard f={f} on />
             </div>
           ))}
-          <div className="ff-sum ch-br flex w-[380px] flex-col justify-end bg-lime p-9 text-on-lime [--ch:22px]">
+          <div className="ff-sum ch-br flex w-[380px] flex-col justify-end bg-[var(--lime)] p-9 text-[var(--on-lime)] [--ch:22px]">
             <p className="t-mono text-[18px]">Removable this month</p>
             <p className="t-meter mt-4 text-[88px] leading-none">{usd(removableTotal)}</p>
             <p className="t-mono mt-2 text-[20px]">/mo, all real dollars</p>
@@ -207,10 +207,10 @@ export default function TourFilm() {
           </h2>
           <div className="text-right">
             <p className="flex items-baseline justify-end gap-4">
-              <span className="fv-num t-meter text-[190px] leading-[0.85] text-lime">{usd(realizedTotal)}</span>
-              <span className="t-mono text-[30px] text-fg-3">/mo</span>
+              <span className="fv-num t-meter text-[190px] leading-[0.85] text-[var(--lime)]">{usd(realizedTotal)}</span>
+              <span className="t-mono text-[30px] text-[var(--fg-3)]">/mo</span>
             </p>
-            <p className="t-mono mt-5 text-[21px] text-fg-2">
+            <p className="t-mono mt-5 text-[21px] text-[var(--fg-2)]">
               off the bill, verified · {usd(savedToDate)} saved to date · {RECEIPTS.length} receipts
             </p>
           </div>
@@ -235,7 +235,7 @@ export default function TourFilm() {
             <p className="fp-line dim mt-3">{"{"}</p>
             {PAYLOAD.map(([k, v]) => (
               <p key={k} className="fp-line pl-8">
-                <span className="text-sig-blue">{k}</span>
+                <span className="text-[var(--sig-blue)]">{k}</span>
                 <span className="dim">: </span>
                 <span className="hi">{v}</span>
               </p>
@@ -248,20 +248,20 @@ export default function TourFilm() {
       {/* 7 · end */}
       <section data-scene="end" className="absolute inset-0 grid place-items-center">
         <div className="fe-in flex flex-col items-center text-center">
-          <PlanckMark className="h-[120px] w-auto" />
+          <PlanckMark className="h-[120px] w-auto" tone="dark" />
           <h2 className="t-display mt-14 text-[112px] leading-[0.95] [--wdth:108]">
             See what your AI bill
             <br />
             is made of.
           </h2>
-          <p className="t-mono mt-12 text-[30px] text-lime">planckspace.dev/demo</p>
+          <p className="t-mono mt-12 text-[30px] text-[var(--lime)]">planckspace.dev/demo</p>
         </div>
       </section>
 
       {/* chapter label */}
       {CHAPTERS.map((c) => (
-        <p key={c.n} data-chapter={c.n} className="t-mono ch-br absolute right-[96px] top-[48px] bg-ink px-4 py-2 text-[20px] text-fg-2 [--ch:8px]">
-          <span className="text-lime">{c.n}</span> {c.t}
+        <p key={c.n} data-chapter={c.n} className="t-mono ch-br absolute right-[96px] top-[48px] bg-ink px-4 py-2 text-[20px] text-[var(--fg-2)] [--ch:8px]">
+          <span className="text-[var(--lime)]">{c.n}</span> {c.t}
         </p>
       ))}
     </div>

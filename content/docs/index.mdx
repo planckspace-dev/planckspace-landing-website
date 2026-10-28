@@ -1,0 +1,76 @@
+---
+title: Introduction
+description: PlanckSpace itemizes what your team spends on AI coding tools, finds the waste, fixes it, and proves every dollar the fix saves.
+icon: BookOpen
+---
+
+PlanckSpace is a cost ledger for AI-assisted engineering. It reads the usage your developers' AI coding tools already record (Claude Code, Cursor, Windsurf and the API keys behind them) and turns it into one account of what the work cost, what it shipped, and what you are paying for that nobody uses.
+
+It does not stop at a dashboard. Every dollar it calls waste comes with a fix, and every fix you apply is measured afterwards against what the same work cost before it. A saving appears in PlanckSpace only once it has been booked from real sessions or a real seat change.
+
+## How it works
+
+PlanckSpace has four parts. You install the first one on each developer machine; the rest run for you.
+
+| Part | Where it runs | What it does |
+| --- | --- | --- |
+| **The CLI** (`planck`) | Each developer's machine | Reads local session logs, sends usage metadata to your workspace, and keeps a background daemon syncing. |
+| **The console** | The web | Spend, findings, budgets, teams and proof of savings, scoped to each person's role. |
+| **The editor extension** | VS Code, Cursor, Windsurf | Shows findings next to the code they concern and applies fixes in one click, with Undo. |
+| **Billing connections** | Your provider accounts | Pulls invoiced usage from Anthropic, OpenAI and Amazon Bedrock so tracked spend can be checked against the bill. |
+
+## The loop
+
+Everything in PlanckSpace follows one loop, in this order.
+
+<Steps>
+<Step>
+
+### Measure
+
+Every session becomes a row: tool, model, tokens, duration, repository and outcome. Money is kept in [two ledgers](/docs/concepts/two-ledgers): **billed** dollars that leave the bank, and the **usage value** of work done on flat-rate seats. The two are never added together.
+
+</Step>
+<Step>
+
+### Find
+
+Detectors look for money that buys nothing: [paid seats nobody uses](/docs/concepts/findings#dormant-seats), plans larger than the work needs, and metered sessions on a premium model or a cold cache. Each finding carries the evidence, the monthly amount, and the fix.
+
+</Step>
+<Step>
+
+### Fix
+
+Mechanical fixes apply from the editor in one click and can be undone in one more. Judgement calls are handed to your own Claude Code with the measured numbers attached. Seat changes wait for an admin's approval.
+
+</Step>
+<Step>
+
+### Prove
+
+After a fix, PlanckSpace prices the sessions that follow against what the same work would have cost before it. A saving is [booked row by row](/docs/concepts/proof-of-savings), only after enough sessions to judge, and it stops if the outcomes get worse.
+
+</Step>
+</Steps>
+
+## What leaves the machine
+
+Usage metadata: token counts, timings, models, tool names, repository and file names, and the git email that attributes a session to a person. Your prompts, the model's responses, and your code are never sent to PlanckSpace. You can check a session's payload yourself with `planck inspect <session-id>`.
+
+One setting is the exception, and it is off by default: if an admin points [agent policy](/docs/guides/agent-policy) at TypeSafe's decision model and a developer adds their own TypeSafe key, that machine sends TypeSafe the first 2,000 characters of the current and previous prompt. PlanckSpace never receives them.
+
+<Callout title="Privacy is a property of the data, not a setting">
+Every session is checked on arrival against a fixed list of metadata fields, and a session that carries any other field is rejected. See [Data we collect](/docs/security/data-we-collect) for the full list.
+</Callout>
+
+## Where to go next
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="Connect a machine and get your first recoverable figure in minutes." />
+  <Card title="Billed and usage value" href="/docs/concepts/two-ledgers" description="The two ledgers every figure in PlanckSpace belongs to." />
+  <Card title="Findings" href="/docs/concepts/findings" description="What PlanckSpace calls waste, and the evidence behind each finding." />
+  <Card title="Proof of savings" href="/docs/concepts/proof-of-savings" description="How a saving is measured, booked and guarded." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="Every field that leaves a developer's machine, and every one that never does." />
+  <Card title="CLI reference" href="/docs/reference/cli" description="Every planck command and flag." />
+</Cards>

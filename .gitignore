@@ -53,3 +53,6 @@ skills-lock.json
 # crops (both actually imported by the build) are tracked.
 /assets/product-shots/*.png
 !/assets/product-shots/02-overview-panel.png
+
+# fumadocs-mdx generated content
+/.source

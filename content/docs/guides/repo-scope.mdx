@@ -1,0 +1,99 @@
+---
+title: Tracked repositories
+description: "Choose which repositories a workspace tracks. Work in every other repository stays out of its spend, findings, budgets and exports."
+icon: FolderGit2
+---
+
+A workspace can track every repository its developers work in, or only the ones you choose. Tracked repositories feed spend, findings, budgets and exports. Everything else stays out, which is how you keep personal projects and other clients' repositories out of a company's numbers. The setting is the workspace's **repository scope**, and it is applied in two places: on each developer's machine and on the PlanckSpace server.
+
+## The two modes
+
+| Mode | What is tracked | A new repository is |
+| --- | --- | --- |
+| All repos | Every repository a developer works in | Tracked automatically |
+| Selected repos | Only the repositories on your list | Not tracked until you add it |
+
+A workspace tracks every repository until an owner, leader or admin narrows it. In the console, a narrowed workspace shows a count such as "6 of 9 repos".
+
+A repository's name is the name of its root folder, the one that contains `.git`. Names are matched without regard to case and surrounding spaces, so `PlanckSpace` and `planckspace` are one repository. A clone in a differently named folder counts as a different repository.
+
+## What happens to an untracked repository
+
+| Where | What happens |
+| --- | --- |
+| The CLI on the developer's machine | Each sync reads the workspace's list. Sessions from other repositories, and findings and anomalies pinned to them, are not uploaded. They stay on the machine, and the sync summary says how many were kept local. |
+| The PlanckSpace server | Anything that still arrives from an untracked repository is stored hidden. No member sees those sessions in any view, total, finding or export, owners included. Owners, leaders and admins still see the repository's name and session count in the Repo scope list, so they can include it. |
+| Agent configuration | Facts about `CLAUDE.md` files, hooks, skills and MCP servers are kept only for tracked repositories. The CLI reads only those repositories for them, and reads none when it cannot tell which are tracked. The server drops any untracked repository's configuration on arrival. |
+
+<Callout type="warn" title="Hidden is not deleted">
+If the CLI cannot read the scope, because the request fails or the server does not advertise one, it syncs as it did before scoping existed and relies on the server to hide what is out of scope. Hidden sessions stay in storage so that tracking the repository later brings its history back. Keeping a repository off the server entirely depends on the CLI being able to read the scope.
+</Callout>
+
+## Change which repositories are tracked
+
+Owners, leaders and admins change the scope. Managers see the card's summary, whether the workspace tracks everything or a selection, but not the list.
+
+<Steps>
+<Step>
+
+### Open the Repo scope card
+
+Go to **Controls → Security**. The **Repo scope** card shows **All repos**, or a count such as "6 of 9 repos". It lists each repository that has sent a session, with its session count and a **tracked** or **excluded** label.
+
+</Step>
+<Step>
+
+### Exclude or include a repository
+
+Select **Exclude** or **Include** beside the repository. The first exclusion switches the workspace to a selection and keeps every other listed repository tracked. From then on, a new repository is not tracked until you add it.
+
+</Step>
+<Step>
+
+### Return to tracking everything
+
+To go back to tracking every repository, select **Track every repo** under the list.
+
+</Step>
+</Steps>
+
+## What changes right away
+
+The change applies to stored history in both directions.
+
+| Change | Sessions already stored | Developer machines |
+| --- | --- | --- |
+| Exclude a repository | Hidden from everyone at once | Stop sending that repository from their next sync |
+| Include a repository, or track every repo | Hidden sessions from it reappear at once | The daemon re-checks the scope about every five minutes, then re-sends the sessions it held back |
+
+Workspaces on the classroom privacy policy hide sessions by default. There, widening the scope does not un-hide anything, because the hiding is the policy's own promise.
+
+Every change is recorded in the audit log, with the number of sessions it hid and un-hid. See [Teams and roles](/docs/guides/teams-and-roles#the-audit-log).
+
+## What an untracked repository affects
+
+PlanckSpace works from the sessions a workspace can see. An excluded repository contributes nothing to:
+
+- Findings and the savings measured against them.
+- Spend, budgets, team figures, Assets and the weekly digest.
+- Chargeback and session exports.
+- The tracked side of the [invoice check](/docs/guides/reconciliation).
+
+The last point matters. A provider still bills for metered work done in an excluded repository, but PlanckSpace does not count it, so it shows up as a gap in the invoice check.
+
+[Coverage](/docs/concepts/coverage) is unaffected. It counts developers whose daemon has contacted PlanckSpace in the last 26 hours, not developers who worked in a tracked repository. A developer whose only active repository is excluded still counts as reporting.
+
+## Edge cases
+
+- **A repository is not listed.** The list shows repositories that have sent at least one session. In a selection, a repository that has never sent one does not appear, because current CLIs do not upload sessions from untracked repositories. To add one that is not listed, set the list through the API with the repository's name. See the [API reference](/docs/reference/api).
+- **Sessions with no repository.** A session that runs outside any git repository is reported under the name `unknown` and follows the same rule. In a selection it is tracked only if `unknown` is on the list.
+- **Who can see and change it.** Any member can read the tracked list through the API, and each developer's CLI reads it on every sync. Only owners, leaders and admins can change it.
+
+## Related
+
+<Cards>
+  <Card title="Coverage" href="/docs/concepts/coverage" description="How PlanckSpace counts developers reporting, and why totals are floors while it is incomplete." />
+  <Card title="Reconcile your invoice" href="/docs/guides/reconciliation" description="Why excluded repositories can open a gap against a provider's bill." />
+  <Card title="Agent setup" href="/docs/concepts/agent-setup" description="The configuration facts PlanckSpace keeps for tracked repositories." />
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="What leaves a developer's machine, and what never does." />
+</Cards>

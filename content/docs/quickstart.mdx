@@ -1,0 +1,146 @@
+---
+title: Quickstart
+description: "Connect a machine to your workspace and see your first recoverable figure with one command: npx @planckspace/cli@latest init."
+icon: Rocket
+---
+
+One command connects a developer machine to your PlanckSpace workspace, reads the AI coding sessions already on it, starts the [background daemon](/docs/installation#the-daemon), and prints the amount PlanckSpace thinks you can recover each month. The first scan does most of the work, so plan on a few minutes.
+
+## Before you start
+
+- **A PlanckSpace workspace and an account in it.** Workspaces are set up with your team after a demo. If you do not have one yet, [book a demo](https://planckspace.dev/demo).
+- **Node.js 20 or newer.** Check with `node --version`. `npx` ships with Node.
+- **A tool PlanckSpace reads.** Claude Code, Cursor or Windsurf, used on this machine. [Supported tools](/docs/reference/supported-tools) lists what each one contributes.
+- **A way to connect.** A one-time connect code from the console, a team join code from your lead, or your CLI token. The table below says where each one comes from.
+
+## Run the command
+
+```bash
+npx @planckspace/cli@latest init
+```
+
+On a terminal, `init` asks for your CLI token with hidden input. To skip the prompt, pass the credential you have.
+
+| You have | Run | Where it comes from |
+| --- | --- | --- |
+| A connect code | `npx -y @planckspace/cli@latest init --code 7KQ4-M2XD` | In the console, click the daemon indicator in the sidebar. It reads **Connect this machine** until a device on your account has reported, and it shows the whole command with a one-time code. The code works once and expires after 10 minutes. |
+| A team join code | `npx @planckspace/cli@latest init --join pk_join_…` | Your lead copies it from **Team → Invites → Connect your team**. See [Onboard your team](/docs/team-onboarding). |
+| A CLI token | `npx @planckspace/cli@latest init --token-stdin` | **Settings → CLI / daemon connection** in the console. Pipe the token in, or set `PLANCKSPACE_TOKEN`. `--token pk_live_…` also works, but it lands in your shell history and the CLI warns you. |
+
+You can run `init` again at any time. With no credential flag, it skips the connect step on a connected machine, scans for new sessions, re-registers the daemon and prints a fresh figure.
+
+| Flag | Effect |
+| --- | --- |
+| `--plan <plan>` | Declares your own Claude Code plan and skips the question: `pro`, `max`, `max_5x`, `max_20x`, `team`, `team_standard`, `team_premium`, `enterprise`, `api` or `none`. |
+| `--email <email>` | With `--join`, the address to join as. The default is your global `git config user.email`. |
+| `--routing`, `--no-routing` | Installs or skips [model routing](/docs/guides/model-routing) for Claude Code without asking. |
+| `--no-daemon` | Skips the daemon. Run `planck daemon install` later to keep syncing. |
+
+## What init does
+
+`init` prints its progress as five numbered steps.
+
+<Steps>
+<Step>
+
+### Create local state
+
+`init` creates `~/.planckspace`, which holds your connection settings (`config.json`) and a local database (`local.db`) that caches what the CLI reads. [Install the CLI](/docs/installation#where-state-lives) lists every file.
+
+</Step>
+<Step>
+
+### Connect
+
+It redeems the code or checks the token, saves the workspace to `config.json`, and prints which backend it is about to talk to. It refuses to send a token or code over plain HTTP, except to localhost.
+
+On a terminal, `init` then asks once which Claude Code plan you are on: Pro, Max, a Team or Enterprise seat, or an API key. The answer decides whether your sessions count as billed spend or as [usage value](/docs/concepts/two-ledgers) on a seat, and it is the baseline for plan right-sizing. If Claude Code has run on the machine, `init` also offers [model routing](/docs/guides/model-routing). The default answer is yes, and your workspace's routing policy (ask, on or off) can answer for you.
+
+</Step>
+<Step>
+
+### Scan and sync
+
+The CLI backfills the session history already on the machine, every session your tools still keep on disk and not only the last 30 days. It pairs each session with its repository's git history to mark whether the work shipped, then uploads the metadata in batches of 100. Sessions from repositories your workspace does not track stay on the machine. See [Repo scope](/docs/guides/repo-scope).
+
+</Step>
+<Step>
+
+### Install the daemon
+
+The daemon keeps syncing after `init` exits and starts again at every login. When you run `init` through `npx`, it first installs the same version globally, so the auto-start entry does not point into npx's temporary cache. If that global install fails, `init` warns you and skips the registration. See [the daemon](/docs/installation#the-daemon).
+
+</Step>
+<Step>
+
+### Print your first number
+
+`init` asks the backend to run its detectors now, then prints the recoverable amount for the last 30 days. It is the same deduplicated figure as the headline on the console's [Findings](/docs/concepts/findings) page, in billed dollars: seat prices you could stop paying and metered spend you could avoid. It is never usage value.
+
+</Step>
+</Steps>
+
+## Your first number
+
+A typical result looks like this. The amounts are an example.
+
+```text
+──────────────────────────────────────────────────────────────
+  Recoverable (estimated):  $760/mo  (at least — see coverage)
+    From the last 30 days · 2 findings
+    An estimate — PlanckSpace measures what a fix actually saves after you apply it.
+    Dormant seat     $600/mo   3 of 12 paid Claude Code Max 20× seats had no sessions in 30 days — $600/mo
+    Metered waste    $160/mo   Opus on 62% of sessions, 38% ship — ~$160/mo reroutable
+
+  Coverage:  14 of 22 developers reporting — INCOMPLETE.
+             5 not connected yet, 3 silent for over 26 h.
+             Every figure is a floor until the whole team reports.
+```
+
+The figure is an estimate, not a saving. A saving is booked only after you apply a fix and PlanckSpace measures it on real sessions. See [Proof of savings](/docs/concepts/proof-of-savings).
+
+The coverage lines say how much of your team is reporting. A machine counts as reporting when it has contacted PlanckSpace in the last 26 hours. While part of the team is missing, every figure built from usage is a floor, not a total: the amount is marked `(at least — see coverage)`, and dormant-seat detection skips members it cannot measure instead of calling them idle. See [Coverage](/docs/concepts/coverage).
+
+`init` can print something other than a figure.
+
+| Output | What it means | What to do |
+| --- | --- | --- |
+| `Recoverable this month: not measurable yet` | The workspace has no findings yet, and it has under about a week of history or fewer than 20 sessions. | Leave the daemon running. The figure appears in the console as soon as there is enough history. |
+| `none found in the last 30 days` | There is enough data, and no dormant seats, oversized plans or metered waste to report. | Nothing to fix today. Findings are re-checked as sessions arrive. |
+| `nothing on your seat or usage` | You are a developer, and the findings about you add up to under $1 a month. | Workspace-wide findings are in your lead's console. A developer's figure covers only the findings about that developer. |
+| `This role can't see the recoverable figure` | A manager who is not on a team yet. | Ask an owner, leader or admin, or open the Findings page in the console. |
+| A message about your plan | Findings are a plan feature and the workspace's plan does not include them. | Ask your workspace owner. |
+
+## Check that it worked
+
+```bash
+planck status
+```
+
+```text
+PlanckSpace Status
+─────────────────────────────────────
+Connection : connected · workspace Acme
+Workspace  : Acme
+Sessions   : 214
+  claude_code               : 190
+  cursor [stable]           : 24
+Sync       : 214 synced / 0 pending
+
+Daemon     : running  (uptime 2m 41s, last event 6s ago)
+```
+
+The output is trimmed. In the console, the daemon indicator in the sidebar turns green and reads **synced** once the daemon's first heartbeat lands, and your sessions appear on the Sessions page. If either does not happen, see [Troubleshooting](/docs/troubleshooting#the-daemon-indicator-is-amber-or-grey).
+
+## What leaves your machine
+
+Only usage metadata reaches PlanckSpace: token counts, timings, models, tool names, repository and file names, and the git email that attributes a session to a person. Your prompts, the model's responses and your code are never sent to PlanckSpace. `planck inspect <session-id>` prints what would be sent for any session. The one exception is opt-in and off by default: when your workspace's [agent policy](/docs/guides/agent-policy) sets its decision provider to TypeSafe and you have set your own `TYPESAFE_API_KEY`, the PlanckSpace routing plugin sends your previous and current prompt, each cut to 2,000 characters, from your machine straight to TypeSafe, and PlanckSpace never receives them. See [Data we collect](/docs/security/data-we-collect).
+
+## Related
+
+<Cards>
+  <Card title="Onboard your team" href="/docs/team-onboarding" description="One command per developer, and how to watch coverage fill in." />
+  <Card title="Fix your first finding" href="/docs/guides/fix-findings" description="Turn the amount init printed into a measured saving." />
+  <Card title="Editor extension" href="/docs/editor-extension" description="See your own numbers and apply one-click fixes in the editor." />
+  <Card title="Troubleshooting" href="/docs/troubleshooting" description="When the daemon is not syncing or a figure looks wrong." />
+</Cards>

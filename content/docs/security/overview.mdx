@@ -1,0 +1,186 @@
+---
+title: Security overview
+description: "How PlanckSpace authenticates machines and people, decides what each request may see, protects provider credentials, and records sensitive actions."
+icon: ShieldCheck
+---
+
+PlanckSpace sits between the developer machines that report AI usage, the people who read it in the console, and the provider accounts that bill you. This page describes each of those boundaries, the credentials that cross them, and the checks the API runs on every request. For the exact fields sent from a developer's machine, see [Data we collect](/docs/security/data-we-collect).
+
+## Trust boundaries
+
+| Boundary | What crosses it | Credential |
+| --- | --- | --- |
+| Developer machine to the PlanckSpace API | Usage metadata from the CLI; finding status changes and skill-suggestion hints from the editor extension | A device token (`pk_live_`) for one person in one workspace |
+| Developer machine to TypeSafe, only when a developer opts in | The developer's previous and current prompt, each cut to 2,000 characters, for the agent policy's task decisions | The developer's own TypeSafe API key |
+| Browser to the PlanckSpace API | Everything people read and change in the console, scoped to their role | A person's sign-in session |
+| PlanckSpace to your provider accounts | Cost reports read from Anthropic, OpenAI and AWS Cost Explorer | An admin key or an IAM role you connect, stored encrypted; a regular Anthropic key is verified, then discarded |
+| PlanckSpace to Anthropic, for [Ask PlanckSpace](/docs/guides/ask-planckspace) | The question, and the results of the read-only lookups it runs as the person asking | PlanckSpace's own Anthropic API key |
+
+PlanckSpace also sends email (invitations, alerts and weekly digests) and posts alerts to the Slack webhooks you configure.
+
+Your prompts, the model's responses and your code are never sent to PlanckSpace. The one path that sends prompt text off a machine goes to TypeSafe, not to PlanckSpace, and it needs two choices: an owner, leader or admin sets the workspace's [agent policy](/docs/guides/agent-policy) to use TypeSafe for task decisions, and the developer sets their own `TYPESAFE_API_KEY`. Without the key, the decision is made on the machine. See [Data we collect](/docs/security/data-we-collect#what-is-never-sent-to-planckspace).
+
+The CLI's default API address uses HTTPS, and when you connect a machine it refuses to send a token or a code over plain HTTP to any host other than the machine itself (localhost), unless you set `PLANCKSPACE_ALLOW_INSECURE=1`. In the browser, cross-origin calls are accepted only from an allowlist of console origins.
+
+## Authentication
+
+Machines and people authenticate differently. The server never stores a device token, a join code or a connect code as issued. It keeps only a SHA-256 hash to compare against, so the raw value is shown once, when it is issued, and cannot be recovered afterwards.
+
+| Credential | Who gets it | What it can do | Ends when |
+| --- | --- | --- | --- |
+| Device token (`pk_live_`) | One person, in one workspace, usually one per machine | Upload usage and act with its owner's role in that workspace | It is rotated away, retired as one of its owner's oldest, or its owner leaves the workspace |
+| Sign-in session | A person who signs in with email and password | Everything their role allows in the console | 30 days after sign-in |
+| Join code (`pk_join_`) | Shared by an owner, leader or admin with the team | Exchanged for a developer's own device token | It is rotated or revoked, or 30 days pass |
+| Connect code (for example `7KQ4-M2XD`) | A person, for themselves | Exchanged once for that person's own device token | Its first use, or 10 minutes |
+
+### Device tokens
+
+A device token is `pk_live_` followed by 32 random bytes. It belongs to the person who created it and to one workspace. On every request the API looks up that person's current membership, so the token always acts with its owner's role, and it stops authenticating the moment its owner is removed from the workspace. To cut off all of a person's machines at once, remove them from the workspace.
+
+Device tokens have no expiry date. Rotating your token in **Controls › Security** revokes every token you hold in that workspace and issues one new one, which disconnects your other machines until you reconnect them. When the console or a connect code issues you a new token, your oldest tokens beyond the 10 most recent are retired.
+
+On the machine, the token lives in `~/.planckspace/config.json`, which the CLI and the editor extension share. Both create the file with owner-only permissions on macOS and Linux. `planck login` reads the token from a hidden prompt by default; `--token-stdin` and the `PLANCKSPACE_TOKEN` environment variable also keep it out of shell history, while `--token` works but warns that the value lands there.
+
+Some actions refuse a device token and require a person's sign-in: managing members, roles, invitations, join codes and device tokens; changing the privacy policy; generating exports; and Ask PlanckSpace.
+
+### Sign-in sessions
+
+People sign in with an email address and a password of at least 8 characters. Passwords are stored as bcrypt hashes. A failed sign-in returns the same message whether or not the address has an account, and every successful sign-in is recorded in the audit log of each workspace the person belongs to.
+
+A successful sign-in returns a signed token that is valid for 30 days and carries only the person's ID and email address. Role, team and permissions are never read from it: the API looks them up afresh on every request, so a role change or a removal applies to the very next request. The server keeps no list of sessions, so a sign-in token cannot be revoked before it expires; removing the person from the workspace is what ends their access to it.
+
+### Join codes
+
+A join code lets a whole team connect with one command, `planck init --join` followed by the code. A workspace has at most one live code. Owners, leaders and admins issue it, and issuing a new one revokes the previous one. Revoking the code stops new joins; tokens already issued keep working, because they belong to people rather than to the code.
+
+When a developer runs the command, the CLI sends the code, an email address (`--email`, or `git config user.email` when omitted), the git user name and a device label made of the operating system and CPU architecture, such as `darwin-arm64`. The server then:
+
+1. Refuses the address if the workspace has a [claimed email domain](/docs/security/workspace-policies#claimed-email-domain) and the address is not at it.
+2. Refuses an address that belongs to an owner, leader, admin or manager of the workspace. A join code only ever issues developer access.
+3. Refuses an existing PlanckSpace account with a password that is not already a member. That person must be invited instead.
+4. Checks the plan's seat limit, adds the person as a developer if they are new, and issues a device token for them without revoking their other tokens.
+
+<Callout type="warn" title="Treat a join code like a shared password">
+Anyone who holds the code can connect a machine to your workspace as a developer. Share it only in a private team channel, and revoke it once your team has joined.
+</Callout>
+
+### Connect codes
+
+A connect code is the one-command way to connect or repair a single machine. Any member mints one for themselves from the console's **Connect this machine** or **Fix daemon** dialog, and the command the dialog shows already contains it: it runs `planck init` or `planck daemon fix` with `--code`.
+
+A code is 8 characters from an alphabet without look-alike characters. It works once: the first redemption consumes it and a simultaneous second attempt is refused. It expires after 10 minutes. On redemption the server checks again that the person is still a member, then issues their own device token, which the CLI saves without displaying. The CLI sends only the code and a device label, never the hostname. Because a code is single-use and short-lived, it is safe to leave in a command line in a way a token is not.
+
+## Authorization
+
+Every API route either runs the role check or is on a short, explicit list of routes that do not need one: public endpoints such as sign-in, registration, invitation lookups, join and connect redemption and the contact form, and routes that check identity in their own handler, such as session upload from a device token. The server verifies this when it starts. A route that is on neither list stops the server from booting, so a route cannot ship without a check by accident.
+
+### Roles and scopes
+
+Every member has one of five roles. Unless a role is explicitly allowed an action on a resource, the action is refused.
+
+| Role | Sessions and findings it can read | Also |
+| --- | --- | --- |
+| Owner | The whole workspace | The only role that can delete the workspace, transfer ownership, change the privacy policy and disconnect a billing connection |
+| Leader, admin | The whole workspace | Share every operational permission with the owner: members, invitations, teams, budgets, subscriptions, billing connections, reconciliation and the audit log |
+| Manager | Their team's people, plus their own work | Read subscriptions and the status of billing connections; read their team's budgets, anomalies and exports |
+| Developer | Their own sessions and findings, plus workspace- and repository-level findings | Export their own sessions; manage their own device tokens |
+
+A manager who is not on a team is refused team-scoped reads, but their own work still opens. Changing someone's role or removing them requires a strictly higher role than theirs: an admin cannot remove a leader, and nobody can assign a role at or above their own. Ownership moves only through a transfer.
+
+Owners, leaders and admins can also grant a person read access to cost data (sessions, subscriptions, reconciliation, seat efficiency and exports) for one team or for the whole workspace, optionally with an expiry date. A grant never adds write access. Managers can grant it only for their own team. See [Teams and roles](/docs/guides/teams-and-roles).
+
+### Which workspace a request is about
+
+A person can belong to several workspaces, so each request is decided for exactly one, in this order:
+
+1. If the route's path names a workspace, that workspace. A different workspace in the query, or a device token from another workspace, is refused with a 400.
+2. Otherwise, the device token's workspace.
+3. Otherwise, the workspace named in the request.
+4. Otherwise, the person's default workspace.
+
+The API then looks up the person's membership, role, team and active grants in that workspace. A person who is not a member gets a 403.
+
+### Recorded decisions
+
+When a member is refused an action, the refusal is written to the workspace's audit log with the action, the resource, the route and the scope. Allowed changes to sensitive resources (members, billing connections, subscriptions, budgets and the privacy policy) are recorded as well. Allowed reads are not, so the log is not filled with page views.
+
+## Provider credentials
+
+Billing connections let PlanckSpace read what a provider invoiced, so tracked spend can be checked against the bill. Only owners, leaders and admins can connect one. Managers can see whether a connection is working, never its credential. See [Connect billing](/docs/guides/connect-billing).
+
+| Provider | What you provide | What PlanckSpace keeps |
+| --- | --- | --- |
+| Anthropic, Admin key (`sk-ant-admin`) | The key | The key, encrypted |
+| Anthropic, regular API key (`sk-ant-api`) | The key | The last 4 characters, a keyed fingerprint and the organization ID; the key is discarded |
+| OpenAI, Admin key (`sk-admin-`) | The key | The key, encrypted |
+| Amazon Bedrock | An IAM role ARN and an optional external ID | Both, encrypted |
+
+The rules that apply to every connection:
+
+- **Checked before it is stored.** The credential's format is checked first (a key's prefix, a role ARN's shape), then PlanckSpace reads the provider's cost report for the previous month and the month to date. Only if that read succeeds is the credential encrypted and saved, together with the billing records it produced. A failed connection writes nothing and leaves an existing, working connection untouched.
+- **Encrypted at rest** with AES-256-GCM, under a key held in the server's configuration rather than in the database.
+- **Never returned.** No response includes a credential; listing connections returns a fixed set of fields such as kind, status and last sync time.
+- **Redacted from errors.** Provider error text is scrubbed of anything shaped like an API key or an AWS access key before it is stored or shown.
+- **Regular Anthropic keys are discarded.** A regular key cannot read the cost report, so PlanckSpace verifies it with a free models request, which also names the key's organization, and then discards it. The fingerprint is used only to recognize the same key again and is never shown. Spend for that connection is what developer machines measure, never an invoice.
+
+Connecting and disconnecting are recorded in the audit log.
+
+## Confirmations for destructive actions
+
+Irreversible and sensitive actions ask for a second, explicit confirmation on top of the role check.
+
+| Action | Who can do it | Confirmation |
+| --- | --- | --- |
+| Delete the workspace | Owner | Type the workspace name |
+| Transfer ownership | Owner | Type the workspace name |
+| Claim a workspace that has no owner | Its highest-ranked leader, else admin | Type the workspace name |
+| Remove a member | An owner, leader or admin with a higher role than the member's | One-time confirmation |
+| Change the privacy policy under **Controls › Security** | Owner | One-time confirmation |
+| Disconnect a billing connection | Owner | One-time confirmation |
+
+A one-time confirmation is requested by the console just before the action. It is valid for 5 minutes, works once, and only for the same person, workspace, action and target. Deleting a workspace removes everything stored for it, its audit log included. The last owner of a workspace cannot be removed.
+
+## The audit log
+
+Each workspace keeps an append-only log of who did what, and when. Entries carry metadata only, never a credential. The log records:
+
+- Sign-ins, and requests refused by the role check.
+- Role changes, member removals, revoked invitations, ownership transfers and claims, and privacy policy changes made under **Controls › Security**.
+- Device tokens created or rotated, join codes rotated or revoked, joins through a join code, and connect codes redeemed.
+- Billing connections connected and disconnected, and subscription and budget changes.
+- Exports generated, finding status changes and seat-finding approvals.
+- Team, grant and request changes, model routing and agent policy changes, repository scope changes and plan changes.
+- Device sync activity, at most one entry per person every 30 minutes.
+
+Role changes, removals, ownership changes and those policy changes are written atomically with the change itself, so one never happens without the other. Other entries are written without holding up the request, so a failed log write never fails the action.
+
+Owners, leaders and admins read the log, and export it as CSV, under **Controls › Security**. Reading it requires the Enterprise plan; events are recorded on every plan.
+
+## Rate limiting
+
+Sign-in, code redemption, uploads and the endpoints that are expensive to answer are rate limited. The defaults:
+
+| Endpoint | Default limit | Counted per |
+| --- | --- | --- |
+| Sign-in and registration | 20 a minute | IP address |
+| Join-code redemption | 10 a minute | IP address |
+| Connect-code redemption | 10 a minute | IP address |
+| Session upload from the CLI | 120 a minute | Device token |
+| The recoverable figure `planck init` prints | 12 a minute | Device token |
+| Ask PlanckSpace questions | 20 a minute | Sign-in session |
+| Contact form | 5 every 10 minutes | IP address |
+
+Device tokens are counted by a hash, so the token itself never enters the rate limiter. Ask PlanckSpace also has a daily spend cap per workspace and answers one question per person at a time. Other routes rely on authentication and the role check rather than a request-rate limit.
+
+## Errors
+
+A server error returns the generic message `Internal Server Error`; the detail goes only to the server's own log, never into the response. A client error returns a short description of what was wrong with the request. A URL that contains an encoded NUL byte (`%00`) is refused with a 400, request bodies are limited to 10 MB, and one upload carries at most 500 sessions. If error reporting to an external tracker is turned on, each report is stripped of request bodies, cookies, the `Authorization` header and query strings before it is sent.
+
+## Related
+
+<Cards>
+  <Card title="Data we collect" href="/docs/security/data-we-collect" description="Every field sent to PlanckSpace from a developer's machine, and every one that never is." />
+  <Card title="Workspace policies" href="/docs/security/workspace-policies" description="Who sees developers by name, and the settings that shape what managers see." />
+  <Card title="Teams and roles" href="/docs/guides/teams-and-roles" description="Roles, teams and grants, and what each lets a person do." />
+  <Card title="Connect billing" href="/docs/guides/connect-billing" description="Connect Anthropic, OpenAI or Bedrock so tracked spend can be checked against the bill." />
+</Cards>

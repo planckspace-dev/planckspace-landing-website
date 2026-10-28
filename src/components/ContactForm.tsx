@@ -64,16 +64,16 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <div className="frame [--ch:24px]">
-        <div className="frame-in flex flex-col items-start p-8 sm:p-11">
-          <span className="ch-br grid h-12 w-12 place-items-center bg-lime text-ink [--ch:9px]">
+      <div className="box">
+        <div className="flex flex-col items-start p-8 sm:p-11">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-green-50 text-green-700">
             <Check className="h-5 w-5" strokeWidth={2.2} />
           </span>
-          <h3 className="t-display mt-6 text-[2rem] leading-none [--wdth:104]">Message sent.</h3>
-          <p className="mt-3 max-w-sm text-[1rem] leading-relaxed text-fg-2">
+          <h3 className="title-md mt-6">Message sent.</h3>
+          <p className="mt-3 max-w-sm text-[1rem] leading-relaxed text-body">
             Thanks, it&apos;s in our inbox. A human, usually a founder, replies within one business day.
           </p>
-          <button type="button" onClick={() => setStatus("idle")} className="link-lined mt-6 text-[0.92rem] text-fg">
+          <button type="button" onClick={() => setStatus("idle")} className="link-under mt-6 text-[0.92rem] text-ink">
             Send another message
           </button>
         </div>
@@ -82,8 +82,8 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="frame [--ch:24px]">
-      <div className="frame-in relative p-6 sm:p-9">
+    <form onSubmit={onSubmit} className="box">
+      <div className="relative p-6 sm:p-9">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="cf-name" className={labelCls}>
@@ -174,7 +174,7 @@ export default function ContactForm() {
       </div>
 
       {status === "error" && (
-        <p role="alert" className="mt-6 bg-sig-coral/10 px-4 py-3 text-[0.9rem] text-sig-coral shadow-[inset_0_0_0_1px_rgb(255_138_92/0.35)]">
+        <p role="alert" className="mt-6 rounded-[10px] bg-coral-50 px-4 py-3 text-[0.9rem] text-coral-700 shadow-[inset_0_0_0_1px_rgb(244_96_47/0.25)]">
           {errorMsg}. You can also email us directly at{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium underline">
             {CONTACT_EMAIL}

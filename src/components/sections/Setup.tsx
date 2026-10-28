@@ -1,156 +1,84 @@
-"use client";
-
-import { useRef } from "react";
-import Button from "@/components/site/Button";
+import Link from "next/link";
+import type { CSSProperties } from "react";
+import { ArrowRight } from "lucide-react";
 import CopyCommand from "@/components/site/CopyCommand";
-import { gsap, useGSAP, MOTION_OK } from "@/lib/gsap";
+import Reveal from "@/components/site/Reveal";
+import { FINDINGS, WORKSPACE, usd } from "@/lib/sample";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   How it goes live. Three steps that are a real sequence, so they are
-   numbered, beside a terminal that types the first run once it scrolls into
-   view. The output is the CLI's actual first-run shape: connect, backfill,
-   daemon, then a number in billed dollars (or what is missing for one).
+   Going live, on the page's one dark panel: the command, what it does, and a
+   sample of what it prints. The recoverable total is the live finding types
+   only (setup findings never count), the same figure the hero's receipt
+   shows, because `planck init` prints the Findings headline.
    ───────────────────────────────────────────────────────────────────────── */
 
+const COMMAND = "npx @planckspace/cli@latest init";
+const FOUND = FINDINGS.filter((f) => f.type !== "setup");
+const recoverable = FOUND.reduce((s, f) => s + f.usd, 0);
+const perMachine = Math.round(5472 / WORKSPACE.developers);
+
 const STEPS = [
-  {
-    title: "Run one command",
-    body: "Each developer connects with a one-time code. No tokens pasted into shells, nothing proxied.",
-  },
-  {
-    title: "It reads the last 30 days",
-    body: "Session history is already on disk. The CLI backfills it, then a small daemon keeps it current.",
-  },
-  {
-    title: "You get a real number",
-    body: "What is recoverable this month in billed dollars, or exactly what data it still needs. Never a placeholder zero.",
-  },
+  { n: "1", title: "Each developer runs one command", body: "It connects the machine, backfills the session history already on it, and starts a background daemon that keeps syncing." },
+  { n: "2", title: "An admin connects billing", body: "Admin keys or a seat invoice, so tracked spend is checked against what the providers actually billed." },
+  { n: "3", title: "The findings arrive", body: "Priced in billed dollars, each with its evidence and its fix, in the console and in the editor." },
 ];
 
-const LINES: { t: string; c?: string }[] = [
-  { t: "$ npx @planckspace/cli@latest init --code 4F9K2", c: "hi" },
-  { t: "✓ Connected to halyard as mara@halyard.dev", c: "ok" },
-  { t: "✓ Found Claude Code and Cursor session logs", c: "ok" },
-  { t: "✓ Backfilled 30 days · 412 sessions · metadata only", c: "ok" },
-  { t: "✓ Daemon installed · syncs every 60s", c: "ok" },
-  { t: "" },
-  { t: "Recoverable this month   $134/mo   real, billed", c: "lime" },
-  { t: "  CLAUDE.md re-read every turn        $96/mo", c: "dim" },
-  { t: "  Opus on routine sessions            $38/mo", c: "dim" },
+const LINES: { t: string; cls?: string }[] = [
+  { t: `$ ${COMMAND}`, cls: "hi" },
+  { t: `✓ Connected to ${WORKSPACE.name}`, cls: "ok" },
+  { t: `✓ Backfilled local history · ${perMachine} sessions`, cls: "ok" },
+  { t: "✓ Daemon running in the background", cls: "ok" },
+  { t: " " },
+  { t: "Recoverable this month, billed dollars", cls: "hi" },
+  // 39 columns wide, so the totals still fit a phone without scrolling
+  ...FOUND.map((f) => ({ t: `  ${f.title.padEnd(30, ".")} ${usd(f.usd).padStart(6)}` })),
+  { t: `  ${"".padEnd(30, " ")} ${"──────".padStart(6)}`, cls: "dim" },
+  { t: `  ${"Total, a month".padEnd(30, " ")} ${usd(recoverable).padStart(6)}`, cls: "hi" },
+  { t: " " },
+  { t: "Next: open the findings in the console.", cls: "dim" },
 ];
-
-const JOIN = "npx @planckspace/cli@latest init --join pk_join_…";
 
 export default function Setup() {
-  const root = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add(MOTION_OK, () => {
-        const lines = gsap.utils.toArray<HTMLElement>(".st-line");
-        const first = lines[0];
-        const full = first.dataset.text ?? "";
-        const typed = { n: 0 };
-        const tl = gsap.timeline({ scrollTrigger: { trigger: ".st-term", start: "top 75%" } });
-        tl.set(lines.slice(1), { autoAlpha: 0 })
-          .set(first, { textContent: "" })
-          .to(typed, {
-            n: full.length,
-            duration: 1.6,
-            ease: "none",
-            onUpdate: () => {
-              first.textContent = full.slice(0, Math.round(typed.n));
-            },
-          })
-          .to(lines.slice(1), { autoAlpha: 1, stagger: 0.32, duration: 0.2 }, "+=0.35");
-
-        gsap.from(".st-step", { y: 34, autoAlpha: 0, stagger: 0.12, duration: 1, scrollTrigger: { trigger: ".st-steps", start: "top 82%" } });
-        gsap.from(".st-head > *", { y: 30, autoAlpha: 0, stagger: 0.1, duration: 1, scrollTrigger: { trigger: ".st-head", start: "top 82%" } });
-      });
-      return () => mm.revert();
-    },
-    { scope: root },
-  );
-
   return (
-    <section ref={root} id="how-it-works" aria-labelledby="setup-title" className="section bg-ink-1">
+    <section id="setup" aria-labelledby="setup-title" className="section">
       <div className="wrap">
-        <div className="st-head max-w-[50rem]">
-          <p className="t-kicker">How it goes live</p>
-          <h2 id="setup-title" className="t-display t-h2 mt-5">
-            A real number in minutes.
-          </h2>
-          <p className="t-lead mt-6 max-w-[40rem]">
-            We set your workspace up with you on the demo call. From there, rollout is one command per developer, and
-            the extension works on its own from the first open.
-          </p>
-        </div>
+        <div className="panel-ink grid grid-cols-1 gap-12 p-6 sm:p-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14 lg:p-16">
+          <Reveal>
+            <p className="eyebrow text-[#8d9096]">Setup</p>
+            <h2 id="setup-title" className="title-lg mt-5 text-[clamp(2.1rem,3.6vw,3.25rem)] text-white">
+              One command. <span className="text-[#8a8d93]">Your first number in minutes.</span>
+            </h2>
+            <ol className="mt-10 space-y-6">
+              {STEPS.map((s) => (
+                <li key={s.n} className="flex gap-4">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/15 font-mono text-[0.75rem] text-[#c9cbcf]">{s.n}</span>
+                  <div>
+                    <p className="text-[1rem] font-medium tracking-[-0.012em] text-white">{s.title}</p>
+                    <p className="mt-1 text-[0.9375rem] leading-relaxed text-[#a3a6ab]">{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <CopyCommand command={COMMAND} tone="dark" className="mt-10 max-w-[30rem]" />
+            <Link href="/docs/quickstart" className="mt-6 inline-flex items-center gap-1.5 text-[0.9375rem] font-medium text-[#8fb2ff] transition-colors hover:text-white">
+              Read the quickstart <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            </Link>
+          </Reveal>
 
-        <div className="mt-14 grid gap-10 sm:mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-14">
-          <ol className="st-steps space-y-8">
-            {STEPS.map((s, i) => (
-              <li key={s.title} className="st-step flex gap-5">
-                <span className="t-meter w-10 shrink-0 text-[1.9rem] leading-none text-lime">{i + 1}</span>
-                <div className="border-t border-[var(--line)] pt-4">
-                  <h3 className="t-h4">{s.title}</h3>
-                  <p className="mt-2 text-[0.98rem] leading-relaxed text-fg-3">{s.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-
-          <div className="min-w-0">
-            <div className="st-term frame [--ch:20px]">
-              <div className="frame-in">
-                <div className="flex h-10 items-center gap-2 border-b border-[var(--line)] px-4">
-                  <span className="h-2.5 w-2.5 rounded-full bg-fg/15" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-fg/15" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-fg/15" />
-                  <span className="t-mono ml-3 text-[11px] text-fg-4">~/halyard/web</span>
-                </div>
-                <div className="term min-h-[19rem] overflow-x-auto p-5 text-[13px] sm:p-6">
-                  {LINES.map((l, i) => (
-                    <p
-                      key={i}
-                      data-text={l.t}
-                      className={`st-line whitespace-pre ${l.c === "lime" ? "font-semibold text-lime" : l.c ?? ""}`}
-                    >
-                      {l.t || " "}
-                    </p>
-                  ))}
-                </div>
-              </div>
+          <div className="min-w-0 self-center overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.035]">
+            <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3" aria-hidden>
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="ml-3 font-mono text-[0.6875rem] text-[#6e7177]">~/code/payments-api</span>
             </div>
-
-            <div className="mt-8 grid gap-6 sm:grid-cols-2">
-              <div>
-                <p className="text-[0.95rem] font-semibold text-fg">Rolling out to a team</p>
-                <p className="mt-1 text-[0.9rem] leading-relaxed text-fg-3">
-                  Paste one join command in the team channel. Each developer joins as themselves.
-                </p>
-                <CopyCommand command={JOIN} className="mt-4" />
-              </div>
-              <div>
-                <p className="text-[0.95rem] font-semibold text-fg">In the editor</p>
-                <p className="mt-1 text-[0.9rem] leading-relaxed text-fg-3">
-                  Works with no account. VS Code, or Cursor and Windsurf through Open VSX.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    href="https://marketplace.visualstudio.com/items?itemName=planckspace.planckspace-extension"
-                    external
-                    size="sm"
-                    variant="ghost"
-                  >
-                    VS Code
-                  </Button>
-                  <Button href="https://open-vsx.org/extension/planckspace/planckspace-extension" external size="sm" variant="ghost">
-                    Open VSX
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Reveal mode="print" className="term overflow-x-auto px-4 py-5 text-[0.6875rem] sm:px-6 sm:text-[0.8125rem]">
+              {LINES.map((l, i) => (
+                <pre key={i} className={l.cls} style={{ "--i": i } as CSSProperties}>
+                  {l.t}
+                </pre>
+              ))}
+            </Reveal>
           </div>
         </div>
       </div>
