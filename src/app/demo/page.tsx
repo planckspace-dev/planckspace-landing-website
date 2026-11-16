@@ -103,7 +103,7 @@ export default function DemoPage() {
               <div className="mt-12 border-t border-line pt-7">
                 <p className="text-[0.95rem] leading-relaxed text-body">
                   Not ready for a call? Read{" "}
-                  <Link href="/#how-it-works" className="link-under text-ink">
+                  <Link href="/#setup" className="link-under text-ink">
                     how it goes live
                   </Link>
                   , or email{" "}

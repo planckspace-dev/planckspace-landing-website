@@ -82,7 +82,7 @@ Every session is filed in one of two ledgers: **billed** for metered, pay-per-to
 
 ### Claude Code
 
-From version 0.5.0, the CLI works this out from Claude Code's own configuration. It reads Claude Code's managed settings file, the `settings.json` in your Claude config folder, and `.claude.json`. Each variable below is looked for in the process environment and in the `env` blocks of those settings. The first match wins.
+With an upcoming CLI release, the CLI will work this out from Claude Code's own configuration; CLI 0.5.2 does not send it yet. It reads Claude Code's managed settings file, the `settings.json` in your Claude config folder, and `.claude.json`. Each variable below is looked for in the process environment and in the `env` blocks of those settings. The first match wins.
 
 | Order | Signal | Result |
 | --- | --- | --- |
@@ -115,12 +115,12 @@ PlanckSpace uses the stamp to say that a session is included in a plan, and to m
 | Capability | CLI version |
 | --- | --- |
 | Subagent turns merged into the parent session | 0.4.0 |
-| Metered or seat detection, and the per-turn detail below | 0.5.0 |
-| Agent configuration snapshots and skill names | 0.6.0 |
+| Metered or seat detection, and the per-turn detail below | An upcoming release; not in 0.5.2 |
+| Agent configuration snapshots and skill names | 0.5.1 |
 
-### Per-turn detail (0.5.0)
+### Per-turn detail (upcoming)
 
-Each field is sent only when Claude Code recorded it, and each is a number or a short identifier, never text.
+These fields arrive with an upcoming CLI release. The current release (0.5.2) does not send them yet. Each field is sent only when Claude Code recorded it, and each is a number or a short identifier, never text.
 
 | Field | Meaning |
 | --- | --- |
@@ -135,11 +135,11 @@ Each field is sent only when Claude Code recorded it, and each is a number or a 
 
 These fields feed the levers on the Optimize page. See [Telemetry](/docs/reference/telemetry) for the full payload.
 
-### Agent configuration snapshots (0.6.0)
+### Agent configuration snapshots (0.5.1)
 
-[Agent setup](/docs/concepts/agent-setup) reads a metadata-only snapshot of how each repository is set up for agents. CLI 0.6.0 is the first build that sends it, and earlier builds, including 0.5.0, do not. A snapshot describes each instruction file, such as `CLAUDE.md`, by size, line count, an estimated token count, a keyed hash and its last commit time. It lists the number of hooks per event and the names of skills, commands and MCP servers, with the MCP transport and the `model` setting. It never carries file contents, hook commands, server URLs or environment values, and the backend rejects a payload that does. Repositories your workspace does not track are dropped.
+[Agent setup](/docs/concepts/agent-setup) reads a metadata-only snapshot of how each repository is set up for agents. CLI 0.5.1 is the first build that sends it, and earlier builds do not. A snapshot describes each instruction file, such as `CLAUDE.md`, by size, line count, an estimated token count, a keyed hash and its last commit time. It lists the number of hooks per event and the names of skills, commands and MCP servers, with the MCP transport and the `model` setting. It never carries file contents, hook commands, server URLs or environment values, and the backend rejects a payload that does. Repositories your workspace does not track are dropped.
 
-On devices below 0.6.0, Agent setup shows how many need a daemon update.
+On devices below 0.5.1, Agent setup shows how many need a daemon update.
 
 ## Prices and unpriced turns
 

@@ -59,7 +59,7 @@ Each line starts with a check mark or a cross, and the remedy is printed under a
 
 | Line | Cause | Fix |
 | --- | --- | --- |
-| `CLI 0.4.0 is behind 0.5.0` | An older build. | `npm i -g @planckspace/cli@latest`, or run `npx -y @planckspace/cli@latest daemon fix`. |
+| `CLI 0.4.0 is behind 0.5.2` | An older build. | `npm i -g @planckspace/cli@latest`, or run `npx -y @planckspace/cli@latest daemon fix`. |
 | `This machine is not connected to a workspace` | No token is saved. | Use **Connect this machine** in the console and run the command it shows. |
 | `The saved token was rejected by <url>` | The token was revoked or regenerated, or it belongs to a different backend. | Use the daemon indicator's command, which carries a one-time code. |
 | `Cannot reach <url>` | A network, VPN or proxy problem. | Fix the network. The daemon keeps queueing sessions locally and uploads them once the backend is reachable. |
@@ -102,7 +102,7 @@ Sessions from repositories your workspace does not track are not pending. They s
 
 ### The CLI asks for an update
 
-**Cause.** `planck daemon status` prints `Update available: 0.5.0 -> 0.6.0`, or `THIS CLI REPORTS INCORRECT SPEND`, and the console shows **Update available** or **Update required**. The second means the build cannot price a model now in use, so it leaves those turns out of its dollar figures and the totals it reports are understated.
+**Cause.** `planck daemon status` prints `Update available: 0.5.1 -> 0.5.2`, or `THIS CLI REPORTS INCORRECT SPEND`, and the console shows **Update available** or **Update required**. The second means the build cannot price a model now in use, so it leaves those turns out of its dollar figures and the totals it reports are understated.
 
 **Fix.** Run `npm install -g @planckspace/cli@latest`, then `planck daemon fix` to restart the daemon on the new build. The daemon never updates itself. If the console says **CLI version unconfirmed**, the daemon has not reported lately, and the verdict dates from its last contact. Running `planck daemon fix` refreshes it.
 
@@ -164,7 +164,7 @@ A flat seat invoice is checked against your declared seats, not against token sp
 
 ### Agent setup asks you to update the daemon
 
-**Cause.** The device's last-seen CLI version is older than the first build that sends agent configuration snapshots, which is 0.6.0. CLI 0.5.0 is not enough. A device that never reported a version shows as unknown.
+**Cause.** The device's last-seen CLI version is older than the first build that sends agent configuration snapshots, which is 0.5.1. A device that never reported a version shows as unknown.
 
 **Fix.** Run `npm install -g @planckspace/cli@latest`, then `planck daemon fix`. Agent setup shows the minimum version and how many devices are below it. See [Agent setup](/docs/concepts/agent-setup).
 

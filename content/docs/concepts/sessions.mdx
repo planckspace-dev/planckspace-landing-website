@@ -21,7 +21,7 @@ The CLI reads each tool's local logs and turns every conversation into one sessi
 | Outcome | Shipped, partial, abandoned, errored or unknown (below). |
 | Turn count and files touched | Counts, plus the merged pull request number when the work shipped. |
 
-A **turn** is one request to the model. Each turn carries its own model, its tokens by type, its dollar figure at API rates, the tools it called and the files it touched, and a timestamp. From CLI 0.5.0, Claude Code turns also carry the share of cache writes kept for an hour, thinking tokens, the effort level, the subagent type, why a cache was missed, the size of tool results, the speed mode and compaction markers. These feed [cost anatomy](/docs/concepts/cost-anatomy). The full field list is in the [telemetry reference](/docs/reference/telemetry).
+A **turn** is one request to the model. Each turn carries its own model, its tokens by type, its dollar figure at API rates, the tools it called and the files it touched, and a timestamp. With an upcoming CLI release (the current 0.5.2 does not send them yet), Claude Code turns also carry the share of cache writes kept for an hour, thinking tokens, the effort level, the subagent type, why a cache was missed, the size of tool results, the speed mode and compaction markers. These feed [cost anatomy](/docs/concepts/cost-anatomy). The full field list is in the [telemetry reference](/docs/reference/telemetry).
 
 A session grows until it ends. The CLI sends its complete turn list on every sync, and PlanckSpace replaces the stored turns with it, so a session is never double counted while it is still running.
 
@@ -76,7 +76,7 @@ If the member who created a device token leaves the workspace, the token stops w
 
 From CLI 0.4.0, a Claude Code session includes the turns of its subagents. Claude Code writes each subagent to its own transcript; the CLI merges those turns into the parent session in time order.
 
-Each turn is priced at its own model. Work a subagent ran on Haiku is priced as Haiku, even when the session's main model is Opus, and the session's model stays the main session's model. From CLI 0.5.0, subagent turns are tagged with the subagent type, so PlanckSpace can tell main-session work from subagent work. On older sessions without the tag, the savings measurement treats a turn on a model other than the session's main model as a subagent's.
+Each turn is priced at its own model. Work a subagent ran on Haiku is priced as Haiku, even when the session's main model is Opus, and the session's model stays the main session's model. With an upcoming CLI release, subagent turns will be tagged with the subagent type (the current 0.5.2 does not send it), so PlanckSpace can tell main-session work from subagent work. On older sessions without the tag, the savings measurement treats a turn on a model other than the session's main model as a subagent's.
 
 A turn on a model with no price is left out of the dollar figures rather than guessed, and counted as unpriced. [Coverage](/docs/concepts/coverage#unpriced-turns) reports how many turns are unpriced, because spend is undercounted while any exist.
 

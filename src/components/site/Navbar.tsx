@@ -4,16 +4,17 @@ import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
-import { ArrowRight, BadgeCheck, BookOpen, Boxes, ChevronDown, FileCode2, Radar, Scale, ShieldCheck, SquareTerminal, Wand2, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, BookOpen, Boxes, ChevronDown, FileCode2, LogIn, Radar, Scale, ShieldCheck, SquareTerminal, Wand2, X } from "lucide-react";
 import { AnthropicLogo, ClaudeLogo, CursorLogo, OpenAILogo, WindsurfLogo } from "@/components/brand/ToolLogos";
 import Button from "@/components/site/Button";
 import { Logo } from "@/components/ui/logo";
-import { DEMO_PATH } from "@/lib/plans";
+import { DEMO_PATH, SIGN_IN_URL } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
    The bar: lockup, two menus (the product's four moves, and the reading),
-   Docs and Contact as plain links, and one action. Transparent over the
+   Docs and Contact as plain links, and one action, with a quiet Sign in
+   beside it for people who already have an account. Transparent over the
    hero; paper with a hairline once the page moves. On phones the same links
    open in a full-screen sheet (a Radix dialog: focus trapped, Escape closes).
    ───────────────────────────────────────────────────────────────────────── */
@@ -158,6 +159,9 @@ export default function Navbar() {
         </NavigationMenu.Root>
 
         <div className="flex items-center gap-1.5">
+          <Button href={SIGN_IN_URL} size="sm" variant="ghost" className="hidden sm:inline-flex">
+            Sign in
+          </Button>
           <Button href={DEMO_PATH} size="sm" className="hidden sm:inline-flex">
             Book a demo
           </Button>
@@ -210,12 +214,14 @@ export default function Navbar() {
                   </ul>
                 </nav>
 
-                <div className="wrap grid shrink-0 gap-2.5 border-t border-line py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:grid-cols-2">
+                {/* Pinned, so Book a demo and Sign in never sit below the fold on a short phone. */}
+                <div className="wrap sticky bottom-0 grid shrink-0 gap-2.5 border-t border-line bg-page py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:grid-cols-2">
                   <Button href={DEMO_PATH} size="lg" onClick={() => setOpen(false)}>
                     Book a demo
                   </Button>
-                  <Button href="/docs" size="lg" variant="secondary" icon={<BookOpen className="h-4 w-4" strokeWidth={1.8} />} onClick={() => setOpen(false)}>
-                    Documentation
+                  {/* Documentation is already first under Resources above. */}
+                  <Button href={SIGN_IN_URL} size="lg" variant="secondary" icon={<LogIn className="h-4 w-4" strokeWidth={1.8} />} onClick={() => setOpen(false)}>
+                    Sign in
                   </Button>
                 </div>
               </Dialog.Content>

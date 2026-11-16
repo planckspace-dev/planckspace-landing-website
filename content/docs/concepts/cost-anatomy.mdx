@@ -12,7 +12,7 @@ Cost anatomy reads the sessions in the window you choose (7, 30 or 90 days), sco
 
 The levers need **per-turn detail**: each turn's own cache reads and cache writes. Sessions synced before turns carried those counts still appear in the token-type breakdown, priced from their totals, but cannot feed the levers. The page says how much it measured, for example "Measured on 412 of 530 sessions with per-turn detail".
 
-The effort, subagent and cache-miss levers also need the turn metadata that CLI 0.5.0 added for Claude Code: the effort level, the subagent type, why a cache was missed, the share of cache writes kept for an hour, and thinking tokens. Until every device runs 0.5.0, those levers see only part of the team.
+The effort, subagent and cache-miss levers also need turn metadata for Claude Code that arrives with an upcoming CLI release, and that the current release (0.5.2) does not send yet: the effort level, the subagent type, why a cache was missed, the share of cache writes kept for an hour, and thinking tokens. Until devices send it, those levers see only part of the team.
 
 ## By token type
 
@@ -23,7 +23,7 @@ For each ledger separately, cost anatomy splits the dollars into four parts:
 | Input | New, uncached input tokens |
 | Cache reads | Context read back from the prompt cache, on every call |
 | Cache writes | Context written to the prompt cache |
-| Output | Generated tokens, with thinking tokens shown as their share of output (CLI 0.5.0 and later) |
+| Output | Generated tokens, with thinking tokens shown as their share of output (arrives with an upcoming CLI release; not sent by 0.5.2) |
 
 Each part is priced on its own at the rate tier of the request it belongs to, so a tiered model such as Haiku 5.5 prices a request with a large prompt at its long-context rate. A session without per-turn detail is priced at its average request size.
 

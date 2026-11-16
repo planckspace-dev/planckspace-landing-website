@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { Logo } from "@/components/ui/logo";
-import { DEMO_PATH } from "@/lib/plans";
+import { DEMO_PATH, SIGN_IN_URL } from "@/lib/plans";
 
-/** Options shared by the docs layouts: the lockup, a way back to the site, and the demo. */
+/** Options shared by the docs layouts: the lockup, a way back to the site,
+ *  sign-in for existing accounts, and the demo. The plain links sit in the
+ *  bar on wide screens and in the sidebar on phones. */
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
@@ -20,6 +22,8 @@ export function baseOptions(): BaseLayoutProps {
     themeSwitch: { enabled: false },
     links: [
       { text: "Website", url: "/", active: "none" },
+      // external: false keeps it in the same tab (fumadocs opens absolute URLs in a new one).
+      { text: "Sign in", url: SIGN_IN_URL, active: "none", external: false },
       {
         type: "custom",
         on: "nav",

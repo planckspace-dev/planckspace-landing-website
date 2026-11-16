@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { PlanckspaceLockup } from "@/components/brand/Planckspace";
 import { Logo } from "@/components/ui/logo";
-import { CONTACT_EMAIL, DEMO_PATH } from "@/lib/plans";
+import { CONTACT_EMAIL, DEMO_PATH, SIGN_IN_URL } from "@/lib/plans";
 import { SOCIAL_LINKS } from "@/lib/social-links";
 
 /* Plain links with 40px tap targets, then the lockup at poster scale, a step
    off the paper and cut by the bottom edge, so the brand is the last thing
    on the page. */
 
-const COLUMNS = [
+/** Off-site links open in a new tab unless `sameTab` (the console's Sign in). */
+type FooterLink = { label: string; href: string; sameTab?: boolean };
+
+const COLUMNS: { head: string; links: FooterLink[] }[] = [
   {
     head: "Product",
     links: [
@@ -34,6 +37,7 @@ const COLUMNS = [
     head: "Get started",
     links: [
       { label: "Book a demo", href: DEMO_PATH },
+      { label: "Sign in", href: SIGN_IN_URL, sameTab: true },
       { label: "VS Code extension", href: "https://marketplace.visualstudio.com/items?itemName=Planckspace.planckspace-extension" },
       { label: "Open VSX", href: "https://open-vsx.org/extension/planckspace/planckspace-extension" },
       { label: "npm package", href: "https://www.npmjs.com/package/@planckspace/cli" },
@@ -93,7 +97,7 @@ export default function Footer() {
                       ) : (
                         <a
                           href={l.href}
-                          {...(l.href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
+                          {...(l.href.startsWith("http") && !l.sameTab ? { target: "_blank", rel: "noreferrer" } : {})}
                           className="inline-block break-all py-[0.4rem] text-[0.9rem] text-body transition-colors hover:text-ink"
                         >
                           {l.label}

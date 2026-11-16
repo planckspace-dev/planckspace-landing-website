@@ -41,11 +41,11 @@ The body of `POST /api/ingest` is an envelope object. A bare array of session ob
 | `anomalies` | Array of [spend jumps](#anomalies), default `[]` | No | Spend jumps the CLI flagged. |
 | `budgets` | Array of [budgets](#budgets), or `null`, default `null` | No | Budgets declared on the device. |
 | `productivityMetric` | [Metric object](#productivitymetric) or `null`, default `null` | No | Accepted. The current CLI sends `null`. |
-| `cliVersion` | String shaped like `0.5.0`, with an optional suffix such as `-beta.1` | No | Version of `@planckspace/cli` that produced the batch. Older CLIs omit it. |
+| `cliVersion` | String shaped like `0.5.2`, with an optional suffix such as `-beta.1` | No | Version of `@planckspace/cli` that produced the batch. Older CLIs omit it. |
 | `routingInstalled` | Boolean | No | Whether model routing is installed on the device. CLI 0.4.0 and later. |
-| `claudeBilling` | [Object](#claudebilling) | No | How Claude Code on the device is billed. CLI 0.5.0 and later. |
-| `agentPolicyState` | [Object](#agentpolicystate) | No | What the device did with the workspace's agent policy. CLI 0.5.0 and later. |
-| `agentConfig` | [Snapshot](#agentconfig) | No | Metadata-only snapshot of agent configuration. CLI 0.6.0 and later. |
+| `claudeBilling` | [Object](#claudebilling) | No | How Claude Code on the device is billed. Arrives with an upcoming CLI release; not sent by 0.5.2. |
+| `agentPolicyState` | [Object](#agentpolicystate) | No | What the device did with the workspace's agent policy. Arrives with an upcoming CLI release; not sent by 0.5.2. |
+| `agentConfig` | [Snapshot](#agentconfig) | No | Metadata-only snapshot of agent configuration. CLI 0.5.1 and later. |
 
 ## Session object
 
@@ -99,9 +99,9 @@ One object per assistant turn. Unknown keys are dropped.
 | `filesTouched` | Array of strings, default `[]` | No | Paths touched in the turn. The CLI sends them relative to the repository root with forward slashes, and reduces a path outside the repository to its file name. File contents are never sent. |
 | `costUsd` | Number, 0 or more, default `0` | No | The turn priced at API list rates. |
 
-### Per-turn telemetry added in CLI 0.5.0
+### Per-turn telemetry (upcoming)
 
-Each of these is optional. An older CLI omits them, and a malformed value is dropped rather than failing the request.
+These fields arrive with an upcoming CLI release. The current release (0.5.2) does not send them yet. Each of these is optional. A CLI that does not send them omits them, and a malformed value is dropped rather than failing the request.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ Since CLI 0.4.0 a session's turns also include its Claude Code subagents' turns,
 | --- | --- | --- | --- |
 | `name` | String | Yes | The tool's name, such as `Read` or `Edit`. Calls to an MCP server appear as `mcp__<server>__<tool>`. Arguments are never sent. |
 | `count` | Integer, 0 or more | Yes | How many times the tool ran in the turn. |
-| `skill` | Identifier matching `[A-Za-z0-9][\w.:@/-]{0,99}` | No | On a Skill tool call, the name of the skill that ran. CLI 0.6.0 and later. A value that does not match the pattern rejects the request. |
+| `skill` | Identifier matching `[A-Za-z0-9][\w.:@/-]{0,99}` | No | On a Skill tool call, the name of the skill that ran. CLI 0.5.1 and later. A value that does not match the pattern rejects the request. |
 
 ## Batch fields
 
@@ -229,7 +229,7 @@ A boolean, sent only where Claude Code exists. When it is absent the state is un
 
 ## `agentConfig`
 
-A snapshot of how Claude Code is set up: which instruction files, hooks, skills, commands and MCP servers exist, and how large and how old they are. It is metadata only and strict at every level. A payload that carries any key not listed here, such as a file's contents, a hook's command, or an MCP server's URL or environment keys, is rejected with `400` rather than stored. Sent by CLI 0.6.0 and later; CLI 0.5.0 does not send it.
+A snapshot of how Claude Code is set up: which instruction files, hooks, skills, commands and MCP servers exist, and how large and how old they are. It is metadata only and strict at every level. A payload that carries any key not listed here, such as a file's contents, a hook's command, or an MCP server's URL or environment keys, is rejected with `400` rather than stored. Sent by CLI 0.5.1 and later.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -323,7 +323,7 @@ An envelope with one metered session of two turns. The session totals are the su
       "reReadPatterns": [{ "path": "src/invoice/round.ts", "count": 2 }]
     }
   ],
-  "cliVersion": "0.5.0",
+  "cliVersion": "0.5.2",
   "routingInstalled": false,
   "claudeBilling": { "mode": "metered", "via": "env_api_key", "anthropicOrgId": null }
 }

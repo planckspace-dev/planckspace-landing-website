@@ -9,6 +9,7 @@
 # Usage:
 #   curl -fsSL https://planckspace.dev/install | sh
 #   curl -fsSL https://planckspace.dev/install | sh -s -- --token pk_live_xxx
+#   curl -fsSL https://planckspace.dev/install | sh -s -- --join pk_join_xxx   (team rollout)
 #
 # POSIX sh only, deliberately. The documented entrypoint pipes this into `sh`,
 # and the shebang is ignored when a script arrives on stdin — so `sh` is dash on
@@ -31,10 +32,13 @@ die()  { printf '\nERROR: %s\n\n' "$*" >&2; exit 1; }
 
 # ── parse args ───────────────────────────────────────────────────────────────
 TOKEN=""
+JOIN=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --token)   TOKEN="${2:-}"; shift 2 ;;
     --token=*) TOKEN="${1#--token=}"; shift ;;
+    --join)    JOIN="${2:-}"; shift 2 ;;
+    --join=*)  JOIN="${1#--join=}"; shift ;;
     *)         shift ;;
   esac
 done
@@ -106,33 +110,23 @@ fi
 command -v planck >/dev/null 2>&1 || \
   die "'planck' not found after install. Add \"$(npm prefix -g 2>/dev/null)/bin\" to your PATH."
 
-# ── init ─────────────────────────────────────────────────────────────────────
-say "Initializing ~/.planckspace..."
-planck init
-
-# ── login ────────────────────────────────────────────────────────────────────
+# ── first run: connect → backfill + sync → daemon → first number ─────────────
+# `planck init` does all of it. Via stdin for a token, never an argument: a
+# bearer credential passed as an argument is visible in `ps` to every other user
+# on the machine for as long as it runs. A join code is lower-stakes by design:
+# it can only mint a developer-role token for the email that redeems it, it is
+# pasted into a team channel anyway, and an admin can rotate it at any time.
 CONNECTED=false
-if [ -n "$TOKEN" ]; then
-  say "Connecting to your workspace..."
-  # Via stdin, never --token: a bearer credential passed as an argument is
-  # visible in `ps` to every other user on the machine for as long as it runs.
-  if printf '%s' "$TOKEN" | planck login --token-stdin; then
-    CONNECTED=true
-  fi
+if [ -n "$JOIN" ]; then
+  say "Joining your team and measuring your last 30 days..."
+  if planck init --join "$JOIN"; then CONNECTED=true; fi
+elif [ -n "$TOKEN" ]; then
+  say "Connecting and measuring your last 30 days..."
+  if printf '%s' "$TOKEN" | planck init --token-stdin; then CONNECTED=true; fi
 else
-  say "No token provided."
-  info "Sign in at $CONSOLE_URL, copy your CLI token from Settings, then run:"
-  info "  planck login"
-fi
-
-# ── scan (backfill existing history) ─────────────────────────────────────────
-say "Scanning local AI session history..."
-planck scan
-
-# ── sync (only when connected) ───────────────────────────────────────────────
-if [ "$CONNECTED" = "true" ]; then
-  say "Syncing data to your workspace..."
-  planck scan --sync
+  say "Initializing (no token or join code — scanning locally only)..."
+  planck init
+  info "Connect with:  planck login   (or your team's: planck init --join pk_join_…)"
 fi
 
 # ── VS Code extension ─────────────────────────────────────────────────────────

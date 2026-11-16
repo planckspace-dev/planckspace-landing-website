@@ -87,10 +87,14 @@ export const PLANS: Plan[] = [
   },
 ];
 
-/** Single entry point for all "get access" intent across the site. The site
- *  exposes no sign-in or console surface at all: there is no public self-serve
- *  registration, and every new workspace is provisioned after a demo. */
+/** Single entry point for all "get access" intent across the site. There is no
+ *  public self-serve registration: every new workspace is provisioned after a
+ *  demo, so the site never links to sign-up. */
 export const DEMO_PATH = "/demo";
+/** Where an existing account signs in to the console. A quiet secondary link
+ *  in the bar, the phone menu, the footer and the docs header — never a CTA
+ *  that competes with the demo. It opens in the same tab. */
+export const SIGN_IN_URL = "https://console.planckspace.dev/login";
 /** Shown illustratively in How it works. Onboarding runs with us, post-demo. */
 export const INSTALL_CMD = "curl -fsSL https://planckspace.dev/install | sh";
 /**

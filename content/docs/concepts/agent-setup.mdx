@@ -20,7 +20,7 @@ The CLI sends a snapshot of each in-scope repository's agent configuration. It i
 
 The agent-config snapshot is checked at every level against a fixed schema, so one carrying file contents, a hook command or an MCP URL is refused rather than stored. Each instruction file is identified by a keyed hash (HMAC-SHA256) of its contents, which lets PlanckSpace see that a file changed without receiving the file. PlanckSpace stores config only for repositories in the workspace's [scope](/docs/guides/repo-scope); any other repository is dropped on arrival.
 
-Config snapshots and skill names come from CLI 0.6.0. Devices on older versions are counted as needing an update. A repository no device has reported is treated as not reported: its setup is unknown, never "missing".
+Config snapshots and skill names come from CLI 0.5.1 and later. Devices on older versions are counted as needing an update. A repository no device has reported is treated as not reported: its setup is unknown, never "missing".
 
 ## The five setup findings
 

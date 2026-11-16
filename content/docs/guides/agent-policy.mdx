@@ -6,6 +6,10 @@ icon: SlidersHorizontal
 
 An agent policy is a workspace-wide set of Claude Code settings and guard behaviors that an owner, leader or admin edits once and every connected machine picks up. Settings such as when a long session compacts, or how long its prompt cache lives, are per-machine, so without a policy each developer sets them, or does not, by hand. The console calls it Autopilot, on the Optimize page, and the CLI command is `planck autopilot`.
 
+<Callout title="Not in the released CLI yet" type="warn">
+The CLI that applies the agent policy to a machine, and the `planck autopilot` command, are not in CLI 0.5.2, the current release. Nothing is written to Claude Code's settings until a later CLI release. Suggest and Off behave as described; Apply will not change a developer's settings yet.
+</Callout>
+
 ## Modes
 
 | Mode | What devices do |
@@ -14,7 +18,7 @@ An agent policy is a workspace-wide set of Claude Code settings and guard behavi
 | Suggest | Nothing is written to Claude Code's settings. The guards and task decisions below still run. The console recommends this for pilots. |
 | Apply | The CLI writes the settings below into each developer's own Claude Code user settings, backed up and undoable. The guards and task decisions run too. |
 
-Devices report their policy state from CLI 0.5.0, so older devices do not appear in the counts below.
+Devices report their policy state with an upcoming CLI release; the current release (0.5.2) does not send it yet, so no device appears in the counts below until then.
 
 ## What the policy sets
 
@@ -98,7 +102,7 @@ Each lever is computed from your own per-turn data, as described in [cost anatom
 | Use the 1-hour or 5-minute prompt-cache TTL | Prompt cache lifetime |
 | Run read-only subagents on Haiku | Nothing. The plugin's `explorer` agent runs on Haiku, while Claude Code's built-in Explore runs on the main model. |
 
-The effort, subagent and cache-miss levers need CLI 0.5.0 on every device, because they read per-turn detail.
+The effort, subagent and cache-miss levers need a CLI release that sends per-turn detail on every device. The current release (0.5.2) does not send it yet.
 
 ## How a device applies it
 
@@ -117,7 +121,7 @@ Every save bumps the version by one, even when nothing changed. Devices report t
 | Applied | Devices that wrote the latest version's settings (Apply mode). |
 | On the latest version | Devices that have received the latest version. |
 | Opted out | Devices whose developer ran `planck autopilot off`. |
-| Reporting | Devices on CLI 0.5.0 or later that report policy state. |
+| Reporting | Devices on a CLI release that reports policy state (not 0.5.2 yet). |
 | Active | Devices seen in the last 30 days. |
 
 ## Opt out on one machine

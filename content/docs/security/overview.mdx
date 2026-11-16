@@ -113,7 +113,7 @@ Billing connections let PlanckSpace read what a provider invoiced, so tracked sp
 | Anthropic, Admin key (`sk-ant-admin`) | The key | The key, encrypted |
 | Anthropic, regular API key (`sk-ant-api`) | The key | The last 4 characters, a keyed fingerprint and the organization ID; the key is discarded |
 | OpenAI, Admin key (`sk-admin-`) | The key | The key, encrypted |
-| Amazon Bedrock | An IAM role ARN and an optional external ID | Both, encrypted |
+| Amazon Bedrock | An IAM role ARN and a required external ID (a role that can be assumed without it is refused) | Both, encrypted |
 
 The rules that apply to every connection:
 

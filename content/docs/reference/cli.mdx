@@ -4,7 +4,7 @@ description: "Every planck command, subcommand and flag, the environment variabl
 icon: SquareTerminal
 ---
 
-`planck` is the command-line client for PlanckSpace. It reads the session records your AI coding tools already write on the machine, keeps them in a local database, and sends usage metadata to your workspace, either when you run a command or continuously from a background daemon. This page lists every command, subcommand and flag in `@planckspace/cli` 0.5.0, the environment variables it reads, and what each command writes or sends.
+`planck` is the command-line client for PlanckSpace. It reads the session records your AI coding tools already write on the machine, keeps them in a local database, and sends usage metadata to your workspace, either when you run a command or continuously from a background daemon. This page lists every command, subcommand and flag in `@planckspace/cli` 0.5.2, the environment variables it reads, and what each command writes or sends.
 
 To install the CLI, see [Installation](/docs/installation). For a first run that ends in a dollar figure, see the [Quickstart](/docs/quickstart). The payload that `planck sync` sends is specified in the [telemetry schema](/docs/reference/telemetry).
 
@@ -32,7 +32,6 @@ All state lives in one directory, `~/.planckspace/` by default. Set `PLANCKSPACE
 | `config.json` | Backend URL, device token, workspace, declared subscriptions, budgets and your routing choice. Written with mode `0600` in a directory created with mode `0700`. |
 | `local.db` | The local session database and the record of which sessions were already synced. |
 | `daemon.json`, `daemon.pid`, `daemon.log` | Daemon state, process id, and an event log that rotates at 10 MB and keeps three older files. |
-| `agent-policy.json`, `agent-policy-applied.json`, `backups/` | The last agent policy received, what `planck autopilot` applied to Claude Code (with each key's previous value, for an exact undo), and a copy of Claude Code's `settings.json` taken before the first write. |
 | `claude-plugin/` | The routing plugin's files, once [model routing](/docs/guides/model-routing) is installed. |
 
 ### Which backend the CLI talks to
@@ -50,7 +49,7 @@ The CLI never loads a `.env` file. A variable takes effect only when you export 
 | `PLANCKSPACE_TOKEN` | `planck login`, `planck init` | Device token. Used when neither `--token-stdin` nor `--token` is given, and read before the hidden prompt. |
 | `PLANCKSPACE_ALLOW_INSECURE` | `planck login`, `planck init`, `planck daemon fix` | Set to `1` to allow sending a token, join code or connect code to an `http://` backend that is not on this machine. `https://` and loopback hosts (`localhost`, `127.0.0.1`, `::1`) never need it. |
 | `PLANCKSPACE_CLAUDE_BIN` | `planck routing`, `planck init`, the daemon | Path to the `claude` binary used to register the routing plugin, or `none` to skip it and edit Claude Code's `settings.json` instead. |
-| `CLAUDE_CONFIG_DIR` | `planck scan`, the daemon, `planck init`, `planck routing`, `planck autopilot` | Claude Code's config directory. Default `~/.claude`. Session logs are read from its `projects` folder, and settings are read and written in its `settings.json`. |
+| `CLAUDE_CONFIG_DIR` | `planck scan`, the daemon, `planck init`, `planck routing` | Claude Code's config directory. Default `~/.claude`. Session logs are read from its `projects` folder, and settings are read and written in its `settings.json`. |
 | `CLAUDE_CODE_BILLING_MODE` | `planck scan`, the daemon | Forces how Claude Code sessions are filed. `token`, `api` or `billed` files them as metered; `seat`, `subscription` or `imputed` files them as seat usage. It takes priority over detection and over your declared plan. |
 | `TYPESAFE_API_KEY` | `planck sync`, the daemon | Checked for presence only, and only when the workspace's agent policy names `typesafe` as its task-decision provider. Without it the device reports `heuristic` instead. The value is never sent. |
 
@@ -643,6 +642,10 @@ The workspace policy decides what `planck init` and the daemon do:
 A flag overrides the policy. Your own `planck routing off` overrides the workspace policy on your machine until you run `planck routing on`. Turning the policy off later stops pushing routing; it does not remove it from machines that have it.
 
 ### `planck autopilot`
+
+<Callout title="Not in the released CLI yet" type="warn">
+The CLI that applies the agent policy to a machine, and the `planck autopilot` command, are not in CLI 0.5.2, the current release. Nothing is written to Claude Code's settings until a later CLI release. Suggest and Off behave as described; Apply will not change a developer's settings yet.
+</Callout>
 
 Controls this machine's side of the workspace's [agent policy](/docs/guides/agent-policy): the Claude Code settings your admins want, such as when to compact, effort level and the subagent model.
 
