@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils";
 
 /* A section's opening: a small mono label (with its index when the section is
    one step of the loop), the headline (its second clause wrapped in
-   <span className="tone">), and a lede. `split` sets the lede beside the
-   headline on wide screens, bottom-aligned. */
+   <span className="tone">), and a lede. The headline gets the full measure of
+   the column and carries the section; the lede sits under it, a reading
+   width wide. `size="xl"` is for the page's statements (the problem, the
+   proof); everything else is `lg`. */
 
 export default function SectionHead({
   id,
@@ -14,8 +16,10 @@ export default function SectionHead({
   title,
   lede,
   align = "left",
-  split,
+  size = "lg",
   className,
+  titleClassName,
+  ledeClassName,
   children,
 }: {
   id: string;
@@ -24,42 +28,26 @@ export default function SectionHead({
   title: ReactNode;
   lede?: ReactNode;
   align?: "left" | "center";
-  split?: boolean;
+  size?: "xl" | "lg";
   className?: string;
+  titleClassName?: string;
+  ledeClassName?: string;
   children?: ReactNode;
 }) {
   const center = align === "center";
-  const label = eyebrow && (
-    <p className="eyebrow">
-      {index && <span className="eyebrow-n">{index}</span>}
-      {eyebrow}
-    </p>
-  );
-
-  if (split) {
-    return (
-      <Reveal className={cn("grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-end lg:gap-20", className)}>
-        <div>
-          {label}
-          <h2 id={id} className={cn("title-lg max-w-[16ch]", eyebrow && "mt-5")}>
-            {title}
-          </h2>
-        </div>
-        <div className="lg:pb-2">
-          {lede && <p className="lede">{lede}</p>}
-          {children}
-        </div>
-      </Reveal>
-    );
-  }
 
   return (
-    <Reveal className={cn(center ? "mx-auto max-w-[50rem] text-center" : "max-w-[48rem]", className)}>
-      {label}
-      <h2 id={id} className={cn("title-lg", eyebrow && "mt-5")}>
+    <Reveal className={cn(center && "mx-auto text-center", className)}>
+      {eyebrow && (
+        <p className="eyebrow">
+          {index && <span className="eyebrow-n">{index}</span>}
+          {eyebrow}
+        </p>
+      )}
+      <h2 id={id} className={cn(size === "xl" ? "title-xl" : "title-lg", eyebrow && "mt-6 sm:mt-7", center && "mx-auto", titleClassName)}>
         {title}
       </h2>
-      {lede && <p className={cn("lede mt-6", center ? "mx-auto max-w-[40rem]" : "max-w-[40rem]")}>{lede}</p>}
+      {lede && <p className={cn("lede mt-7 max-w-[40rem] sm:mt-8", center && "mx-auto", ledeClassName)}>{lede}</p>}
       {children}
     </Reveal>
   );

@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import Navbar from "@/components/site/Navbar";
 import Footer from "@/components/site/Footer";
 import Hero from "@/components/hero/Hero";
@@ -21,10 +22,17 @@ import FinalCTA from "@/components/sections/FinalCTA";
    (the ledger, a diff, a booked row). Every figure comes from one sample
    workspace (lib/sample.ts) and adds up. Depth lives in /docs. */
 
+/* The home page opens on night (the hero), so the browser chrome does too.
+   Shallow-merged over the root layout's viewport: only themeColor changes. */
+export const viewport: Viewport = {
+  themeColor: "#06080d",
+};
+
 export default function Home() {
   return (
     <>
-      <Navbar />
+      {/* the page opens on the night hero, so the nav paints dark from the first byte */}
+      <Navbar initialTone="dark" />
       <main id="main" className="overflow-x-clip">
         <Hero />
         <Platform />

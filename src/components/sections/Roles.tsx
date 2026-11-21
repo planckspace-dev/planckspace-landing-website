@@ -1,7 +1,9 @@
 import Reveal from "@/components/site/Reveal";
 import SectionHead from "@/components/site/SectionHead";
 
-/* Who it is for: three readers of the same ledger, each promised one thing. */
+/* Who it is for: three readers of the same ledger, each promised one thing.
+   Set as three rows of a ledger: who, the promise as a headline, and what
+   they get. */
 
 const ROLES = [
   {
@@ -35,12 +37,12 @@ const ROLES = [
 
 export default function Roles() {
   return (
-    <section id="roles" aria-labelledby="roles-title" className="section pt-0">
+    <section id="roles" aria-labelledby="roles-title" className="section band">
       <div className="wrap">
-        <div className="rule mb-[var(--section-y)]" />
         <SectionHead
           id="roles-title"
           eyebrow="Who it is for"
+          titleClassName="max-w-[18ch]"
           title={
             <>
               One ledger, read by the people who <span className="tone">sign, run and ship.</span>
@@ -48,15 +50,19 @@ export default function Roles() {
           }
         />
 
-        <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-0 lg:mt-20">
+        <div className="mt-14 border-t-2 border-ink lg:mt-20">
           {ROLES.map((r, i) => (
-            <Reveal key={r.who} delay={i * 80} className="border-line md:px-8 md:first:pl-0 md:last:pr-0 md:[&:not(:first-child)]:border-l">
-              <p className="eyebrow">{r.who}</p>
-              <p className="title-md mt-5 text-[clamp(1.4rem,1.9vw,1.65rem)] md:min-h-[2lh]">{r.promise}</p>
-              <ul className="mt-7 space-y-4">
+            <Reveal
+              key={r.who}
+              delay={i * 60}
+              className="grid grid-cols-1 gap-5 border-b border-line-strong py-9 sm:py-11 lg:grid-cols-[minmax(0,10rem)_minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-12 lg:py-14"
+            >
+              <p className="eyebrow self-start lg:pt-3">{r.who}</p>
+              <p className="text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1] tracking-[-0.045em] text-balance text-ink">{r.promise}</p>
+              <ul className="space-y-3 lg:pt-2">
                 {r.points.map((p) => (
-                  <li key={p} className="flex gap-3 text-[0.9375rem] leading-relaxed text-body">
-                    <span className="mt-[0.6em] h-[5px] w-[5px] shrink-0 rounded-full bg-brand-600" aria-hidden />
+                  <li key={p} className="flex gap-3 text-[1rem] leading-relaxed text-body sm:text-[1.0625rem]">
+                    <span className="mt-[0.62em] h-1.5 w-1.5 shrink-0 bg-brand-600" aria-hidden />
                     {p}
                   </li>
                 ))}

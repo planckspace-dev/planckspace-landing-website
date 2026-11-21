@@ -94,7 +94,7 @@ export default function DemoPage() {
                     </span>
                     <div>
                       <h3 className="text-[1rem] font-semibold text-ink">{a.title}</h3>
-                      <p className="mt-1 text-[0.92rem] leading-relaxed text-body">{a.body}</p>
+                      <p className="mt-1 text-pretty text-[0.92rem] leading-relaxed text-body">{a.body}</p>
                     </div>
                   </li>
                 ))}

@@ -1,0 +1,420 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PlanckSpace · "Ledger, lit"
+
+   The ledger system (globals.css) keeps its paper, its ink and its one blue.
+   This file adds the light source: night surfaces, the glass that floats over
+   them, the nav, and the hero. It is additive; a paper section is unchanged.
+
+     night      #06080D   the room the light falls into (hero, close, footer)
+     on night   #F4F5F7 headline · #B8BCC6 reading (10.5:1) · #8F94A1 quiet (6.6:1)
+     light      brand blue, from #2E6BF2 up to #9DBCFB where it is brightest
+     glass      white at 5–11% over a 22px blur, a hairline, a top highlight
+
+   Glass is only for UI that floats over an image or a colour field. On paper,
+   surfaces stay solid.
+
+   Imported at the top of globals.css, so these rules sit first in the
+   components layer. Anything here that has to beat a globals.css rule does it
+   with a scoped selector, never with !important.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* ─── scopes: a local theme ────────────────────────────────────────────────
+
+     .on-night re-points the palette's own variables, so every utility and
+     component inside it (text-ink, text-muted, border-line, bg-surface, .lede,
+     .eyebrow, .tone, links, pills) reads correctly on a dark or coloured field
+     without a second set of classes. .on-paper puts the paper values back for
+     an island inside it: the receipt, a white table.
+
+     One thing it cannot fix: `bg-ink text-white` becomes white on white.
+     Inside .on-night, set solid chips and buttons explicitly. */
+
+  .on-night {
+    --color-ink: #f4f5f7;
+    --color-body: #b8bcc6;
+    --color-muted: #8f94a1;
+    --color-subtle: #717684;
+    --color-tone: #9dbcfb;
+
+    --color-surface: rgb(255 255 255 / 0.06);
+    --color-band: rgb(255 255 255 / 0.045);
+    --color-well: rgb(255 255 255 / 0.045);
+    --color-line: rgb(255 255 255 / 0.12);
+    --color-line-soft: rgb(255 255 255 / 0.07);
+    --color-line-strong: rgb(255 255 255 / 0.22);
+
+    --color-brand-50: rgb(76 128 246 / 0.16);
+    --color-brand-100: rgb(76 128 246 / 0.26);
+    --color-brand-500: #7fa6ff;
+    --color-brand-600: #8fb2ff;
+    --color-brand-700: #a9c4ff;
+
+    --color-green-50: rgb(22 165 103 / 0.18);
+    --color-green-500: #3ecf8e;
+    --color-green-700: #6fd3a3;
+    --color-coral-50: rgb(239 90 43 / 0.18);
+    --color-coral-500: #ff7a52;
+    --color-coral-700: #ff9a7a;
+    --color-amber-50: rgb(247 144 9 / 0.16);
+    --color-amber-700: #f5b657;
+
+    color: var(--color-ink);
+  }
+
+  /* keep in step with @theme in globals.css */
+  .on-paper {
+    --color-ink: #0e1013;
+    --color-body: #3c3e43;
+    --color-muted: #6b6d72;
+    --color-subtle: #9a9ca1;
+    --color-tone: #8f9196;
+
+    --color-surface: #ffffff;
+    --color-band: #f3f2ee;
+    --color-well: #f3f2ee;
+    --color-line: #e5e4df;
+    --color-line-soft: #edece7;
+    --color-line-strong: #d2d1cb;
+
+    --color-brand-50: #eef3ff;
+    --color-brand-100: #dbe6fe;
+    --color-brand-500: #4c80f6;
+    --color-brand-600: #2e6bf2;
+    --color-brand-700: #1f55d0;
+
+    --color-green-50: #e9f6ef;
+    --color-green-500: #16a567;
+    --color-green-700: #0d7d4f;
+    --color-coral-50: #fdefea;
+    --color-coral-500: #ef5a2b;
+    --color-coral-700: #b73d16;
+    --color-amber-50: #fff5e6;
+    --color-amber-700: #b45309;
+
+    color: var(--color-ink);
+  }
+
+  .on-night ::selection {
+    background: rgb(76 128 246 / 0.45);
+    color: #fff;
+  }
+  .on-paper ::selection {
+    background: #dbe6fe;
+    color: #0e1013;
+  }
+
+  /* Buttons on night: the primary inverts to paper, the secondary is glass. */
+  .on-night .btn-primary {
+    background: #fff;
+    color: #0e1013;
+    box-shadow:
+      inset 0 -1px 0 rgb(14 16 19 / 0.14),
+      0 1px 2px rgb(0 0 0 / 0.35),
+      0 12px 32px -12px rgb(0 0 0 / 0.55);
+  }
+  .on-night .btn-secondary {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.06));
+    color: #fff;
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.18),
+      inset 0 1px 0 rgb(255 255 255 / 0.22);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
+  .on-night .btn-ghost {
+    color: rgb(255 255 255 / 0.8);
+  }
+  @media (hover: hover) {
+    .on-night .btn-primary:hover {
+      background: #e9efff;
+    }
+    .on-night .btn-secondary:hover {
+      background: linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.1));
+      box-shadow:
+        inset 0 0 0 1px rgb(255 255 255 / 0.28),
+        inset 0 1px 0 rgb(255 255 255 / 0.3);
+    }
+    .on-night .btn-ghost:hover {
+      background: rgb(255 255 255 / 0.08);
+      color: #fff;
+    }
+  }
+
+  /* The paper island gets its own buttons back. */
+  .on-paper .btn-primary {
+    background: #0e1013;
+    color: #fff;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 1px 2px rgb(14 16 19 / 0.2),
+      0 6px 18px -8px rgb(14 16 19 / 0.45);
+  }
+  .on-paper .btn-secondary {
+    background: rgb(255 255 255 / 0.6);
+    color: #0e1013;
+    box-shadow: inset 0 0 0 1px #d2d1cb;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* ─── glass ──────────────────────────────────────────────────────────────
+
+     A sheet of glass over an image: a faint fill that is brighter at the top,
+     a hairline, one highlight along the top edge, and the blur behind it.
+     The radius is the caller's. Keep the count low: a blurred backdrop is
+     repainted while the page scrolls. */
+
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.05));
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.14),
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 20px 50px -22px rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass {
+      background: rgb(18 26 43 / 0.92);
+    }
+  }
+
+  /* ─── grain ──────────────────────────────────────────────────────────────
+
+     Film grain over a night or colour field, so wide gradients never band and
+     the image reads as a photograph. A small tile, rasterized once. The host
+     needs `position: relative` and `isolation: isolate`. */
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+    opacity: 0.07;
+  }
+
+  /* ─── the art ────────────────────────────────────────────────────────────
+     ApertureArt's <img>: the fill's object-position comes from the variant,
+     with its own value for the portrait render. */
+
+  .aperture-art {
+    object-position: var(--art-pos, 50% 50%);
+  }
+  @media (max-width: 39.999rem) {
+    .aperture-art {
+      object-position: var(--art-pos-portrait, var(--art-pos, 50% 50%));
+    }
+  }
+
+  /* ─── hero ───────────────────────────────────────────────────────────────
+
+     Night: the Aperture render is the picture, whole and unobstructed.
+
+     The column is the nav island's box (nav.css: min(100% - 2 × gutter,
+     --maxw), centred inside the safe-area insets), so the copy starts on the
+     island's left edge and the tools strip spans it exactly. From 1024px the
+     opening fills the rest of that row: its left edge 6.93em into the column
+     (the end of "accounted for." is at 6.22em, so a 0.71em gap) and its right
+     edge on the island's right edge. The render's scale follows from that.
+     Below 1024 it is the copy, then the picture in a box of its own.
+
+     --hero-fs is the headline's size: a height term keeps the buttons and the
+     lock line above the fold on short screens, and the 6.875rem cap keeps the
+     opening at no less than 38% of the column on wide ones. */
+
+  .hero {
+    --hero-fs: clamp(3rem, min(7.4vw, 15svh), 6.875rem);
+    --sa-l: env(safe-area-inset-left, 0px);
+    --sa-r: env(safe-area-inset-right, 0px);
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    padding-left: var(--sa-l);
+    padding-right: var(--sa-r);
+  }
+
+  .hero .display {
+    font-size: var(--hero-fs);
+    font-weight: 660;
+    line-height: 0.93;
+    letter-spacing: -0.055em;
+    text-wrap: nowrap;
+  }
+
+  /* the nav island's box, by the same expression */
+  .hero-wrap {
+    width: min(100% - 2 * var(--gutter), var(--maxw));
+    margin-inline: auto;
+  }
+
+  /* Everything that reads sits above the art and the grain. */
+  .hero-layer {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-copy {
+    padding-top: calc(var(--nav-h) + 2.25rem);
+  }
+  .hero-lede {
+    max-width: 33rem;
+  }
+
+  /* The chip: one glass pill, "New" set quietly in mono ahead of the line. */
+  .hero-chip-new {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0;
+    color: var(--color-tone);
+  }
+
+  /* Phones and tablets: the picture under the copy, full bleed, in a box with
+     the render's own proportions (the portrait under 640px, the landscape at
+     4:3 from 640px, cropped to centre the opening). Its top edge is night, so
+     it rises a little under the lock line. The tools follow it, pulled up by
+     a share of the box's height (a % margin is a share of the width, and the
+     box's height is a fixed multiple of it): on a phone over the reflection,
+     on a tablet over its faded tail only. */
+  .hero-stage {
+    position: relative;
+    margin: -2.5rem calc(-1 * var(--sa-r)) 0 calc(-1 * var(--sa-l));
+    aspect-ratio: 430 / 640;
+  }
+  .hero-art {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hero-tools {
+    margin-top: -49%;
+    padding-bottom: 1.5rem;
+  }
+  @media (min-width: 40rem) {
+    .hero-stage {
+      margin-top: -1rem;
+      aspect-ratio: 4 / 3;
+    }
+    .hero-tools {
+      margin-top: -12%;
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  /* 1024 and up. The stage dissolves (display: contents), so the art frame is
+     placed against the section; the copy sits under the nav and the tools
+     strip is the column's last row. The opening is 531 × 498 design px at
+     x 1300 in a 2300 × 900 render: the frame is 2300/531 of the opening's
+     width, shifted left by 1300/531 of it. The hero is at least as tall as
+     the frame, so the reflection always fades out inside it. */
+  @media (min-width: 64rem) {
+    .hero {
+      --open-w: calc(min(100vw - 2 * var(--gutter), var(--maxw)) - 6.93 * var(--hero-fs));
+      min-height: max(min(100svh, 64rem), 1.6949 * var(--open-w));
+    }
+    .hero-copy {
+      margin-bottom: auto;
+      padding-top: calc(var(--nav-h) + clamp(1.5rem, 10svh - 3rem, 6rem));
+      padding-bottom: 2rem;
+    }
+    /* the lede never runs past the headline into the light */
+    .hero-lede {
+      max-width: min(33rem, 6.3 * var(--hero-fs));
+    }
+    .hero-stage {
+      display: contents;
+    }
+    .hero-art {
+      /* the column, measured against the section's padding box */
+      --col: min(100% - var(--sa-l) - var(--sa-r) - 2 * var(--gutter), var(--maxw));
+      --col-l: calc(var(--sa-l) + (100% - var(--sa-l) - var(--sa-r) - var(--col)) / 2);
+      --open-w: calc(var(--col) - 6.93 * var(--hero-fs));
+      inset: 0 auto auto calc(var(--col-l) + 6.93 * var(--hero-fs) - 2.44821 * var(--open-w));
+      width: calc(4.33145 * var(--open-w));
+      aspect-ratio: 2300 / 900;
+    }
+    .hero-tools {
+      margin-top: 0;
+      padding-bottom: 1.75rem;
+    }
+  }
+
+  /* Where text crosses light: a gradient, never a box. */
+  .hero-scrim {
+    display: none;
+  }
+  @media (min-width: 64rem) {
+    .hero-scrim {
+      display: block;
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(60rem 34rem at 16% 40%, rgb(6 8 13 / 0.45), transparent 70%);
+    }
+  }
+
+  /* The tools sit over the floor's reflection: a darker glass than the
+     default, so the label and the names keep their contrast over the light. */
+  .hero-tools .glass {
+    background: linear-gradient(180deg, rgb(14 19 31 / 0.66), rgb(9 12 20 / 0.74));
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.12),
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 20px 50px -22px rgb(0 0 0 / 0.6);
+  }
+
+  /* The entrance, on the site's reveal (globals.css: [data-reveal] waits for
+     [data-in], set once the column is on screen, and only with <html data-js>).
+     Here the column itself stays put and its parts carry the motion: the chip,
+     then the headline a line at a time (the second 90ms behind the first),
+     then the lede, the actions and the lock line. Without script, or under
+     reduced motion, it is simply there. */
+  .hero-line {
+    display: block;
+  }
+  .hero-copy [data-reveal] > *,
+  .hero-line {
+    transition:
+      opacity 0.7s var(--ease-out-expo) var(--rd, 0ms),
+      transform 0.8s var(--ease-out-expo) var(--rd, 0ms);
+  }
+  .hero-copy [data-reveal] > :nth-child(3) {
+    --rd: 260ms;
+  }
+  .hero-copy [data-reveal] > :nth-child(4) {
+    --rd: 320ms;
+  }
+  .hero-copy [data-reveal] > :nth-child(5) {
+    --rd: 380ms;
+  }
+  .hero-line:first-child {
+    --rd: 80ms;
+  }
+  .hero-line:last-child {
+    --rd: 170ms;
+  }
+  [data-js] .hero-copy [data-reveal]:not([data-in]) {
+    opacity: 1;
+    transform: none;
+  }
+  [data-js] .hero-copy [data-reveal]:not([data-in]) > :not(h1) {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  [data-js] .hero-copy [data-reveal]:not([data-in]) .hero-line {
+    opacity: 0;
+    transform: translateY(0.16em);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-js] .hero-copy [data-reveal]:not([data-in]) > :not(h1),
+    [data-js] .hero-copy [data-reveal]:not([data-in]) .hero-line {
+      transform: none;
+    }
+  }
+}

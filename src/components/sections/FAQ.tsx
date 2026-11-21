@@ -42,16 +42,18 @@ const FAQS = [
 
 export default function FAQ() {
   return (
-    <section id="faq" aria-labelledby="faq-title" className="section pt-0">
+    <section id="faq" aria-labelledby="faq-title" className="section">
       <div className="wrap">
-        <div className="rule mb-[var(--section-y)]" />
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.35fr)] lg:gap-24">
-          <Reveal className="lg:sticky lg:top-28 lg:self-start">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.5fr)] lg:gap-20">
+          <Reveal className="lg:col-span-2">
             <p className="eyebrow">Questions</p>
-            <h2 id="faq-title" className="title-lg mt-5 text-[clamp(2rem,2.8vw,2.5rem)]">
+            <h2 id="faq-title" className="title-lg mt-6 sm:mt-7">
               Fair questions, <span className="tone">straight answers.</span>
             </h2>
-            <p className="lede mt-6 max-w-[24rem]">
+          </Reveal>
+
+          <Reveal className="lg:sticky lg:top-28 lg:self-start">
+            <p className="lede max-w-[24rem]">
               Something we have not covered?{" "}
               <Link href="/contact" className="link-under text-ink">
                 Ask us directly
@@ -59,24 +61,25 @@ export default function FAQ() {
               . A founder replies.
             </p>
             <Link href="/docs/faq" className="link-arrow mt-6">
-              Every question in the docs <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              Every question in the docs <ArrowRight className="h-4 w-4" strokeWidth={1.5} aria-hidden />
             </Link>
           </Reveal>
 
           <Reveal>
-            <Accordion.Root type="single" collapsible defaultValue="item-0" className="border-t border-line">
+            <Accordion.Root type="single" collapsible defaultValue="item-0" className="border-t-2 border-ink">
               {FAQS.map((f, i) => (
-                <Accordion.Item key={f.q} value={`item-${i}`} className="border-b border-line">
+                <Accordion.Item key={f.q} value={`item-${i}`} className="border-b border-line-strong">
                   <Accordion.Header>
-                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-                      <span className="text-[1.125rem] font-medium leading-snug tracking-[-0.018em] text-ink">{f.q}</span>
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-body transition-[transform,background-color,color,border-color] duration-300 group-hover:border-line-strong group-data-[state=open]:rotate-45 group-data-[state=open]:border-ink group-data-[state=open]:bg-ink group-data-[state=open]:text-white">
-                        <Plus className="h-4 w-4" strokeWidth={1.8} />
+                    <Accordion.Trigger className="group flex w-full items-center justify-between gap-6 py-6 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:py-7">
+                      <span className="text-[1.1875rem] font-medium leading-snug tracking-[-0.022em] text-ink sm:text-[1.375rem]">{f.q}</span>
+                      {/* Tailwind v4's rotate-* is the `rotate` property, so that is what transitions */}
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line-strong text-body transition-[rotate,background-color,color,border-color] duration-200 ease-[var(--ease-out-expo)] group-hover:border-ink group-hover:text-ink group-data-[state=open]:rotate-45 group-data-[state=open]:border-ink group-data-[state=open]:bg-ink group-data-[state=open]:text-white">
+                        <Plus className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden />
                       </span>
                     </Accordion.Trigger>
                   </Accordion.Header>
                   <Accordion.Content className="faq-content">
-                    <p className="max-w-[44rem] pb-7 pr-14 text-[1rem] leading-relaxed text-body">{f.a}</p>
+                    <p className="max-w-[46rem] pb-8 pr-14 text-[1rem] leading-relaxed text-body sm:text-[1.0625rem]">{f.a}</p>
                   </Accordion.Content>
                 </Accordion.Item>
               ))}

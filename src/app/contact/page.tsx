@@ -47,9 +47,9 @@ export default function ContactPage() {
               >
                 <div className="flex-1">
                   <p className="text-[1rem] font-semibold text-ink">Want to see the product?</p>
-                  <p className="mt-1 text-[0.9rem] leading-relaxed text-body">Book a 30-minute demo. That&apos;s how workspaces get set up.</p>
+                  <p className="mt-1 text-pretty text-[0.9rem] leading-relaxed text-body">Book a 30-minute demo. That&apos;s how workspaces get set up.</p>
                 </div>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink text-white transition-transform duration-200 group-hover:translate-x-0.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink text-white transition-[translate] duration-200 group-hover:translate-x-1">
                   <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </Link>
@@ -62,7 +62,7 @@ export default function ContactPage() {
                     </span>
                     <div>
                       <h2 className="text-[1rem] font-semibold text-ink">{e.title}</h2>
-                      <p className="mt-1 text-[0.92rem] leading-relaxed text-body">{e.body}</p>
+                      <p className="mt-1 text-pretty text-[0.92rem] leading-relaxed text-body">{e.body}</p>
                     </div>
                   </li>
                 ))}

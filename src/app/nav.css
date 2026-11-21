@@ -1,0 +1,228 @@
+/* ─── nav ────────────────────────────────────────────────────────────────
+   The site nav: a floating glass island. Imported at the top of globals.css,
+   after aperture.css, whose scopes it leans on: the island wears `.on-night`
+   over a dark or coloured field, the mega menu and the phone sheet carry
+   `.on-paper`. Navbar.tsx picks the tone. */
+
+@layer components {
+  /* The positioning layer: full width, transparent, and out of the pointer's
+     way. Only the island takes events. The island's top edge sits
+     --nav-offset below the viewport; offset + height (4.25rem, 3.75rem on a
+     phone) stays inside --nav-h (4.75rem), the room pages reserve for it. */
+  /* --nav-pad-r is the gap between the pill's end and its last control, kept
+     concentric with the pill rather than on the 4px grid: (56 - 44) / 2 = 6px
+     for the 44px burger, (56 - 36) / 2 = 10px for the 36px Book a demo, and
+     4px for the burger in the 52px phone island. */
+  .nav-root,
+  .sheet-bar {
+    --nav-offset: 0.75rem;
+    --nav-island-h: 3.5rem;
+    --nav-pad-l: 1.5rem;
+    --nav-pad-r: 0.375rem;
+  }
+  @media (max-width: 39.999rem) {
+    .nav-root,
+    .sheet-bar {
+      --nav-offset: 0.5rem;
+      --nav-island-h: 3.25rem;
+      --nav-pad-l: 1.25rem;
+      --nav-pad-r: 0.25rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .nav-root,
+    .sheet-bar {
+      --nav-pad-r: 0.625rem;
+    }
+  }
+  .nav-root {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: var(--z-nav);
+    padding: calc(var(--nav-offset) + env(safe-area-inset-top)) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+    pointer-events: none;
+  }
+
+  /* Light tone, the default: what the server and no-JS render. */
+  .nav-island {
+    --nav-hover: rgb(14 16 19 / 0.06);
+    --nav-ring: var(--color-brand-500);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    width: min(100% - 2 * var(--gutter), var(--maxw));
+    height: var(--nav-island-h);
+    margin-inline: auto;
+    padding: 0 var(--nav-pad-r) 0 var(--nav-pad-l);
+    border-radius: 999px;
+    pointer-events: auto;
+    color: var(--color-ink);
+    background: rgb(250 250 248 / 0.78);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    box-shadow:
+      inset 0 0 0 1px rgb(14 16 19 / 0.08),
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 12px 32px -16px rgb(14 16 19 / 0.22);
+  }
+  /* Tone changes animate, but the first one (a page that opens on a dark
+     hero) is applied outright: .is-settled arrives a moment after it. The
+     island is a large surface changing colour, so 300ms, on the site's one
+     curve (hover and focus feedback elsewhere is 160ms). */
+  .nav-island.is-settled {
+    transition:
+      background-color 0.3s var(--ease-out-expo),
+      color 0.3s var(--ease-out-expo),
+      box-shadow 0.3s var(--ease-out-expo);
+  }
+  @media (max-width: 39.999rem) {
+    .nav-island {
+      gap: 1rem;
+    }
+  }
+
+  /* Dark tone: over the hero, the blue band, the close and the footer. */
+  .nav-island.on-night {
+    --nav-hover: rgb(255 255 255 / 0.1);
+    --nav-ring: var(--color-brand-300, #9dbcfb);
+    /* dense enough that white text holds 8:1 when the island crosses
+       something white (the receipt, the savings table) */
+    background: rgb(12 16 28 / 0.74);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.12),
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 16px 40px -18px rgb(0 0 0 / 0.6);
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nav-island {
+      background: rgb(250 250 248 / 0.96);
+    }
+    .nav-island.on-night {
+      background: rgb(12 16 28 / 0.94);
+    }
+  }
+
+  /* Focus rings follow the tone; the panel below is paper in either one. */
+  .nav-island :focus-visible {
+    outline-color: var(--nav-ring);
+  }
+
+  /* The lockup: ink with the brand blue on light; paper with a lighter blue
+     on dark. The accent is the one path that carries a fill attribute. */
+  .nav-logo {
+    color: #0c0c0c;
+    transition: color 0.3s var(--ease-out-expo);
+  }
+  .nav-logo path[fill] {
+    fill: #2e6bf2;
+    transition: fill 0.3s var(--ease-out-expo);
+  }
+  .on-night .nav-logo {
+    color: #f7f5f0;
+  }
+  .on-night .nav-logo path[fill] {
+    fill: #4c80f6;
+  }
+
+  .nav-burger {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    color: var(--color-ink);
+    transition: background-color 0.16s var(--ease-out-expo);
+  }
+  .nav-burger:hover {
+    background: var(--color-band);
+  }
+  /* In the island the burger takes the tone (300ms, like the island); in the
+     sheet it stays paper. The hover fill is 160ms in both. */
+  .nav-island .nav-burger {
+    transition:
+      color 0.3s var(--ease-out-expo),
+      background-color 0.16s var(--ease-out-expo);
+  }
+  .nav-island .nav-burger:hover {
+    background: var(--nav-hover);
+  }
+
+  /* The mega menu's panel, sized by Radix to its content. Solid paper in both
+     tones (the element carries .on-paper), centred under the island.
+
+     The one place that animates width and height. Radix measures the active
+     content and publishes it as --radix-navigation-menu-viewport-width/height,
+     and transitioning those two is how the panel morphs between Product and
+     Resources; there is no transform that does the same, because the panel
+     has to reflow around its content. It is out of flow (absolute under the
+     island) and only moves while the pointer travels between triggers. */
+  .nav-viewport {
+    --nav-ring: var(--color-brand-500);
+    position: relative;
+    width: var(--radix-navigation-menu-viewport-width);
+    height: var(--radix-navigation-menu-viewport-height);
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    box-shadow:
+      0 1px 2px rgb(14 16 19 / 0.04),
+      0 24px 60px -20px rgb(14 16 19 / 0.22);
+    transform-origin: top center;
+    transition:
+      width 0.3s var(--ease-out-expo),
+      height 0.3s var(--ease-out-expo);
+  }
+  .nav-viewport[data-state="open"] {
+    animation: menu-in 0.22s var(--ease-out-expo);
+  }
+  .nav-viewport[data-state="closed"] {
+    animation: menu-out 0.16s var(--ease-out-expo) forwards;
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+  @keyframes menu-out {
+    to {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+
+  /* The sheet fades in without moving, so its lockup stays on top of the
+     island's own while they cross-fade. */
+  .sheet {
+    animation: sheet-in 0.35s var(--ease-out-expo);
+  }
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* The sheet's top row: the island's offset, width, inset and height, without
+     the glass, so the lockup and the close button sit exactly where the
+     island's lockup and burger were. The bottom padding makes the row as tall
+     as --nav-h, as it was before the island. */
+  .sheet-bar {
+    flex-shrink: 0;
+    padding: calc(var(--nav-offset) + env(safe-area-inset-top)) env(safe-area-inset-right)
+      calc(var(--nav-h) - var(--nav-offset) - var(--nav-island-h)) env(safe-area-inset-left);
+  }
+  .sheet-bar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(100% - 2 * var(--gutter), var(--maxw));
+    height: var(--nav-island-h);
+    margin-inline: auto;
+    padding: 0 var(--nav-pad-r) 0 var(--nav-pad-l);
+  }
+}

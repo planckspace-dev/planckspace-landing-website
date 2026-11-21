@@ -1,22 +1,30 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { useEffect, useRef, useState, type ComponentType, type RefObject, type SVGProps } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { ArrowRight, BadgeCheck, BookOpen, Boxes, ChevronDown, FileCode2, LogIn, Radar, Scale, ShieldCheck, SquareTerminal, Wand2, X } from "lucide-react";
+import { PlanckspaceLockup } from "@/components/brand/Planckspace";
 import { AnthropicLogo, ClaudeLogo, CursorLogo, OpenAILogo, WindsurfLogo } from "@/components/brand/ToolLogos";
 import Button from "@/components/site/Button";
-import { Logo } from "@/components/ui/logo";
 import { DEMO_PATH, SIGN_IN_URL } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   The bar: lockup, two menus (the product's four moves, and the reading),
-   Docs and Contact as plain links, and one action, with a quiet Sign in
-   beside it for people who already have an account. Transparent over the
-   hero; paper with a hairline once the page moves. On phones the same links
-   open in a full-screen sheet (a Radix dialog: focus trapped, Escape closes).
+   The nav: a floating glass island. Lockup, two menus (the product's four
+   moves, and the reading), Docs and Contact as plain links, and one action,
+   with a quiet Sign in beside it for people who already have an account.
+
+   The island has two tones, picked by what is under it. A section on a dark
+   or coloured field carries data-nav="dark"; while one of them crosses the
+   island's centre line the island wears `on-night` (aperture.css re-points
+   the palette, so text, buttons and the logo flip by themselves). Everywhere
+   else, on the server and without script, it is the light tone. The mega menu
+   and the phone sheet are solid paper in both tones (`on-paper`). On phones
+   the same links open in a full-screen sheet (a Radix dialog: focus trapped,
+   Escape closes).
    ───────────────────────────────────────────────────────────────────────── */
 
 type Icon = ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number }>;
@@ -44,35 +52,121 @@ const RESOURCES: { icon: Icon; title: string; body: string; href: string }[] = [
   { icon: FileCode2, title: "CLI reference", body: "Every planck command and flag.", href: "/docs/reference/cli" },
 ];
 
+// Hover and open fills come from --nav-hover (nav.css), which follows the tone; the focus ring from --nav-ring.
+// Colour and fill only: transition-colors would also fade the ring in from currentColor.
 const triggerCls =
-  "group inline-flex h-9 items-center gap-1 rounded-full px-3.5 text-[0.9rem] font-medium tracking-[-0.01em] text-body outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-500 data-[state=open]:text-ink";
+  "group inline-flex h-9 items-center gap-1 rounded-full px-4 text-[0.9rem] font-medium text-body transition-[color,background-color] duration-160 ease-[var(--ease-out-expo)] hover:bg-[var(--nav-hover)] hover:text-ink data-[state=open]:bg-[var(--nav-hover)] data-[state=open]:text-ink";
+
+const chevronCls = "h-4 w-4 opacity-60 transition-transform duration-160 ease-[var(--ease-out-expo)] group-data-[state=open]:rotate-180";
+
+/** The lockup. Its two tones are set in nav.css (.nav-logo), so it follows the island. */
+function Lockup() {
+  return <PlanckspaceLockup className="nav-logo shrink-0" height={21} width={122} accent="#2E6BF2" />;
+}
+
+type NavTone = "light" | "dark";
+
+const DARK_FIELD = '[data-nav="dark"]';
+
+/**
+ * Whether a dark field is under the island, and whether the tone has been
+ * applied once already (until then it is set without a transition, so a page
+ * that opens on a dark hero does not fade in from light).
+ *
+ * An IntersectionObserver whose root is collapsed to a 1px strip at the
+ * island's vertical centre reports each dark field as it crosses that line:
+ * no scroll handler, no layout reads while scrolling. The strip depends on the
+ * viewport height, so the observer is rebuilt on resize; the fields are
+ * collected again whenever the pathname changes.
+ *
+ * `initial` is the tone of the server render and of the first client render
+ * (a page that opens on a dark hero passes "dark", so the island is dark from
+ * the first byte). The observer takes over after mount. Because the first
+ * swap carries no transition, a matching initial tone never flashes.
+ */
+function useNavTone(islandRef: RefObject<HTMLDivElement | null>, initial: NavTone) {
+  const pathname = usePathname();
+  // keyed by path, so a new route reads as light until its own fields report
+  const [tone, setTone] = useState({ path: pathname, dark: initial === "dark" });
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    const island = islandRef.current;
+    const fields = Array.from(document.querySelectorAll<HTMLElement>(DARK_FIELD));
+    if (!island || fields.length === 0) {
+      // nothing dark on this page: an "initial" dark has nothing to hand over to
+      setTone((t) => (t.dark ? { path: pathname, dark: false } : t));
+      return;
+    }
+
+    const crossing = new Set<Element>();
+    let observer: IntersectionObserver | undefined;
+    let frame = 0;
+    let timer = 0;
+    let first = true;
+
+    const observe = () => {
+      observer?.disconnect();
+      crossing.clear();
+      const { top, height } = island.getBoundingClientRect();
+      const line = Math.round(top + height / 2);
+      const viewport = document.documentElement.clientHeight;
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) crossing.add(entry.target);
+            else crossing.delete(entry.target);
+          }
+          const dark = crossing.size > 0;
+          setTone((t) => (t.path === pathname && t.dark === dark ? t : { path: pathname, dark }));
+          if (first) {
+            first = false;
+            timer = window.setTimeout(() => setSettled(true), 120);
+          }
+        },
+        { rootMargin: `-${line}px 0px -${Math.max(0, viewport - line - 1)}px 0px` },
+      );
+      for (const field of fields) observer.observe(field);
+    };
+    const onResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(observe);
+    };
+
+    observe();
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      observer?.disconnect();
+    };
+  }, [islandRef, pathname]);
+
+  return { dark: tone.path === pathname && tone.dark, settled };
+}
 
 function MenuItem({ icon: I, title, body, href }: { icon: Icon; title: string; body: string; href: string }) {
   return (
     <NavigationMenu.Link asChild>
-      <Link href={href} className="group/item flex gap-3.5 rounded-[14px] p-3 transition-colors hover:bg-band focus-visible:bg-band">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-line bg-surface text-ink shadow-[var(--shadow-flat)] transition-colors group-hover/item:text-brand-600">
-          <I className="h-[17px] w-[17px]" strokeWidth={1.7} />
+      <Link href={href} className="group/item flex gap-3 rounded-[14px] p-3 transition-[background-color] duration-160 ease-[var(--ease-out-expo)] hover:bg-band focus-visible:bg-band">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-line bg-surface text-ink shadow-[var(--shadow-flat)] transition-[color] duration-160 ease-[var(--ease-out-expo)] group-hover/item:text-brand-600">
+          <I className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden />
         </span>
         <span>
-          <span className="block text-[0.9rem] font-medium tracking-[-0.01em] text-ink">{title}</span>
-          <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{body}</span>
+          <span className="block text-[0.9rem] font-medium text-ink">{title}</span>
+          <span className="mt-1 block text-[0.8125rem] leading-snug text-muted">{body}</span>
         </span>
       </Link>
     </NavigationMenu.Link>
   );
 }
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+/** `initialTone`: the tone to render first, before the page's own fields report. Pass "dark" on a page that opens on one. */
+export default function Navbar({ initialTone = "light" }: { initialTone?: NavTone }) {
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 8);
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
-  }, []);
+  const islandRef = useRef<HTMLDivElement>(null);
+  const { dark, settled } = useNavTone(islandRef, initialTone);
 
   // the sheet is for phones; widening past it closes it
   useEffect(() => {
@@ -83,18 +177,20 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className={cn("nav-root", scrolled && "is-scrolled", open && "is-open")}>
-      <div className="wrap flex h-[var(--nav-h)] items-center justify-between gap-6">
-        <Link href="/" aria-label="PlanckSpace, home" className="-m-2 rounded-lg p-2">
-          <Logo height={21} />
-        </Link>
+    <header className="nav-root">
+      <div ref={islandRef} data-tone={dark ? "dark" : "light"} className={cn("nav-island", dark && "on-night", settled && "is-settled")}>
+        <div className="flex flex-1 items-center">
+          <Link href="/" aria-label="PlanckSpace, home" className="-m-2 rounded-lg p-2">
+            <Lockup />
+          </Link>
+        </div>
 
-        <NavigationMenu.Root delayDuration={60} className="relative hidden flex-1 justify-center lg:flex">
-          <NavigationMenu.List className="flex items-center gap-0.5">
+        <NavigationMenu.Root delayDuration={60} className="hidden justify-center lg:flex">
+          <NavigationMenu.List className="flex items-center gap-1">
             <NavigationMenu.Item>
               <NavigationMenu.Trigger className={triggerCls}>
                 Product
-                <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180" strokeWidth={2} aria-hidden />
+                <ChevronDown className={chevronCls} strokeWidth={1.5} aria-hidden />
               </NavigationMenu.Trigger>
               <NavigationMenu.Content className="w-[46rem] p-3">
                 <div className="grid grid-cols-[minmax(0,1fr)_14rem] gap-3">
@@ -107,15 +203,15 @@ export default function Navbar() {
                     <p className="eyebrow">Works with</p>
                     <ul className="mt-3 space-y-2">
                       {TOOLS.map(({ name, Logo: L }) => (
-                        <li key={name} className="flex items-center gap-2.5 text-[0.8125rem] text-body">
-                          <L className="h-3.5 w-3.5 text-ink" strokeWidth={1.7} />
+                        <li key={name} className="flex items-center gap-2 text-[0.8125rem] text-body">
+                          <L className="h-4 w-4 text-ink" strokeWidth={1.5} aria-hidden />
                           {name}
                         </li>
                       ))}
                     </ul>
                     <NavigationMenu.Link asChild>
                       <Link href="/docs/quickstart" className="link-arrow mt-4 text-[0.8125rem]">
-                        Setup guide <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+                        Setup guide <ArrowRight className="h-4 w-4" strokeWidth={1.5} aria-hidden />
                       </Link>
                     </NavigationMenu.Link>
                   </div>
@@ -126,7 +222,7 @@ export default function Navbar() {
             <NavigationMenu.Item>
               <NavigationMenu.Trigger className={triggerCls}>
                 Resources
-                <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180" strokeWidth={2} aria-hidden />
+                <ChevronDown className={chevronCls} strokeWidth={1.5} aria-hidden />
               </NavigationMenu.Trigger>
               <NavigationMenu.Content className="w-[30rem] p-3">
                 <div className="grid grid-cols-2 gap-1">
@@ -153,12 +249,15 @@ export default function Navbar() {
             </NavigationMenu.Item>
           </NavigationMenu.List>
 
-          <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3">
-            <NavigationMenu.Viewport className="nav-viewport" />
+          {/* Positioned against the island, so the panel is centred under it with a small gap. */}
+          <div className="absolute left-1/2 top-full -translate-x-1/2 pt-2">
+            <NavigationMenu.Viewport className="nav-viewport on-paper" />
           </div>
         </NavigationMenu.Root>
 
-        <div className="flex items-center gap-1.5">
+        {/* The island's padding is lopsided (a wide inset left, a concentric one right), which would pull the links off its centre;
+            the extra start padding here evens the two flexible sides so the links sit on the centre line, over the panel. */}
+        <div className="flex flex-1 items-center justify-end gap-2 lg:pl-[calc(var(--nav-pad-l)_-_var(--nav-pad-r))]">
           <Button href={SIGN_IN_URL} size="sm" variant="ghost" className="hidden sm:inline-flex">
             Sign in
           </Button>
@@ -176,17 +275,20 @@ export default function Navbar() {
               </button>
             </Dialog.Trigger>
             <Dialog.Portal>
-              <Dialog.Content className="sheet fixed inset-0 z-[var(--z-modal)] flex flex-col overflow-y-auto bg-page" aria-describedby={undefined}>
+              <Dialog.Content className="sheet on-paper fixed inset-0 z-[var(--z-modal)] flex flex-col overflow-y-auto bg-page" aria-describedby={undefined}>
                 <Dialog.Title className="sr-only">Menu</Dialog.Title>
-                <div className="wrap flex h-[var(--nav-h)] shrink-0 items-center justify-between">
-                  <Link href="/" onClick={() => setOpen(false)} aria-label="PlanckSpace, home">
-                    <Logo height={21} />
-                  </Link>
-                  <Dialog.Close asChild>
-                    <button type="button" className="nav-burger" aria-label="Close menu">
-                      <X className="h-5 w-5" strokeWidth={1.7} />
-                    </button>
-                  </Dialog.Close>
+                {/* The island's own geometry (nav.css), so the lockup and the close button land where the island's lockup and burger were. */}
+                <div className="sheet-bar">
+                  <div className="sheet-bar-row">
+                    <Link href="/" onClick={() => setOpen(false)} aria-label="PlanckSpace, home" className="-m-2 rounded-lg p-2">
+                      <Lockup />
+                    </Link>
+                    <Dialog.Close asChild>
+                      <button type="button" className="nav-burger" aria-label="Close menu">
+                        <X className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden />
+                      </button>
+                    </Dialog.Close>
+                  </div>
                 </div>
 
                 <nav className="wrap flex-1 pb-10 pt-4" aria-label="Main">
@@ -196,7 +298,7 @@ export default function Navbar() {
                       <li key={p.title} className="border-b border-line">
                         <Link href={p.href} onClick={() => setOpen(false)} className="flex items-baseline justify-between gap-4 py-4">
                           <span className="text-[1.375rem] font-medium tracking-[-0.025em] text-ink">{p.title}</span>
-                          <ArrowRight className="h-4 w-4 shrink-0 text-subtle" strokeWidth={1.8} />
+                          <ArrowRight className="h-4 w-4 shrink-0 text-subtle" strokeWidth={1.5} aria-hidden />
                         </Link>
                       </li>
                     ))}
@@ -205,9 +307,9 @@ export default function Navbar() {
                   <ul className="mt-3 border-t border-line">
                     {[...RESOURCES, { icon: BookOpen, title: "Contact", body: "", href: "/contact" }].map((r) => (
                       <li key={r.title} className="border-b border-line">
-                        <Link href={r.href} onClick={() => setOpen(false)} className="flex items-center justify-between gap-4 py-3.5 text-[1.0625rem] text-body">
+                        <Link href={r.href} onClick={() => setOpen(false)} className="flex items-center justify-between gap-4 py-3 text-[1.0625rem] text-body">
                           {r.title}
-                          <ArrowRight className="h-4 w-4 shrink-0 text-subtle" strokeWidth={1.8} />
+                          <ArrowRight className="h-4 w-4 shrink-0 text-subtle" strokeWidth={1.5} aria-hidden />
                         </Link>
                       </li>
                     ))}
@@ -215,12 +317,12 @@ export default function Navbar() {
                 </nav>
 
                 {/* Pinned, so Book a demo and Sign in never sit below the fold on a short phone. */}
-                <div className="wrap sticky bottom-0 grid shrink-0 gap-2.5 border-t border-line bg-page py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:grid-cols-2">
+                <div className="wrap sticky bottom-0 grid shrink-0 gap-3 border-t border-line bg-page py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:grid-cols-2">
                   <Button href={DEMO_PATH} size="lg" onClick={() => setOpen(false)}>
                     Book a demo
                   </Button>
                   {/* Documentation is already first under Resources above. */}
-                  <Button href={SIGN_IN_URL} size="lg" variant="secondary" icon={<LogIn className="h-4 w-4" strokeWidth={1.8} />} onClick={() => setOpen(false)}>
+                  <Button href={SIGN_IN_URL} size="lg" variant="secondary" icon={<LogIn className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden />} onClick={() => setOpen(false)}>
                     Sign in
                   </Button>
                 </div>

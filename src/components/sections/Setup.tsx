@@ -1,15 +1,22 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { ArrowRight } from "lucide-react";
+import ApertureArt from "@/components/site/ApertureArt";
 import CopyCommand from "@/components/site/CopyCommand";
 import Reveal from "@/components/site/Reveal";
 import { FINDINGS, WORKSPACE, usd } from "@/lib/sample";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Going live, on the page's one dark panel: the command, what it does, and a
-   sample of what it prints. The recoverable total is the live finding types
-   only (setup findings never count), the same figure the hero's receipt
-   shows, because `planck init` prints the Findings headline.
+   Going live, on a night panel set into the paper: the command, what it
+   does, and a sample of what it prints. The recoverable total is the live
+   finding types only (setup findings never count), the same figure the
+   hero's receipt shows, because `planck init` prints the Findings headline.
+
+   The panel is lit from the top right (.panel-ink draws the light in CSS).
+   Its first child is the art slot for the rendered corner of the window:
+   the image goes inside it and the CSS light steps aside. The terminal is a
+   glass window in a bezel (outer shell, inner core, concentric radii), so
+   the light reads through it.
    ───────────────────────────────────────────────────────────────────────── */
 
 const COMMAND = "npx @planckspace/cli@latest init";
@@ -38,47 +45,66 @@ const LINES: { t: string; cls?: string }[] = [
   { t: "Next: open the findings in the console.", cls: "dim" },
 ];
 
+/* The panel's light is the Aperture render: the chamfered corner of the
+   opening entering from the top right, most of the frame dark. */
 export default function Setup() {
   return (
     <section id="setup" aria-labelledby="setup-title" className="section">
       <div className="wrap">
-        <div className="panel-ink grid grid-cols-1 gap-12 p-6 sm:p-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14 lg:p-16">
-          <Reveal>
-            <p className="eyebrow text-[#8d9096]">Setup</p>
-            <h2 id="setup-title" className="title-lg mt-5 text-[clamp(2.1rem,3.6vw,3.25rem)] text-white">
-              One command. <span className="text-[#8a8d93]">Your first number in minutes.</span>
+        <div className="panel-ink on-night grain px-5 py-10 sm:p-12 lg:p-16">
+          {/* The rendered corner of the window of light, entering from the top right. */}
+          <div aria-hidden="true" data-art-slot="corner" className="pointer-events-none absolute inset-0 z-[-1] overflow-hidden rounded-[inherit]">
+            <div className="corner-art">
+              <ApertureArt variant="corner" />
+            </div>
+          </div>
+
+          <Reveal className="relative z-[2]">
+            <p className="eyebrow">Setup</p>
+            <h2 id="setup-title" className="title-lg mt-6 max-w-[14ch] sm:mt-7">
+              One command. <span className="tone">Your first number in minutes.</span>
             </h2>
-            <ol className="mt-10 space-y-6">
-              {STEPS.map((s) => (
-                <li key={s.n} className="flex gap-4">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/15 font-mono text-[0.75rem] text-[#c9cbcf]">{s.n}</span>
-                  <div>
-                    <p className="text-[1rem] font-medium tracking-[-0.012em] text-white">{s.title}</p>
-                    <p className="mt-1 text-[0.9375rem] leading-relaxed text-[#a3a6ab]">{s.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <CopyCommand command={COMMAND} tone="dark" className="mt-10 max-w-[30rem]" />
-            <Link href="/docs/quickstart" className="mt-6 inline-flex items-center gap-1.5 text-[0.9375rem] font-medium text-[#8fb2ff] transition-colors hover:text-white">
-              Read the quickstart <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
           </Reveal>
 
-          <div className="min-w-0 self-center overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.035]">
-            <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3" aria-hidden>
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-              <span className="ml-3 font-mono text-[0.6875rem] text-[#6e7177]">~/code/payments-api</span>
-            </div>
-            <Reveal mode="print" className="term overflow-x-auto px-4 py-5 text-[0.6875rem] sm:px-6 sm:text-[0.8125rem]">
-              {LINES.map((l, i) => (
-                <pre key={i} className={l.cls} style={{ "--i": i } as CSSProperties}>
-                  {l.t}
-                </pre>
-              ))}
+          <div className="relative z-[2] mt-12 grid grid-cols-1 gap-12 lg:mt-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+            <Reveal>
+              <ol className="space-y-7">
+                {STEPS.map((s) => (
+                  <li key={s.n} className="flex gap-4 sm:gap-5">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full font-mono text-[0.8125rem] text-ink ring-1 ring-inset ring-white/20">
+                      {s.n}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[1.1875rem] font-medium leading-snug tracking-[-0.018em] text-ink">{s.title}</p>
+                      <p className="mt-2 text-[1rem] leading-relaxed text-body">{s.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <CopyCommand command={COMMAND} tone="dark" className="mt-10 max-w-[31rem]" />
+              <Link href="/docs/quickstart" className="link-arrow mt-7">
+                Read the quickstart <ArrowRight className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+              </Link>
             </Reveal>
+
+            {/* the terminal: a glass shell holding a darker core (radii 28, 8 apart, 20) */}
+            <div className="glass min-w-0 self-center rounded-[28px] p-2">
+              <div className="overflow-hidden rounded-[20px] bg-night/70 shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] ring-1 ring-inset ring-white/[0.07]">
+                <div className="flex items-center gap-2 border-b border-white/[0.08] px-4 py-3" aria-hidden>
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                  <span className="ml-2 font-mono text-[0.75rem] text-muted">~/code/payments-api</span>
+                </div>
+                <Reveal mode="print" className="term overflow-x-auto px-4 py-5 text-[0.6875rem] sm:px-6 sm:py-6 sm:text-[0.8125rem]">
+                  {LINES.map((l, i) => (
+                    <pre key={i} className={l.cls} style={{ "--i": i } as CSSProperties}>
+                      {l.t}
+                    </pre>
+                  ))}
+                </Reveal>
+              </div>
+            </div>
           </div>
         </div>
       </div>

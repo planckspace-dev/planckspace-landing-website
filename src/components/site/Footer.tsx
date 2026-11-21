@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { PlanckspaceLockup } from "@/components/brand/Planckspace";
-import { Logo } from "@/components/ui/logo";
 import { CONTACT_EMAIL, DEMO_PATH, SIGN_IN_URL } from "@/lib/plans";
 import { SOCIAL_LINKS } from "@/lib/social-links";
 
-/* Plain links with 40px tap targets, then the lockup at poster scale, a step
-   off the paper and cut by the bottom edge, so the brand is the last thing
-   on the page. */
+/* The footer is night: on the home page it continues the closing section as
+   one dark block that bookends the hero. The lockup in paper with its blue
+   block, links in quiet white with 44px tap targets, hairlines at white/10,
+   and the lockup again at poster scale, barely there, cut by the bottom edge
+   so the brand is the last thing on the page. */
 
 /** Off-site links open in a new tab unless `sameTab` (the console's Sign in). */
 type FooterLink = { label: string; href: string; sameTab?: boolean };
@@ -53,13 +54,15 @@ const COLUMNS: { head: string; links: FooterLink[] }[] = [
   },
 ];
 
+const LINK = "inline-flex min-h-11 items-center break-words text-[0.9375rem] text-body transition-colors duration-200 hover:text-ink sm:min-h-9";
+
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden border-t border-line bg-page">
-      <div className="wrap pt-20 sm:pt-24">
-        <div className="grid grid-cols-1 gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)]">
+    <footer data-nav="dark" className="on-night grain relative isolate overflow-hidden bg-night">
+      <div className="wrap relative z-[2]">
+        <div className="grid grid-cols-1 gap-14 border-t border-white/10 pt-16 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)]">
           <div>
-            <Logo height={22} />
+            <PlanckspaceLockup className="h-6 w-auto text-on-night" accent="#4C80F6" />
             <p className="mt-6 max-w-[19rem] text-[0.9375rem] leading-relaxed text-body">
               The cost ledger for AI-assisted engineering. Every token, accounted for.
             </p>
@@ -73,7 +76,7 @@ export default function Footer() {
                       target="_blank"
                       rel="noreferrer"
                       aria-label={s.label}
-                      className="grid h-10 w-10 place-items-center rounded-full border border-line text-body transition-colors duration-200 hover:border-line-strong hover:bg-surface hover:text-ink"
+                      className="grid h-11 w-11 place-items-center rounded-full text-body ring-1 ring-inset ring-white/12 transition-colors duration-200 hover:bg-white/[0.06] hover:text-ink hover:ring-white/25"
                     >
                       <Icon className="h-4 w-4" />
                     </a>
@@ -85,20 +88,20 @@ export default function Footer() {
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
             {COLUMNS.map((c) => (
-              <div key={c.head}>
+              <div key={c.head} className="min-w-0">
                 <p className="eyebrow">{c.head}</p>
                 <ul className="mt-4">
                   {c.links.map((l) => (
                     <li key={l.label}>
                       {l.href.startsWith("/") ? (
-                        <Link href={l.href} className="inline-block break-words py-[0.4rem] text-[0.9rem] text-body transition-colors hover:text-ink">
+                        <Link href={l.href} className={LINK}>
                           {l.label}
                         </Link>
                       ) : (
                         <a
                           href={l.href}
                           {...(l.href.startsWith("http") && !l.sameTab ? { target: "_blank", rel: "noreferrer" } : {})}
-                          className="inline-block break-all py-[0.4rem] text-[0.9rem] text-body transition-colors hover:text-ink"
+                          className={`${LINK} break-all`}
                         >
                           {l.label}
                         </a>
@@ -111,14 +114,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-2 border-t border-line pt-6 text-[0.8125rem] text-muted sm:flex-row sm:justify-between">
+        <div className="mt-16 flex flex-col gap-2 border-t border-white/10 pt-6 text-[0.8125rem] text-muted sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} PlanckSpace. All rights reserved.</p>
           <p>Metadata only. Your prompts and code are never sent to PlanckSpace.</p>
         </div>
       </div>
 
-      <div className="wrap mt-14" aria-hidden="true" style={{ marginBottom: "-4.4vw" }}>
-        <PlanckspaceLockup className="h-auto w-full text-[#ecebe6]" accent="#e1e8fb" />
+      <div className="wrap relative mt-14" aria-hidden="true" style={{ marginBottom: "-4.4vw" }}>
+        <PlanckspaceLockup className="h-auto w-full text-white/[0.05]" accent="rgb(76 128 246 / 0.14)" />
       </div>
       <div style={{ height: "max(0px, env(safe-area-inset-bottom))" }} />
     </footer>
