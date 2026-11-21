@@ -70,19 +70,19 @@ planck init --token-stdin < token.txt
 | --- | --- | --- |
 | `--code <code>` | none | One-time connect code from the console, valid for 10 minutes and usable once. |
 | `--join <code>` | none | Team join code (`pk_join_…`) from an owner, leader or admin. It joins you to the workspace as a developer and gives you your own device token. |
-| `--email <email>` | `git config user.email` | Identity to join as with `--join`. The global git setting is tried first, then the repository's. On a terminal, `init` asks if neither exists. |
+| `--email <email>` | asked | Work email to join as with `--join`, and skips the question. On a terminal, `init` always asks, with your git email filled in (global setting first, then the repository's). With no terminal, it uses that git email and says so. |
 | `--token <token>` | none | Device token. It is written to your shell history in plain text; prefer the prompt or `--token-stdin`. |
 | `--token-stdin` | off | Read the device token from standard input. |
 | `--api-url <url>` | see above | Backend base URL for this run. |
 | `--no-daemon` | daemon installed | Skip installing the daemon. Run `planck daemon install` later. |
-| `--plan <plan>` | asked on a terminal | Your own Claude Code plan: `pro`, `max`, `max_5x`, `max_20x`, `team`, `team_standard`, `team_premium`, `enterprise`, `api` or `none`. Spellings such as `Max 20x` or `max5x` are normalized. |
+| `--plan <plan>` | none | Hidden. For solo use with no workspace leader: your own Claude Code plan, `pro`, `max`, `max_5x`, `max_20x`, `team`, `team_standard`, `team_premium`, `enterprise`, `api` or `none`. Spellings such as `Max 20x` or `max5x` are normalized. Ignored once your workspace assigns you a seat. |
 | `--routing` | asked | Install model routing for Claude Code without asking. |
 | `--no-routing` | asked | Do not install model routing. |
 
 `init` runs five steps and prints each one.
 
 1. **Local setup.** Creates `~/.planckspace/` and the local database.
-2. **Connect.** The first match wins: `--code`, then `--join`, then `--token`, `--token-stdin` or `PLANCKSPACE_TOKEN`, then a token already saved on this machine, then a hidden prompt on a terminal. Pressing Enter at the prompt skips connecting, and the CLI measures locally only. After connecting, `init` asks which Claude Code plan you are on, because the plan decides whether your sessions count as metered spend or as seat usage. It then offers model routing if Claude Code is present.
+2. **Connect.** The first match wins: `--code`, then `--join`, then `--token`, `--token-stdin` or `PLANCKSPACE_TOKEN`, then a token already saved on this machine, then a hidden prompt on a terminal. Pressing Enter at the prompt skips connecting, and the CLI measures locally only. After connecting, `init` reads the Claude Code seat your workspace assigned you and prints it. It never asks for a plan. With no seat assigned it prints nothing, and the daemon picks the seat up within 15 minutes of an owner, leader or admin assigning it. It then offers model routing if Claude Code is present.
 3. **First scan and sync.** Scans every local session it can find and sends them, as `planck scan --sync` does.
 4. **Background sync.** Installs the daemon. When you ran `init` through `npx`, it first installs the same version globally, so the auto-start entry does not point at a cache that npm can prune.
 5. **Your first number.** Asks the workspace for the recoverable dollars per month over the last 30 days and for how many developers are reporting. With too little history it says what is missing, about a week of data and 20 or more sessions, rather than printing `$0`. When part of the team has not reported, the figure is marked incomplete: a floor, not a total.

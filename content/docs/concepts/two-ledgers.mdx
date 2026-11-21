@@ -32,7 +32,7 @@ For Claude Code, the CLI reads Claude Code's own local configuration. A session 
 
 Otherwise the session is seat usage. The `CLAUDE_CODE_BILLING_MODE` environment variable overrides all of this when it is set, either way. Only the result leaves the machine: no key or token value is ever sent.
 
-The CLI applies the machine's current setup each time it reads the logs. If a machine's billing route changes, for example because a developer adds an API key, its earlier Claude Code sessions are re-filed under the new ledger on the next scan. A plan change made with `planck init --plan` is the exception: sessions from before the change keep the plan and ledger they were recorded under.
+The CLI applies the machine's current setup each time it reads the logs. If a machine's billing route changes, for example because a developer adds an API key, its earlier Claude Code sessions are re-filed under the new ledger on the next scan. A plan change is the exception, whether a leader assigned a different seat or you used `planck init --plan`: sessions from before the change keep the plan and ledger they were recorded under.
 
 Other tools follow the plan you declared for them. Cursor and Windsurf sessions are billed only when that tool's declared plan is a metered one; JetBrains AI sessions are always seat usage. If a session arrives from an older CLI that does not say which ledger it belongs to, PlanckSpace uses the workspace's declared subscriptions for that tool (any seat plan wins) and otherwise records seat usage.
 

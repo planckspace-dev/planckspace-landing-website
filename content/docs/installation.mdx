@@ -109,7 +109,7 @@ Everything the CLI keeps is under `~/.planckspace`, unless `PLANCKSPACE_HOME` mo
 
 | Path | Holds |
 | --- | --- |
-| `config.json` | The backend URL, your CLI token, the workspace, the plan you declared, budgets and your routing choice. The token is stored in plain text, so treat the file like an SSH key. On macOS and Linux it is readable only by your user. |
+| `config.json` | The backend URL, your CLI token, the workspace, your Claude Code seat (assigned by your workspace, or set with `--plan`), budgets and your routing choice. The token is stored in plain text, so treat the file like an SSH key. On macOS and Linux it is readable only by your user. |
 | `local.db` | A SQLite cache of the sessions the CLI has read, with per-turn detail for its own checks, plus sync state. The file itself is never uploaded. Only the mapped metadata fields are. |
 | `daemon.log` | The daemon's event log, one JSON object per line. It rotates at 10 MB and keeps three older files, `daemon.log.1` to `daemon.log.3`. |
 | `daemon.json`, `daemon.pid` | The daemon's live status and process ID, which `planck daemon status` reads. |

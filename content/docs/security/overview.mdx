@@ -53,7 +53,7 @@ A successful sign-in returns a signed token that is valid for 30 days and carrie
 
 A join code lets a whole team connect with one command, `planck init --join` followed by the code. A workspace has at most one live code. Owners, leaders and admins issue it, and issuing a new one revokes the previous one. Revoking the code stops new joins; tokens already issued keep working, because they belong to people rather than to the code.
 
-When a developer runs the command, the CLI sends the code, an email address (`--email`, or `git config user.email` when omitted), the git user name and a device label made of the operating system and CPU architecture, such as `darwin-arm64`. The server then:
+When a developer runs the command, the CLI sends the code, the work email the developer confirms or types (`--email` skips the question; with no terminal it is `git config user.email`), the git user name and a device label made of the operating system and CPU architecture, such as `darwin-arm64`. The server then:
 
 1. Refuses the address if the workspace has a [claimed email domain](/docs/security/workspace-policies#claimed-email-domain) and the address is not at it.
 2. Refuses an address that belongs to an owner, leader, admin or manager of the workspace. A join code only ever issues developer access.

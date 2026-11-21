@@ -10,6 +10,10 @@
 #   curl -fsSL https://planckspace.dev/install | sh
 #   curl -fsSL https://planckspace.dev/install | sh -s -- --token pk_live_xxx
 #   curl -fsSL https://planckspace.dev/install | sh -s -- --join pk_join_xxx   (team rollout)
+#   curl -fsSL https://planckspace.dev/install | sh -s -- --join pk_join_xxx --email you@company.com
+#
+# With --join, `planck init` asks for your work email (git email filled in).
+# --email answers it up front, for scripts and machines with no terminal.
 #
 # POSIX sh only, deliberately. The documented entrypoint pipes this into `sh`,
 # and the shebang is ignored when a script arrives on stdin — so `sh` is dash on
@@ -33,12 +37,15 @@ die()  { printf '\nERROR: %s\n\n' "$*" >&2; exit 1; }
 # ── parse args ───────────────────────────────────────────────────────────────
 TOKEN=""
 JOIN=""
+EMAIL=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --token)   TOKEN="${2:-}"; shift 2 ;;
     --token=*) TOKEN="${1#--token=}"; shift ;;
     --join)    JOIN="${2:-}"; shift 2 ;;
     --join=*)  JOIN="${1#--join=}"; shift ;;
+    --email)   EMAIL="${2:-}"; shift 2 ;;
+    --email=*) EMAIL="${1#--email=}"; shift ;;
     *)         shift ;;
   esac
 done
@@ -116,10 +123,21 @@ command -v planck >/dev/null 2>&1 || \
 # on the machine for as long as it runs. A join code is lower-stakes by design:
 # it can only mint a developer-role token for the email that redeems it, it is
 # pasted into a team channel anyway, and an admin can rotate it at any time.
+#
+# `curl … | sh` makes the pipe this script's stdin, so `planck init` would see no
+# terminal and could not ask which work email to join as. It would join silently
+# as the git email. Hand it the terminal when there is one; with no terminal it
+# falls back to --email, then the git email, and says which it used.
 CONNECTED=false
 if [ -n "$JOIN" ]; then
   say "Joining your team and measuring your last 30 days..."
-  if planck init --join "$JOIN"; then CONNECTED=true; fi
+  set -- --join "$JOIN"
+  if [ -n "$EMAIL" ]; then set -- "$@" --email "$EMAIL"; fi
+  if ( : </dev/tty ) 2>/dev/null; then
+    if planck init "$@" </dev/tty; then CONNECTED=true; fi
+  else
+    if planck init "$@"; then CONNECTED=true; fi
+  fi
 elif [ -n "$TOKEN" ]; then
   say "Connecting and measuring your last 30 days..."
   if printf '%s' "$TOKEN" | planck init --token-stdin; then CONNECTED=true; fi

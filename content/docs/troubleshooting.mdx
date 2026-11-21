@@ -124,7 +124,7 @@ A repository with a different `user.email` does not hide sessions. A device toke
 
 ### You joined as the wrong person
 
-**Cause.** `planck init --join` takes your identity from the `--email` flag, then your global `git config user.email`, then the repository's. If that is a personal or alias address, PlanckSpace joined, or reused, a member for that address.
+**Cause.** `planck init --join` joins as the email you accept or type at its question, which fills in your git email. Pressing Enter on a personal or alias address, or running it with no terminal (where it uses the git email), joins or reuses a member for that address. CLI versions before the question joined as the git email without asking.
 
 **Fix.** Run the join command again with your work address: `npx @planckspace/cli@latest init --join pk_join_… --email you@company.com`. Then ask an owner, leader or admin to remove the stray member.
 

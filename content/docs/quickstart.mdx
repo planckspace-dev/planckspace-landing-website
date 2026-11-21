@@ -31,8 +31,7 @@ You can run `init` again at any time. With no credential flag, it skips the conn
 
 | Flag | Effect |
 | --- | --- |
-| `--plan <plan>` | Declares your own Claude Code plan and skips the question: `pro`, `max`, `max_5x`, `max_20x`, `team`, `team_standard`, `team_premium`, `enterprise`, `api` or `none`. |
-| `--email <email>` | With `--join`, the address to join as. The default is your global `git config user.email`. |
+| `--email <email>` | With `--join`, the work email to join as. Skips the question. Without it, `init` asks, with your git email filled in. |
 | `--routing`, `--no-routing` | Installs or skips [model routing](/docs/guides/model-routing) for Claude Code without asking. |
 | `--no-daemon` | Skips the daemon. Run `planck daemon install` later to keep syncing. |
 
@@ -54,7 +53,9 @@ You can run `init` again at any time. With no credential flag, it skips the conn
 
 It redeems the code or checks the token, saves the workspace to `config.json`, and prints which backend it is about to talk to. It refuses to send a token or code over plain HTTP, except to localhost.
 
-On a terminal, `init` then asks once which Claude Code plan you are on: Pro, Max, a Team or Enterprise seat, or an API key. The answer decides whether your sessions count as billed spend or as [usage value](/docs/concepts/two-ledgers) on a seat, and it is the baseline for plan right-sizing. If Claude Code has run on the machine, `init` also offers [model routing](/docs/guides/model-routing). The default answer is yes, and your workspace's routing policy (ask, on or off) can answer for you.
+`init` does not ask which Claude Code plan you are on. Seats are set by your workspace: it reads the seat an owner, leader or admin assigned you in the console and prints it. Claude Code's own configuration on the machine decides whether your sessions count as billed spend or as [usage value](/docs/concepts/two-ledgers) on a seat. If no seat is assigned yet, nothing is printed and your sessions still sync. The daemon checks again every 15 minutes and applies the seat once it is assigned.
+
+If Claude Code has run on the machine, `init` also offers [model routing](/docs/guides/model-routing). The default answer is yes, and your workspace's routing policy (ask, on or off) can answer for you.
 
 </Step>
 <Step>

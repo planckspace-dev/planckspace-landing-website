@@ -106,7 +106,7 @@ A session is filed as billed only when you declared an `api` plan for that tool 
 
 ### Plan stamps
 
-A seat session carries the plan you declared for its tool. For Claude Code that is `pro`, `max_5x`, `max_20x`, `team_standard`, `team_premium` or `enterprise`, and the older generic `max` and `team` are still accepted. Declare it with `planck init --plan` or `planck subscription add`. A stamp is filled in only where the session has none, and metered sessions are never stamped.
+A seat session carries the plan of its tool's seat. For Claude Code that is the seat an owner, leader or admin assigned you in the console: `pro`, `max_5x`, `max_20x`, `team_standard`, `team_premium` or `enterprise`, or `default` for a seat declared without a plan name. The CLI reads it from the workspace when it connects and the daemon checks again every 15 minutes, so a developer is never asked. The older generic `max` and `team` are still accepted. With no workspace leader, set it yourself with `planck init --plan` or `planck subscription add`. An assigned seat replaces a plan set that way. A stamp is filled in only where the session has none, and metered sessions are never stamped.
 
 PlanckSpace uses the stamp to say that a session is included in a plan, and to measure dormant seats and Max to Pro right-sizing against the right plan. See [Findings](/docs/concepts/findings).
 
