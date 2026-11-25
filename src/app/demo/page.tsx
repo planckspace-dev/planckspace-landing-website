@@ -17,19 +17,19 @@ export const metadata: Metadata = {
 
 const AGENDA = [
   {
-    title: "Your current spend, mapped",
-    body: "We start from the tools and plans you already pay for and show exactly what PlanckSpace would meter across them.",
+    title: "What you spend today",
+    body: "We start from the tools and plans you already pay for and show exactly what PlanckSpace would track across them.",
   },
   {
     title: "The waste we'd expect to find",
-    body: "Seats nobody opens, Max plans used at Pro levels, premium models on routine work, context re-sent every turn.",
+    body: "Seats nobody uses, Max plans that only need Pro, expensive models on simple work, the same context paid for again and again.",
   },
   {
     title: "Numbers finance will accept",
-    body: "Per team, per repo and per developer, billed dollars kept apart from estimates, checked against the invoice.",
+    body: "By team, repository and developer, with real charges kept apart from estimates and checked against the invoice.",
   },
   {
-    title: "Rollout, honestly scoped",
+    title: "An honest plan to roll it out",
     body: "What setup takes, what your developers see, and what it costs. If you don't need us yet, we'll say so.",
   },
 ];
@@ -37,7 +37,7 @@ const AGENDA = [
 const ASSURANCES = [
   { icon: Clock, label: "30 minutes", sub: "no slide deck" },
   { icon: UserRound, label: "A founder", sub: "not an SDR" },
-  { icon: Lock, label: "Metadata only", sub: "code stays on your machine" },
+  { icon: Lock, label: "Usage data only", sub: "code stays on your machine" },
 ];
 
 /** Matches the form's footprint so the layout doesn't jump before hydration. */
@@ -71,8 +71,8 @@ export default function DemoPage() {
               <p className="eyebrow">Book a demo</p>
               <h1 className="title-xl mt-4 text-[clamp(2.4rem,4.6vw,3.75rem)]">See it on your own numbers.</h1>
               <p className="lede mt-6 max-w-md">
-                PlanckSpace is rolled out with us, not around us. Tell us about your team, we&apos;ll walk you through what
-                your AI spend actually looks like, then set your workspace up with you.
+                Tell us about your team. We&apos;ll show you what your AI coding spend really looks like, then set up your
+                workspace with you.
               </p>
 
               <ul className="mt-8 flex flex-wrap gap-2">

@@ -15,26 +15,26 @@ import SectionHead from "@/components/site/SectionHead";
    the dark.
    ───────────────────────────────────────────────────────────────────────── */
 
-const LEAVES = ["Token counts and timings", "Models and tool names", "Repository and file names", "Session outcome", "The git email that attributes a session"];
+const LEAVES = ["How many tokens were used, and when", "Which model and which tool", "Repository and file names", "Whether the work shipped", "The git email, to show whose session it was"];
 const STAYS = ["Your prompts", "The model's responses", "Source code and file contents", "Hook commands and MCP secrets", "API keys"];
 
 const POINTS = [
   {
     icon: ScanSearch,
-    title: "Check any session",
-    body: "planck inspect rebuilds a session's payload with the sync's own code and prints its core fields.",
+    title: "Check it yourself",
+    body: "Run planck inspect on any session and it prints what would be sent.",
     href: "/docs/security/data-we-collect",
   },
   {
     icon: EyeOff,
-    title: "Identity private by policy",
-    body: "A collaborative workspace hides who is who from every role, leadership included.",
+    title: "Names can stay hidden",
+    body: "In a collaborative workspace, nobody sees who is who. Not managers, not leadership.",
     href: "/docs/security/workspace-policies",
   },
   {
     icon: FolderLock,
     title: "Only the repositories you choose",
-    body: "Sessions from untracked repositories are kept out of every figure and every screen.",
+    body: "Sessions from any repository you have not added stay out of every number and every screen.",
     href: "/docs/guides/repo-scope",
   },
 ];
@@ -51,7 +51,7 @@ export default function Privacy() {
               The numbers leave the machine. <span className="tone block">Your code never does.</span>
             </>
           }
-          lede="The CLI reads the session logs your tools already keep and sends usage metadata only. Every session is checked on arrival against a fixed list of fields, and one that carries anything else is rejected."
+          lede="PlanckSpace reads the logs your AI tools already keep on each machine and sends usage data only: numbers and names, never content. Every session is checked on arrival against a fixed list of fields, and anything extra is rejected."
         />
 
         <Reveal className="mt-14 grid grid-cols-1 overflow-hidden rounded-[32px] border border-line shadow-[var(--shadow-lift)] md:grid-cols-2 lg:mt-20">

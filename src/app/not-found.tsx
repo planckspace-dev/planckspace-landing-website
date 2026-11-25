@@ -12,9 +12,9 @@ export default function NotFound() {
         <div className="wrap relative flex min-h-[78vh] flex-col items-center justify-center pt-[var(--nav-h)] text-center">
           <p className="eyebrow">404</p>
           <h1 className="title-xl mt-6 max-w-[14ch]">
-            This page is <span className="tone sm:whitespace-nowrap">not in the ledger.</span>
+            This page is <span className="tone sm:whitespace-nowrap">not accounted for.</span>
           </h1>
-          <p className="lede mt-6 max-w-[30rem]">The link may be old, or the page may have moved. Everything else is accounted for.</p>
+          <p className="lede mt-6 max-w-[30rem]">The link may be old, or the page may have moved. Everything else is right where it should be.</p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Button href="/" size="lg">
               Back to the homepage

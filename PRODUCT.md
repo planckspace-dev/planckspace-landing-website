@@ -23,6 +23,16 @@ Success for this landing page: a visitor immediately understands what PlanckSpac
 
 Precise · premium · calm. The voice of a serious infra tool with one idea: **every token, accounted for.** Three words: **exact, calm, confident.** Type does most of the work, at a size that carries the page; numbers are set like a ledger; one image, the Aperture, gives the page its light.
 
+## Voice and words (since 2026-11-25)
+
+The page is written in plain words, because the founder judged the earlier copy "not up to the mark" and named "itemize" as the example. A visitor should be able to say what PlanckSpace is and does after the hero: it shows what a team spends on AI coding tools, finds the waste, fixes it, and proves what was saved.
+
+- **Say the thing, not the metaphor.** The accounting vocabulary is retired from visible copy: itemize, ledger, booked, repriced, prorated, metered, recoverable, price card, ship rate, provision, attribute, reconcile, telemetry, payload, daemon, backfill. Write what they mean: "see where the money goes", "counted", "compared with the old price", "pay-as-you-go API spend", "what you could save", "price list", "the share of work that ships", "set up", "checked against the invoice".
+- **Product names stay, explained once.** Measure, Find, Fix, Prove; Proof of savings; Billed; Usage value ("seat work, valued at API prices"). These are the labels a customer meets in the console and the docs.
+- **"Usage data only"** is the short privacy line (it replaced "Metadata only"). The claim itself is unchanged and stays in transmission terms: prompts and code are "never sent to PlanckSpace".
+- **Short sentences, verbs first, "you" and "we".** No em dashes. The hero headline is still the tagline; the sentence under it carries the explanation.
+- The docs keep their defined terms (the two ledgers, booked rows): they are reference, and each term is defined where it is used.
+
 ## Anti-references
 
 - **Screens of the console.** The site never pictures the product UI (no dashboard replicas, no chart walls, no sneak peeks). It speaks in the product's artefacts instead: ledger rows, a priced finding, a one-line diff, a booked saving, a terminal's printout. (The 2026-10-28 "Daylight" site rebuilt the console on the page; retired 2026-10-29 as giving away too much.)

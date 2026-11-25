@@ -192,7 +192,7 @@ export const FINDINGS: Finding[] = [
   },
   {
     id: "cache",
-    title: "Cold prompt cache",
+    title: "Repeat context at full price",
     plain: "Only 41% of prompt tokens come from cache on the API key",
     saw: "Only 41% of prompt tokens on the data-pipeline key are served from cache. Well-cached sessions reach 90%.",
     why: "Uncached input is billed at full price on every call.",
@@ -206,7 +206,7 @@ export const FINDINGS: Finding[] = [
   },
   {
     id: "maxpro",
-    title: "Max seats used at Pro levels",
+    title: "Max seats that only need Pro",
     plain: "Two $200 seats never came near the $20 plan's ceiling",
     saw: "Two $200 Max seats stayed under the Pro plan's ceiling every day for 30 days.",
     why: "The difference is billed every month, used or not.",
@@ -220,7 +220,7 @@ export const FINDINGS: Finding[] = [
   },
   {
     id: "dormant",
-    title: "Dormant seats",
+    title: "Paid seats nobody uses",
     plain: "Four paid seats had no sessions in 30 days",
     saw: "Four paid seats had no sessions in 30 days. Members who aren't reporting are never counted as idle.",
     why: "An idle seat is billed in full.",
@@ -249,9 +249,9 @@ export const savingsDayLabel = (d: number) => fmtDay(SAVINGS_START + d * DAY_MS)
 export type Method = "seat" | "repriced" | "cache";
 
 export const METHOD_LABEL: Record<Method, string> = {
-  seat: "Seat change, prorated daily",
-  repriced: "Repriced at the old model's rates",
-  cache: "Re-split at the old cache hit rate",
+  seat: "Seat change, counted per day",
+  repriced: "Compared with the old model's price",
+  cache: "Compared with the old cache rate",
 };
 
 export interface Receipt {
@@ -309,7 +309,7 @@ export const RECEIPTS: Receipt[] = [
   }),
   r({
     id: "routing",
-    title: "Opus on routine work in web",
+    title: "Routine work in web moved to Sonnet",
     method: "repriced",
     metric: "sessions on Opus",
     before: "64%",
@@ -323,7 +323,7 @@ export const RECEIPTS: Receipt[] = [
   }),
   r({
     id: "cache",
-    title: "Cold cache on search-api",
+    title: "Prompt caching fixed in search-api",
     method: "cache",
     metric: "prompt tokens from cache",
     before: "38%",

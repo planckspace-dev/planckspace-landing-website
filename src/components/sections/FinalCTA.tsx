@@ -14,7 +14,7 @@ import { DEMO_PATH } from "@/lib/plans";
    --close-clear, so the two never meet at any width. If the art slot is ever
    empty, .close-night falls back to a horizon of light drawn in CSS. */
 
-const PROMISES = ["30 minutes with a founder", "Billed dollars, checked against the invoice", "Metadata only"];
+const PROMISES = ["30 minutes with a founder", "Numbers checked against your invoice", "Prompts and code never sent"];
 
 export default function FinalCTA() {
   return (
@@ -35,7 +35,7 @@ export default function FinalCTA() {
           See what your AI bill <span className="tone">is made of.</span>
         </h2>
         <p className="lede mx-auto mt-8 max-w-[36rem]">
-          Bring one month of your tools and plans. We will show you where it goes, what can be cut, and how the saving would be proven.
+          Tell us which AI tools and plans you pay for. In 30 minutes we will show you where the money goes, what you can cut, and how you will see the saving.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Button href={DEMO_PATH} size="lg" magnetic>

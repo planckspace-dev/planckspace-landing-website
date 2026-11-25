@@ -57,7 +57,7 @@ function MeasureExhibit() {
       </div>
       <p className="mt-3 flex justify-between font-mono text-[0.75rem] text-muted">
         <span>seats {usd(seatTotal)}</span>
-        <span>metered {usd(meteredTotal)}</span>
+        <span>API usage {usd(meteredTotal)}</span>
       </p>
 
       <div className="my-5 flex items-center gap-3 font-mono text-[0.6875rem] text-muted">
@@ -71,7 +71,7 @@ function MeasureExhibit() {
         <p className="num font-mono text-[1.25rem] font-medium text-muted">{usd(usageValue)}</p>
       </div>
       <div className="hatch mt-3 h-3 rounded-full ring-1 ring-inset ring-amber-500/40" style={{ "--hatch": "#ecc99b" } as CSSProperties} aria-hidden />
-      <p className="mt-3 font-mono text-[0.75rem] text-muted">work on flat-rate seats, at API rates</p>
+      <p className="mt-3 font-mono text-[0.75rem] text-muted">seat work, valued at API prices</p>
     </Exhibit>
   );
 }
@@ -83,8 +83,7 @@ function FindExhibit() {
         <CountUp to={71} suffix="%" />
       </p>
       <p className="mt-6 max-w-[24rem] text-[1.0625rem] leading-snug text-body">
-        of Opus sessions in <span className="font-mono text-[0.85em] text-ink">payments-api</span> were routine: under 12 turns, single-file
-        edits.
+        of Opus sessions in <span className="font-mono text-[0.85em] text-ink">payments-api</span> were routine work: short, single-file edits.
       </p>
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span className="pill h-7 bg-surface px-3 text-[0.8125rem] text-coral-700 ring-1 ring-inset ring-coral-500/25">−$1,380 a month</span>
@@ -142,7 +141,7 @@ function ProveExhibit() {
       <div className="mt-6 border-t border-green-700/15 pt-5">
         {/* a leader row where the cell is wide enough; label over figure elsewhere */}
         <div className="leader flex-col items-start gap-2 xl:flex-row xl:items-baseline xl:gap-2">
-          <span className="text-[0.9375rem] text-body">{routing.booked} repriced</span>
+          <span className="text-[0.9375rem] text-body">Saved across {routing.booked}</span>
           <span className="fill hidden xl:block" aria-hidden />
           <span className="amt fig text-[clamp(2rem,2.8vw,2.375rem)] font-semibold tracking-[-0.04em] text-green-700">
             <CountUp to={routing.usd} prefix="$" separator="," suffix="/mo" />
@@ -158,18 +157,18 @@ const MOVES: { id: Tone; n: string; label: string; title: ReactNode; body: strin
     id: "measure",
     n: "01",
     label: "Measure",
-    title: "Every dollar, in its ledger.",
-    body: "Each session becomes a row: tool, model, tokens, repository, outcome. Billed dollars and the usage value of flat-rate seats are kept in separate ledgers, so no figure quietly mixes the two.",
-    link: { label: "How the two ledgers work", href: "/docs/concepts/two-ledgers" },
+    title: "See where every dollar goes.",
+    body: "Every AI coding session is recorded with its tool, model, repository and cost, and whether the work shipped. What you actually paid is always shown apart from the value of work done on flat-rate seats, so no number mixes the two.",
+    link: { label: "How billed and usage value differ", href: "/docs/concepts/two-ledgers" },
     exhibit: <MeasureExhibit />,
   },
   {
     id: "find",
     n: "02",
     label: "Find",
-    title: "Waste, priced by the month.",
-    body: "Seats nobody opens, plans larger than the work, premium models on routine edits, prompt caches gone cold. Each finding carries its evidence, its monthly amount and its fix.",
-    link: { label: "What counts as a finding", href: "/docs/concepts/findings" },
+    title: "Find the money being wasted.",
+    body: "Paid seats nobody uses. Plans bigger than the work needs. Expensive models doing simple edits. The same context paid for at full price, again and again. Each one comes with the evidence, what it costs you a month, and the fix.",
+    link: { label: "What counts as waste", href: "/docs/concepts/findings" },
     exhibit: <FindExhibit />,
   },
   {
@@ -179,19 +178,19 @@ const MOVES: { id: Tone; n: string; label: string; title: ReactNode; body: strin
     // the second sentence holds together, so the break falls between them
     title: (
       <>
-        One click. <span className="whitespace-nowrap">One more to undo.</span>
+        Fix it in one click. <span className="whitespace-nowrap">Undo it in one more.</span>
       </>
     ),
-    body: "Mechanical fixes apply from the editor, next to the code they concern, with a backup first. Judgement calls go to your own Claude Code with the numbers attached. Seat changes wait for an approval.",
-    link: { label: "Fixing a finding", href: "/docs/guides/fix-findings" },
+    body: "Simple fixes are applied right in your editor, with a backup made first. Bigger changes are handed to your own Claude Code with the numbers attached, for you to review. Nothing changes a person's seat until an admin approves it.",
+    link: { label: "How fixes work", href: "/docs/guides/fix-findings" },
     exhibit: <FixExhibit />,
   },
   {
     id: "prove",
     n: "04",
     label: "Prove",
-    title: "A saving is a receipt.",
-    body: "After a fix, the sessions that follow are priced at the rates you paid before it. The difference is booked row by row, only once there is enough work to judge.",
+    title: "See what each fix really saved.",
+    body: "After a fix, PlanckSpace works out what each new session would have cost the old way. The difference is your saving, counted one session at a time, and only once there is enough work to be sure.",
     link: { label: "How savings are measured", href: "/docs/concepts/proof-of-savings" },
     exhibit: <ProveExhibit />,
   },
@@ -203,14 +202,14 @@ export default function Platform() {
       <div className="wrap">
         <SectionHead
           id="platform-title"
-          eyebrow="The platform"
+          eyebrow="What PlanckSpace does"
           size="xl"
           title={
             <>
-              AI is now a line item. <span className="tone">Nobody can itemize it.</span>
+              Your AI bill keeps growing. <span className="tone">Nobody can explain it.</span>
             </>
           }
-          lede="The bill grows every month and no one can say what it bought. PlanckSpace reads the usage your tools already record and turns it into a ledger you can act on."
+          lede="Seats, plans and API keys add up fast, and no one can say what the money bought. PlanckSpace reads the usage your AI tools already record and does four things with it."
         />
 
         <div className="mt-14 grid grid-cols-1 overflow-hidden rounded-[32px] border border-line bg-surface shadow-[var(--shadow-card)] md:grid-cols-2 lg:mt-20">

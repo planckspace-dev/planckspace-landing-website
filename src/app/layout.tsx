@@ -20,7 +20,7 @@ const mono = Geist_Mono({
 
 const OG_IMAGE = "/og.png";
 const DESCRIPTION =
-  "PlanckSpace meters what your team spends on Claude Code, Cursor and the AI APIs, finds the waste, fixes it in one click, and proves every saving from your own telemetry. Metadata only: your code never leaves your machine.";
+  "PlanckSpace shows what your team spends on Claude Code, Cursor and the AI APIs, finds the waste, fixes it in one click, and measures what each fix saved. Usage data only: your prompts and code are never sent to PlanckSpace.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://planckspace.dev"),
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "PlanckSpace: Every token, accounted for",
     description:
-      "Meter your team's AI coding spend across every tool, fix the waste in one click, and prove every saving from your own telemetry.",
+      "See what your team spends on AI coding tools, fix the waste in one click, and see what each fix really saved.",
     type: "website",
     url: "https://planckspace.dev",
     siteName: "PlanckSpace",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PlanckSpace: Every token, accounted for",
     description:
-      "Meter your team's AI coding spend across every tool, fix the waste in one click, and prove every saving from your own telemetry.",
+      "See what your team spends on AI coding tools, fix the waste in one click, and see what each fix really saved.",
     images: [OG_IMAGE],
   },
   icons: {

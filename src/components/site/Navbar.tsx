@@ -30,10 +30,10 @@ import { cn } from "@/lib/utils";
 type Icon = ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number }>;
 
 const PRODUCT: { icon: Icon; title: string; body: string; href: string }[] = [
-  { icon: Scale, title: "Measure", body: "Every seat and API key in one ledger, billed kept apart from usage value.", href: "/#measure" },
-  { icon: Radar, title: "Find", body: "Idle seats, oversized plans, premium models on routine work, cold caches.", href: "/#find" },
-  { icon: Wand2, title: "Fix", body: "One click in the editor, with Undo. Seat changes wait for an approval.", href: "/#fix" },
-  { icon: BadgeCheck, title: "Prove", body: "Savings booked from real sessions after the fix, never forecast.", href: "/#prove" },
+  { icon: Scale, title: "Measure", body: "See what every seat and API key costs, all in one place.", href: "/#measure" },
+  { icon: Radar, title: "Find", body: "Unused seats, oversized plans, expensive models doing simple work.", href: "/#find" },
+  { icon: Wand2, title: "Fix", body: "One click in your editor, with Undo. Seat changes wait for approval.", href: "/#fix" },
+  { icon: BadgeCheck, title: "Prove", body: "Savings measured from real work after the fix, never a forecast.", href: "/#prove" },
 ];
 
 const TOOLS: { name: string; Logo: Icon }[] = [

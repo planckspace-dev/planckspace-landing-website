@@ -20,7 +20,7 @@ const COLUMNS: { head: string; links: FooterLink[] }[] = [
       { label: "Find", href: "/#find" },
       { label: "Fix", href: "/#fix" },
       { label: "Prove", href: "/#prove" },
-      { label: "Privacy model", href: "/#privacy" },
+      { label: "Privacy", href: "/#privacy" },
     ],
   },
   {
@@ -64,7 +64,7 @@ export default function Footer() {
           <div>
             <PlanckspaceLockup className="h-6 w-auto text-on-night" accent="#4C80F6" />
             <p className="mt-6 max-w-[19rem] text-[0.9375rem] leading-relaxed text-body">
-              The cost ledger for AI-assisted engineering. Every token, accounted for.
+              See what your team spends on AI coding, cut the waste, and prove the saving. Every token, accounted for.
             </p>
             <ul className="mt-7 flex gap-2">
               {SOCIAL_LINKS.map((s) => {
@@ -116,7 +116,7 @@ export default function Footer() {
 
         <div className="mt-16 flex flex-col gap-2 border-t border-white/10 pt-6 text-[0.8125rem] text-muted sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} PlanckSpace. All rights reserved.</p>
-          <p>Metadata only. Your prompts and code are never sent to PlanckSpace.</p>
+          <p>Usage data only. Your prompts and code are never sent to PlanckSpace.</p>
         </div>
       </div>
 

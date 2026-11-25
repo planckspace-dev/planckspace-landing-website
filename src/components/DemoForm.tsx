@@ -50,10 +50,10 @@ const SPEND = [
 
 const GOALS = [
   "See total spend in one place",
-  "Attribute cost per team or repo",
+  "See cost per team or repo",
   "Find and cut wasted spend",
-  "Reconcile against the invoice",
-  "Set budgets and anomaly alerts",
+  "Check spend against the invoice",
+  "Set budgets and spending alerts",
   "Justify AI spend to leadership",
 ];
 
@@ -320,7 +320,7 @@ export default function DemoForm() {
               },
               {
                 t: "Access to your workspace",
-                b: "If it's a fit, we provision your team and help with the rollout ourselves.",
+                b: "If it's a fit, we set up your team and help with the rollout ourselves.",
               },
             ].map((s, i) => (
               <li key={s.t} className="flex gap-5">

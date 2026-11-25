@@ -25,24 +25,24 @@ const recoverable = FOUND.reduce((s, f) => s + f.usd, 0);
 const perMachine = Math.round(5472 / WORKSPACE.developers);
 
 const STEPS = [
-  { n: "1", title: "Each developer runs one command", body: "It connects the machine, backfills the session history already on it, and starts a background daemon that keeps syncing." },
-  { n: "2", title: "An admin connects billing", body: "Admin keys or a seat invoice, so tracked spend is checked against what the providers actually billed." },
-  { n: "3", title: "The findings arrive", body: "Priced in billed dollars, each with its evidence and its fix, in the console and in the editor." },
+  { n: "1", title: "Each developer runs one command", body: "It connects their machine, reads the AI coding history already on it, and keeps syncing quietly in the background." },
+  { n: "2", title: "An admin connects billing", body: "Add your provider accounts or a seat invoice, so our numbers are checked against what you were really charged." },
+  { n: "3", title: "You get your list of waste", body: "Each item shows what it costs you a month, the evidence, and the fix. See it on the web or right in your editor." },
 ];
 
 const LINES: { t: string; cls?: string }[] = [
   { t: `$ ${COMMAND}`, cls: "hi" },
   { t: `✓ Connected to ${WORKSPACE.name}`, cls: "ok" },
-  { t: `✓ Backfilled local history · ${perMachine} sessions`, cls: "ok" },
-  { t: "✓ Daemon running in the background", cls: "ok" },
+  { t: `✓ Read local history · ${perMachine} sessions`, cls: "ok" },
+  { t: "✓ Syncing in the background", cls: "ok" },
   { t: " " },
-  { t: "Recoverable this month, billed dollars", cls: "hi" },
+  { t: "What you could save each month", cls: "hi" },
   // 39 columns wide, so the totals still fit a phone without scrolling
   ...FOUND.map((f) => ({ t: `  ${f.title.padEnd(30, ".")} ${usd(f.usd).padStart(6)}` })),
   { t: `  ${"".padEnd(30, " ")} ${"──────".padStart(6)}`, cls: "dim" },
   { t: `  ${"Total, a month".padEnd(30, " ")} ${usd(recoverable).padStart(6)}`, cls: "hi" },
   { t: " " },
-  { t: "Next: open the findings in the console.", cls: "dim" },
+  { t: "Next: open the console to fix them.", cls: "dim" },
 ];
 
 /* The panel's light is the Aperture render: the chamfered corner of the

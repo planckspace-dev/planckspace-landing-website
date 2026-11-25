@@ -24,12 +24,12 @@ import { METHOD_LABEL, RECEIPTS, savedToDate, usd } from "@/lib/sample";
    place once (reactbits/CountUp); the HTML carries their final values.
    ───────────────────────────────────────────────────────────────────────── */
 
-// `to` rolls; Σ is a glyph and stays one. −10 is written with a true minus.
+// `to` rolls; the 0 is set as a glyph (nothing to roll to). −10 is written with a true minus.
 const RULES: { to?: number; prefix?: string; glyph?: string; unit?: string; sub: string; body: string }[] = [
-  { to: 7, unit: " days", sub: "and 20 sessions", body: "A session fix is judged only after a week and twenty settled sessions in its scope. Anything less is noise." },
-  { to: 1, sub: "price card", body: "Both sides of a comparison are priced from the same pinned rates, so a vendor's price change is never booked as your saving." },
-  { to: 10, prefix: "−", sub: "points", body: "If the ship rate falls ten points after a fix, booking stops. Cheaper and worse is not a saving." },
-  { glyph: "Σ", sub: "booked rows", body: "Saved to date is the sum of rows booked from real sessions and seat changes. Never a rate multiplied forward." },
+  { to: 7, unit: " days", sub: "and 20 sessions", body: "We wait a week and twenty finished sessions before we judge a session fix. Anything less is too little to trust." },
+  { to: 1, sub: "price list", body: "Before and after are priced from the same price list. If a provider changes its prices, that never shows up as your saving." },
+  { to: 10, prefix: "−", sub: "points", body: "If the share of your work that ships drops ten points after a fix, we stop counting. Cheaper but worse is not a saving." },
+  { glyph: "0", sub: "forecasts", body: "Your total is added up from real sessions and real seat changes. It is never a monthly rate multiplied forward." },
 ];
 
 export default function Proof() {
@@ -42,10 +42,10 @@ export default function Proof() {
           size="xl"
           title={
             <>
-              A saving is a receipt, <span className="tone block">not a forecast.</span>
+              Savings you can check, <span className="tone block">not a forecast.</span>
             </>
           }
-          lede="Most tools project savings from a model of what might happen. PlanckSpace waits for the work: after a fix, it prices the sessions that follow at the rates you paid before, and books the difference one row at a time."
+          lede="Most tools tell you what you might save. PlanckSpace measures what you did save. After a fix, it works out what each new session would have cost the old way, and counts only the difference."
         />
 
         <Reveal className="mt-14 lg:mt-20">
@@ -70,7 +70,7 @@ export default function Proof() {
 
         <Reveal className="on-paper mt-5 overflow-hidden rounded-[24px] bg-surface shadow-[0_2px_4px_rgb(9_27_84/0.18),0_32px_64px_-24px_rgb(9_27_84/0.5)] lg:mt-6">
           <div className="flex items-baseline justify-between gap-4 border-b border-line px-6 py-5 sm:px-8 sm:py-6">
-            <p className="text-[1rem] font-medium text-ink">Booked savings · sample workspace</p>
+            <p className="text-[1rem] font-medium text-ink">Savings so far · sample workspace</p>
             <Link href="/docs/concepts/proof-of-savings" className="link-arrow hidden text-[0.875rem] sm:inline-flex">
               How each row is measured <ArrowRight className="h-4 w-4" strokeWidth={1.5} aria-hidden />
             </Link>
@@ -83,7 +83,7 @@ export default function Proof() {
                   Fix
                 </th>
                 <th scope="col" className="pb-2 pt-5 font-normal">
-                  Measured by
+                  How it was measured
                 </th>
                 <th scope="col" className="pb-2 pt-5 font-normal">
                   Before → after
@@ -92,7 +92,7 @@ export default function Proof() {
                   Confirmed
                 </th>
                 <th scope="col" className="px-8 pb-2 pt-5 text-right font-normal">
-                  Pace
+                  Saving
                 </th>
               </tr>
             </thead>
@@ -116,7 +116,7 @@ export default function Proof() {
             <tfoot>
               <tr className="flex items-baseline justify-between gap-4 border-t border-line bg-green-50/70 px-6 py-5 sm:px-8 md:table-row md:px-0">
                 <th scope="row" colSpan={4} className="text-[1rem] font-medium text-ink md:py-6 md:pl-8">
-                  Saved to date, as booked rows
+                  Total saved so far
                 </th>
                 <td className="fig text-[clamp(1.75rem,3vw,2.5rem)] font-semibold tracking-[-0.045em] text-green-700 md:py-5 md:pr-8 md:text-right">
                   <CountUp to={savedToDate} prefix="$" separator="," />

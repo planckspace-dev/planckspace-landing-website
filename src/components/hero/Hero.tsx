@@ -10,7 +10,7 @@ import { DEMO_PATH } from "@/lib/plans";
 /* ─────────────────────────────────────────────────────────────────────────
    The promise, in one line, and the light it stands in. Two actions: a
    demo, or the docs for anyone who would rather read how every figure is
-   computed first. Under it, the tools metered.
+   computed first. Under it, the tools it works with.
 
    Staged at night: the Aperture render (an opening in the shape of the mark,
    lit by blue hour, stars on its module grid) is the picture, whole and
@@ -43,7 +43,7 @@ export default function Hero() {
           >
             <span className="hero-chip-new">New</span>
             <span>
-              Proof of savings<span className="hidden sm:inline">, measured session by session</span>
+              Proof of savings<span className="hidden sm:inline">: see what each fix really saved</span>
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-muted transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2} />
           </Link>
@@ -54,8 +54,8 @@ export default function Hero() {
           </h1>
 
           <p className="lede hero-lede mt-8">
-            PlanckSpace itemizes what your team spends on Claude Code, Cursor and every API key, finds the money that buys nothing, fixes it in one
-            click, and proves each dollar the fix saves.
+            PlanckSpace shows you where your team&apos;s AI coding money goes: Claude Code, Cursor and every API key. It finds the waste, fixes it
+            in one click, and proves what you saved.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
@@ -69,7 +69,7 @@ export default function Hero() {
 
           <p className="mt-8 flex items-center gap-2 text-[0.875rem] text-body">
             <Lock className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={2} />
-            Metadata only. Your prompts and code are never sent to PlanckSpace.
+            Usage data only. Your prompts and code are never sent to PlanckSpace.
           </p>
         </Reveal>
       </div>
@@ -82,7 +82,7 @@ export default function Hero() {
 
       <div className="hero-tools hero-wrap hero-layer">
         <div className="glass flex flex-col gap-4 rounded-[1.25rem] px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:px-8 lg:py-4">
-          <p className="shrink-0 text-[0.875rem] text-muted">Meters every seat and every API key</p>
+          <p className="shrink-0 text-[0.875rem] text-muted">Works with the tools you already use</p>
           <ul className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center lg:gap-x-9">
             {TOOLS.map(({ name, Logo }) => (
               <li key={name} className="flex items-center gap-2 text-[0.9375rem] font-medium tracking-[-0.015em] text-ink/80">

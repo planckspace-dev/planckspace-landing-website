@@ -11,7 +11,7 @@ import FAQ from "@/components/sections/FAQ";
 import FinalCTA from "@/components/sections/FinalCTA";
 
 /* The page is one argument, in order:
-     the promise                Hero (a month, itemized)
+     the promise                Hero (what we are, what we do, in plain words)
      the problem, the answer    Platform (measure, find, fix, prove)
      the difference             Proof (savings as booked rows)
      going live                 Setup

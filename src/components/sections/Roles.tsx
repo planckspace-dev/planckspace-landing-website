@@ -8,29 +8,29 @@ import SectionHead from "@/components/site/SectionHead";
 const ROLES = [
   {
     who: "Leaders",
-    promise: "A bill you can defend.",
+    promise: "A bill you can explain.",
     points: [
-      "Billed spend by team, repository and tool, checked against the provider invoice.",
-      "Savings booked from real sessions and seat changes, never projected.",
-      "Budgets with alerts before the month runs out, on billed dollars only.",
+      "What you paid, by team, repository and tool, checked against the real invoice.",
+      "Savings counted from real sessions and seat changes, never a forecast.",
+      "Budgets that warn you before the money runs out.",
     ],
   },
   {
     who: "Managers",
     promise: "Your team's numbers, not a watchlist.",
     points: [
-      "Spend and ship rate for your team, side by side, against the prior period.",
-      "Findings scoped to your team's people, with the fix attached.",
-      "A collaborative workspace keeps identities private from every role, yours included.",
+      "What your team spent and how much of its work shipped, next to last period.",
+      "The waste found in your own team, each with its fix.",
+      "In a collaborative workspace, names stay hidden from everyone, you included.",
     ],
   },
   {
     who: "Developers",
     promise: "Fixes in the editor, not a lecture.",
     points: [
-      "Your own numbers on first open, in VS Code, Cursor or Windsurf.",
+      "Your own numbers the first time you open it, in VS Code, Cursor or Windsurf.",
       "One-click fixes with a backup and an Undo.",
-      "Metadata only, and planck inspect lets you check any session's payload.",
+      "Usage data only. Run planck inspect to see what any session sends.",
     ],
   },
 ];
@@ -45,7 +45,7 @@ export default function Roles() {
           titleClassName="max-w-[18ch]"
           title={
             <>
-              One ledger, read by the people who <span className="tone">sign, run and ship.</span>
+              The same numbers, for the people who <span className="tone">pay, lead and build.</span>
             </>
           }
         />

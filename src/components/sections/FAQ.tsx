@@ -11,32 +11,36 @@ import Reveal from "@/components/site/Reveal";
 
 const FAQS = [
   {
-    q: "How does the tracking actually work?",
-    a: "AI coding tools already write session logs on the developer's machine: models, token counts, timestamps. The PlanckSpace CLI and its background daemon read that metadata locally and sync it to your workspace. Nothing is intercepted, proxied or injected into your editor.",
+    q: "What is PlanckSpace, in one sentence?",
+    a: "A tool that shows a company what its AI coding tools cost, finds the money being wasted, fixes it, and then measures what each fix saved. It works with Claude Code, Cursor, Windsurf and the API keys behind them.",
   },
   {
-    q: "Which tools are supported?",
-    a: "Claude Code, Cursor and Windsurf on the developer's machine, plus metered API spend through Anthropic, OpenAI and Amazon Bedrock. The editor extension runs in VS Code, and in Cursor and Windsurf through Open VSX. The docs list exactly what each tool reports.",
+    q: "How does it work?",
+    a: "Your AI coding tools already keep a log of every session on the developer's machine: which model, how many tokens, when. A small PlanckSpace program reads those logs on the machine and sends the usage numbers to your workspace. It does not sit between you and your tools, and it changes nothing in your editor.",
   },
   {
-    q: "Do our code or prompts ever reach PlanckSpace?",
-    a: "No. PlanckSpace syncs usage metadata only: models, token counts, timings, tool, repository and file names, outcome and the git email that attributes a session. Prompts, responses, source code and file contents are never sent to PlanckSpace; run planck inspect on any session to check its payload. The one opt-in exception sends truncated prompts to a third party, never to us: an agent policy that uses TypeSafe's decision model, on machines where the developer adds their own TypeSafe key.",
+    q: "Which tools does it work with?",
+    a: "Claude Code, Cursor and Windsurf on each developer's machine, plus pay-as-you-go API spend with Anthropic, OpenAI and Amazon Bedrock. The editor extension runs in VS Code, and in Cursor and Windsurf through Open VSX. The docs list exactly what each tool reports.",
   },
   {
-    q: "What does a measured saving mean?",
-    a: "Every saved dollar is a booked row you can open. After a routing or cache fix, each session is priced at what the same work cost before the fix, and the difference is booked; a removed seat is counted for each day it stays off. Nothing books until a session fix has run for 7 days and 20 sessions. If the ship rate drops 10 points, booking stops, and if the old behaviour comes back, the finding reopens.",
+    q: "Are our code or prompts ever sent to PlanckSpace?",
+    a: "No. Only usage data is sent: models, token counts, timings, tool, repository and file names, whether the work shipped, and the git email that shows whose session it was. Prompts, responses, source code and file contents are never sent to PlanckSpace. Run planck inspect on any session to check. There is one opt-in exception, and it sends shortened prompts to a third party, never to us: an agent policy that uses TypeSafe's decision model, on machines where the developer adds their own TypeSafe key.",
   },
   {
-    q: "We pay for Claude Max and Pro seats, not the API. Is it useful?",
-    a: "Yes. Seat findings are some of the largest: seats nobody opens, and Max seats used at Pro levels. Work done on flat-rate seats is shown as usage value, and never added to the money that actually leaves the account.",
+    q: "How do you know a saving is real?",
+    a: "We measure it instead of estimating it. After a fix, we work out what each new session would have cost the old way, and count the difference. A removed seat counts for each day it stays removed. A session fix counts for nothing until it has run for 7 days and 20 sessions. If the share of work that ships drops 10 points, we stop counting, and if the old habit comes back, the problem is reopened.",
   },
   {
-    q: "How is this different from each provider's usage page?",
-    a: "A provider dashboard shows one tool and one account, without team context. PlanckSpace puts every tool on one ledger, attributes it per developer, team and repository, checks it against the invoice, and prices the waste.",
+    q: "We pay for Claude Max and Pro seats, not the API. Is it still useful?",
+    a: "Yes. Seats are where some of the biggest waste is: seats nobody uses, and Max seats that only need Pro. We also show how much work each flat-rate seat carried, as a separate number that is never added to what you paid.",
+  },
+  {
+    q: "How is this different from the usage page each provider gives us?",
+    a: "A provider's page shows one tool and one account. PlanckSpace puts all your tools in one place, shows the spend by developer, team and repository, checks it against the invoice, and tells you what the waste costs. Then it helps you fix it.",
   },
   {
     q: "How do we get access, and what does it cost?",
-    a: "Through a demo. We spend 30 minutes on your setup, size the plan to your team and tools, then provision the workspace and help roll it out. Onboarding runs with us so your numbers are right from the first session.",
+    a: "Book a demo. In 30 minutes we look at your setup and size a plan to your team and tools. Then we set up your workspace and help you roll it out, so your numbers are right from day one.",
   },
 ];
 
